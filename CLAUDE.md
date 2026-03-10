@@ -26,7 +26,7 @@ Projects live in `projects/`. Each has a README with status, description, and ke
 - **n8n** -- AI automation stack. Active client workflow running (email-to-PHC, ~300 emails/day).
 - **OneNote** -- Notes (open to switching to Notion)
 - **WhatsApp / Discord** -- Team communication
-- **MCP servers** -- None yet. Add here as integrations are connected.
+- **MCP servers** -- GitHub (repos, issues, PRs via `@modelcontextprotocol/server-github`)
 
 ## Skills
 

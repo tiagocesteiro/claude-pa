@@ -8,7 +8,7 @@
 - **Automations:** n8n
 - **Notes:** OneNote (open to switching to Notion)
 - **Team comms:** WhatsApp, Discord
-- **MCP servers:** None yet
+- **MCP servers:** GitHub (read/write repos, issues, PRs)
 
 ## Business Ideas
 
