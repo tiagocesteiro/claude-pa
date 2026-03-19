@@ -20,7 +20,7 @@ interface ModelCardProps {
 export default function ModelCard({ model, locale }: ModelCardProps) {
   return (
     <Link href={`/${locale}/model/${model.id}`}
-      className="group bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius)] overflow-hidden hover:border-[var(--fg)] hover:shadow-md transition-all">
+      className="model-card-link group bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius)] overflow-hidden transition-all duration-200">
       <div className="aspect-[4/3] bg-[var(--accent-light)] relative overflow-hidden">
         {model.thumbnail ? (
           <Image src={model.thumbnail} alt={model.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
