@@ -1,0 +1,71 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "PrintPal" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - img [ref=e5]
+        - text: PrintPal
+      - navigation [ref=e8]:
+        - link "Catalog" [ref=e9] [cursor=pointer]:
+          - /url: /en/catalog
+        - link "Makers" [ref=e10] [cursor=pointer]:
+          - /url: /en/makers
+      - generic [ref=e11]:
+        - button "PT" [ref=e12]:
+          - img [ref=e13]
+          - text: PT
+        - generic [ref=e16]:
+          - link "Sign in" [ref=e17] [cursor=pointer]:
+            - /url: /en/auth/signin
+          - link "Sign up" [ref=e18] [cursor=pointer]:
+            - /url: /en/auth/signup
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - heading "Makers" [level=1] [ref=e21]
+      - paragraph [ref=e22]: Local makers ready to print your order.
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - img [ref=e25]
+          - generic [ref=e26]:
+            - generic [ref=e27]: Sort by
+            - combobox [ref=e28]:
+              - option "Top rated" [selected]
+              - option "Most models"
+              - option "Name (A–Z)"
+          - generic [ref=e29]:
+            - generic [ref=e30]: Min rating
+            - combobox [ref=e31]:
+              - option "Any" [selected]
+              - option "3+"
+              - option "4+"
+              - option "4.5+"
+          - generic [ref=e32] [cursor=pointer]:
+            - checkbox "With location" [ref=e33]
+            - generic [ref=e34]: With location
+          - button "Use my location" [ref=e35]:
+            - img [ref=e36]
+            - text: Use my location
+        - paragraph [ref=e39]: 1 maker
+        - link "T Teste Lisboa 3 models Adoro imprimir 3D :) No reviews" [ref=e41] [cursor=pointer]:
+          - /url: /en/maker/7758a8c3-57f5-434b-93d1-fb9edb668afa
+          - generic [ref=e43]: T
+          - generic [ref=e44]:
+            - paragraph [ref=e45]: Teste
+            - generic [ref=e46]:
+              - generic [ref=e47]:
+                - img [ref=e48]
+                - text: Lisboa
+              - generic [ref=e51]:
+                - img [ref=e52]
+                - text: 3 models
+            - paragraph [ref=e56]: Adoro imprimir 3D :)
+          - generic [ref=e57]: No reviews
+  - contentinfo [ref=e58]:
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - img [ref=e61]
+        - text: PrintPal
+      - paragraph [ref=e64]: Click Globally, Print Locally
+      - paragraph [ref=e65]: © 2026 PrintPal
+  - button "Open Next.js Dev Tools" [ref=e71] [cursor=pointer]:
+    - img [ref=e72]

@@ -55,7 +55,6 @@ export default function Navbar() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link href={l('/catalog')} className={`transition-colors ${pathname.includes('/catalog') ? 'text-[var(--fg)]' : 'text-[var(--muted)] hover:text-[var(--fg)]'}`}>{t('catalog')}</Link>
-          <Link href={l('/makers')} className={`transition-colors ${pathname.includes('/makers') ? 'text-[var(--fg)]' : 'text-[var(--muted)] hover:text-[var(--fg)]'}`}>{t('makers')}</Link>
           {isMaker && (
             <Link href={l('/dashboard')} className={`transition-colors ${pathname.includes('/dashboard') ? 'text-[var(--fg)]' : 'text-[var(--muted)] hover:text-[var(--fg)]'}`}>{t('dashboard')}</Link>
           )}
@@ -88,7 +87,6 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-[var(--border)] bg-[var(--bg)] px-4 py-4 flex flex-col gap-4 text-sm font-medium">
           <Link href={l('/catalog')} onClick={() => setOpen(false)}>{t('catalog')}</Link>
-          <Link href={l('/makers')} onClick={() => setOpen(false)}>{t('makers')}</Link>
           {isMaker && <Link href={l('/dashboard')} onClick={() => setOpen(false)}>{t('dashboard')}</Link>}
           {user ? (
             <>

@@ -1,0 +1,48 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "PrintPal" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - img [ref=e5]
+        - text: PrintPal
+      - navigation [ref=e8]:
+        - link "Catalog" [ref=e9] [cursor=pointer]:
+          - /url: /en/catalog
+        - link "Makers" [ref=e10] [cursor=pointer]:
+          - /url: /en/makers
+      - generic [ref=e11]:
+        - button "PT" [ref=e12]:
+          - img [ref=e13]
+          - text: PT
+        - generic [ref=e16]:
+          - link "Sign in" [ref=e17] [cursor=pointer]:
+            - /url: /en/auth/signin
+          - link "Sign up" [ref=e18] [cursor=pointer]:
+            - /url: /en/auth/signup
+  - main [ref=e19]:
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - img [ref=e23]
+        - generic [ref=e26]: PrintPal
+      - heading "Sign in" [level=1] [ref=e27]
+      - paragraph [ref=e28]:
+        - text: Don't have an account?
+        - link "Create account" [ref=e29] [cursor=pointer]:
+          - /url: /en/auth/signup
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: Email
+          - textbox [ref=e33]
+        - generic [ref=e34]:
+          - generic [ref=e35]: Password
+          - textbox [ref=e36]
+        - button "Sign in" [ref=e37]
+  - contentinfo [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e40]:
+        - img [ref=e41]
+        - text: PrintPal
+      - paragraph [ref=e44]: Click Globally, Print Locally
+      - paragraph [ref=e45]: © 2026 PrintPal
+  - button "Open Next.js Dev Tools" [ref=e51] [cursor=pointer]:
+    - img [ref=e52]

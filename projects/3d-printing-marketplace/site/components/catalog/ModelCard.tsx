@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, Printer } from 'lucide-react'
+import { Printer, ShoppingBag, Users } from 'lucide-react'
 
 interface ModelCardProps {
   model: {
@@ -10,9 +10,10 @@ interface ModelCardProps {
     thumbnail?: string
     license_name?: string
     creator_username?: string
-    likes?: number
-    makes?: number
     category_name?: string
+    maker_count?: number
+    order_count?: number
+    min_price?: number
   }
   locale: string
 }
@@ -29,6 +30,11 @@ export default function ModelCard({ model, locale }: ModelCardProps) {
             <Printer size={32} className="text-[var(--accent)] opacity-40" />
           </div>
         )}
+        {model.min_price != null && (
+          <span className="absolute bottom-2 right-2 bg-[var(--accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            from €{model.min_price.toFixed(2)}
+          </span>
+        )}
         {model.license_name && (
           <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur">
             {model.license_name.replace('Creative Commons — ', 'CC ').replace(' Public Domain', '0')}
@@ -41,8 +47,8 @@ export default function ModelCard({ model, locale }: ModelCardProps) {
           <p className="text-[var(--muted)] text-xs mb-2">by {model.creator_username}</p>
         )}
         <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
-          <span className="flex items-center gap-1"><Heart size={11} />{model.likes?.toLocaleString()}</span>
-          <span className="flex items-center gap-1"><Printer size={11} />{model.makes?.toLocaleString()}</span>
+          <span className="flex items-center gap-1"><Users size={11} />{model.maker_count ?? 0} makers</span>
+          <span className="flex items-center gap-1"><ShoppingBag size={11} />{model.order_count ?? 0} orders</span>
           {model.category_name && <span className="ml-auto truncate">{model.category_name}</span>}
         </div>
       </div>

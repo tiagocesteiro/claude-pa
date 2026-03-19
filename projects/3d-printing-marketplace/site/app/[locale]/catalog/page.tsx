@@ -33,7 +33,7 @@ export default async function CatalogPage({
   // cat is comma-separated list of category_ids
   const catIds = cat ? cat.split(',').filter(Boolean) : []
 
-  let query = supabase.from('models').select('*').eq('is_active', true).order('likes', { ascending: false }).limit(60)
+  let query = supabase.from('catalog_models').select('*').order('likes', { ascending: false }).limit(60)
   if (q) query = query.ilike('name', `%${q}%`)
   if (catIds.length === 1) query = query.eq('category_id', catIds[0])
   else if (catIds.length > 1) query = query.in('category_id', catIds)

@@ -31,7 +31,10 @@ Automated self-service smoothie model for Lisbon gyms and co-working spaces.
 ### 3. Dental X-Ray AI [ON HOLD]
 Deep learning model to detect dental issues in X-rays, sold as SaaS to clinics.
 
-### 4. Clean & Maintain [ON HOLD]
-B2B fitness facility maintenance: floor scrubbing, rust restoration, cardio machine servicing.
-- Target: CrossFit boxes, boutique studios, corporate/condo gyms in Lisbon
+### 4. Clean & Maintain [ACTIVE — Phase 1]
+B2B fitness facility maintenance starting with Concept2 ergometer servicing, expanding to barbells/kettlebells.
+- **Gap:** No Concept2-specialized maintenance company in Portugal (UK: Rowgear, USA: Erg Doctor)
+- Target: CrossFit boxes (16 in Lisbon), boutique studios, condo gyms
+- Revenue model: monthly retainer €15-25/machine/month
 - CAE codes: 81220 (Specialized Cleaning) + 33190 (Equipment Repair)
+- Project folder: `projects/clean-maintain/`

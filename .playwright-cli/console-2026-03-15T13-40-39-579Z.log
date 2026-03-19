@@ -1,0 +1,165 @@
+[    1918ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   51461ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   53011ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=12000&marca=toyota&modelo=auris&tipo-vendedor[]=1:0
+[   54010ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   55091ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   56849ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   58430ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=12000&marca=hyundai&modelo=i30&tipo-vendedor[]=1:0
+[   58738ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   60278ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=12000&marca=hyundai&modelo=tucson&tipo-vendedor[]=1:0
+[   60574ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   62326ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   64105ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   65631ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=12000&marca=opel&modelo=insignia&tipo-vendedor[]=1:0
+[   65971ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   67508ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=12000&marca=seat&modelo=leon&tipo-vendedor[]=1:0
+[   67848ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   69527ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=12000&marca=mazda&modelo=6&tipo-vendedor[]=1:0
+[   69803ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   71568ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   73354ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[   98241ms] [ERROR] Failed to find a valid digest in the 'integrity' attribute for resource 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' with computed SHA-512 integrity 'z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='. The resource has been blocked. @ https://www.custojusto.pt/portugal/veiculos/carros-usados/skoda/octavia?price_max=12000&me=11&sp=1:0
+[  112996ms] [ERROR] Failed to find a valid digest in the 'integrity' attribute for resource 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' with computed SHA-512 integrity 'z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='. The resource has been blocked. @ https://www.custojusto.pt/portugal/veiculos/carros-usados/toyota/auris?price_max=12000&me=11&sp=1:0
+[  135783ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://www.custojusto.pt/v2/auth/check:0
+[  140068ms] [ERROR] Failed to find a valid digest in the 'integrity' attribute for resource 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' with computed SHA-512 integrity 'z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='. The resource has been blocked. @ https://www.custojusto.pt/portugal/veiculos/carros-usados/ford/focus?price_max=12000&me=11&sp=1:0
+[  140229ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://www.custojusto.pt/v2/auth/check:0

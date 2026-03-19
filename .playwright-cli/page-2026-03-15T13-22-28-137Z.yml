@@ -1,0 +1,793 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - link "Saltar os links da Barra SAPO" [ref=e6] [cursor=pointer]:
+        - /url: "#bsu-v4-end"
+      - generic [ref=e7]:
+        - button "MENU" [ref=e8] [cursor=pointer]
+        - link "Mail" [ref=e10] [cursor=pointer]:
+          - /url: https://mail.sapo.pt/login?loginType=bsu&utm_source=bsu&utm_medium=web&utm_campaign=bsu_mainmenu&utm_content=auto.sapo.pt
+        - link "Jornais" [ref=e11] [cursor=pointer]:
+          - /url: https://sapo.pt/noticias/jornais?utm_source=bsu&utm_medium=web&utm_campaign=bsu_mainmenu&utm_content=auto.sapo.pt
+      - link "30 Anos" [ref=e12] [cursor=pointer]:
+        - /url: https://www.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_logo&utm_content=auto.sapo.pt
+        - img [ref=e13]
+      - generic [ref=e23]:
+        - link "Autenticar" [ref=e25] [cursor=pointer]:
+          - /url: https://login.sapo.pt/Login.do?to=https%3A%2F%2Fauto.sapo.pt%2F
+          - generic [ref=e26]: 
+        - link "Autenticar" [ref=e28] [cursor=pointer]:
+          - /url: https://login.sapo.pt/Login.do?to=https%3A%2F%2Fauto.sapo.pt%2F
+          - generic [ref=e29]: 
+      - generic "Lisboa - Céu Limpo" [ref=e32] [cursor=pointer]:
+        - combobox [ref=e36]:
+          - option "Abrantes"
+          - option "Águeda"
+          - option "Aguiar da Beira"
+          - option "Alandroal"
+          - option "Albergaria-a-Velha"
+          - option "Albufeira"
+          - option "Alcácer do Sal"
+          - option "Alcanena"
+          - option "Alcobaça"
+          - option "Alcochete"
+          - option "Alcoutim"
+          - option "Alenquer"
+          - option "Alfandega da Fé"
+          - option "Alijó"
+          - option "Aljezur"
+          - option "Aljustrel"
+          - option "Almada"
+          - option "Almeida"
+          - option "Almeirim"
+          - option "Almodôvar"
+          - option "Alpiarça"
+          - option "Alter do Chão"
+          - option "Alvaiázere"
+          - option "Alvito"
+          - option "Amadora"
+          - option "Amarante"
+          - option "Amares"
+          - option "Anadia"
+          - option "Angra do Heroísmo"
+          - option "Ansião"
+          - option "Arcos de Valdevez"
+          - option "Arganil"
+          - option "Armamar"
+          - option "Arouca"
+          - option "Arraiolos"
+          - option "Arronches"
+          - option "Arruda dos Vinhos"
+          - option "Aveiro"
+          - option "Avis"
+          - option "Azambuja"
+          - option "Baião"
+          - option "Barcelos"
+          - option "Barrancos"
+          - option "Barreiro"
+          - option "Batalha"
+          - option "Beja"
+          - option "Belmonte"
+          - option "Benavente"
+          - option "Bombarral"
+          - option "Borba"
+          - option "Boticas"
+          - option "Braga"
+          - option "Bragança"
+          - option "Cabeceiras de Basto"
+          - option "Cadaval"
+          - option "Caldas da Rainha"
+          - option "Câmara de Lobos"
+          - option "Caminha"
+          - option "Campo Maior"
+          - option "Cantanhede"
+          - option "Carrazeda de Ansiães"
+          - option "Carregal do Sal"
+          - option "Cartaxo"
+          - option "Cascais"
+          - option "Castanheira de Pêra"
+          - option "Castelo Branco"
+          - option "Castelo de Paiva"
+          - option "Castelo de Vide"
+          - option "Castro Daire"
+          - option "Castro Marim"
+          - option "Castro Verde"
+          - option "Celorico da Beira"
+          - option "Celorico de Basto"
+          - option "Chamusca"
+          - option "Chaves"
+          - option "Cinfães"
+          - option "Coimbra"
+          - option "Condeixa-a-Nova"
+          - option "Constância"
+          - option "Coruche"
+          - option "Covilhã"
+          - option "Crato"
+          - option "Cuba"
+          - option "Elvas"
+          - option "Entroncamento"
+          - option "Espinho"
+          - option "Esposende"
+          - option "Estarreja"
+          - option "Estremoz"
+          - option "Évora"
+          - option "Fafe"
+          - option "Faro"
+          - option "Felgueiras"
+          - option "Ferreira do Alentejo"
+          - option "Ferreira do Zêzere"
+          - option "Figueira da Foz"
+          - option "Figueira de Castelo Rodrigo"
+          - option "Figueiró dos Vinhos"
+          - option "Fornos de Algodres"
+          - option "Freixo Espada à Cinta"
+          - option "Fronteira"
+          - option "Funchal"
+          - option "Fundão"
+          - option "Gavião"
+          - option "Góis"
+          - option "Golegã"
+          - option "Gondomar"
+          - option "Gouveia"
+          - option "Grândola"
+          - option "Guarda"
+          - option "Guimarães"
+          - option "Horta"
+          - option "Idanha-a-Nova"
+          - option "Ílhavo"
+          - option "Lagoa"
+          - option "Lagos"
+          - option "Lamego"
+          - option "Leiria"
+          - option "Lisboa" [selected]
+          - option "Loulé"
+          - option "Loures"
+          - option "Lourinhã"
+          - option "Lousã"
+          - option "Lousada"
+          - option "Mação"
+          - option "Macedo de Cavaleiros"
+          - option "Machico"
+          - option "Madalena"
+          - option "Mafra"
+          - option "Maia"
+          - option "Mangualde"
+          - option "Manteigas"
+          - option "Marco de Canaveses"
+          - option "Marinha Grande"
+          - option "Marvão"
+          - option "Matosinhos"
+          - option "Mealhada"
+          - option "Meda"
+          - option "Melgaço"
+          - option "Mértola"
+          - option "Mesão Frio"
+          - option "Mira"
+          - option "Miranda do Corvo"
+          - option "Miranda do Douro"
+          - option "Mirandela"
+          - option "Mogadouro"
+          - option "Moimenta da Beira"
+          - option "Moita"
+          - option "Monção"
+          - option "Monchique"
+          - option "Mondim de Basto"
+          - option "Monforte"
+          - option "Montalegre"
+          - option "Montemor-o-Novo"
+          - option "Montemor-o-Velho"
+          - option "Montijo"
+          - option "Mora"
+          - option "Mortágua"
+          - option "Moura"
+          - option "Mourão"
+          - option "Murça"
+          - option "Murtosa"
+          - option "Nazaré"
+          - option "Nelas"
+          - option "Nisa"
+          - option "Nordeste"
+          - option "Óbidos"
+          - option "Odemira"
+          - option "Odivelas"
+          - option "Oeiras"
+          - option "Oleiros"
+          - option "Olhão"
+          - option "Oliveira de Azeméis"
+          - option "Oliveira de Frades"
+          - option "Oliveira do Bairro"
+          - option "Oliveira do Hospital"
+          - option "Ourém"
+          - option "Ourique"
+          - option "Ovar"
+          - option "Paços de Ferreira"
+          - option "Palmela"
+          - option "Pampilhosa da Serra"
+          - option "Paredes"
+          - option "Paredes de Coura"
+          - option "Pedrógão Grande"
+          - option "Penacova"
+          - option "Penafiel"
+          - option "Penalva do Castelo"
+          - option "Penamacor"
+          - option "Penedono"
+          - option "Penela"
+          - option "Peniche"
+          - option "Peso da Régua"
+          - option "Pinhel"
+          - option "Pombal"
+          - option "Ponta Delgada"
+          - option "Ponte da Barca"
+          - option "Ponte de Lima"
+          - option "Ponte de Sor"
+          - option "Portalegre"
+          - option "Portel"
+          - option "Portimão"
+          - option "Porto"
+          - option "Porto de Mós"
+          - option "Porto Moniz"
+          - option "Porto Santo"
+          - option "Póvoa de Lanhoso"
+          - option "Póvoa de Varzim"
+          - option "Proença-a-Nova"
+          - option "Redondo"
+          - option "Reguengos de Monsaraz"
+          - option "Resende"
+          - option "Ribeira de Pena"
+          - option "Rio Maior"
+          - option "Sabrosa"
+          - option "Sabugal"
+          - option "Salvaterra de Magos"
+          - option "Santa Comba Dão"
+          - option "Santa Cruz - Aeroporto"
+          - option "Santa Cruz da Graciosa"
+          - option "Santa Cruz das Flores"
+          - option "Santa Maria da Feira"
+          - option "Santa Marta de Penaguião"
+          - option "Santana"
+          - option "Santarém"
+          - option "Santiago do Cacém"
+          - option "Santo Tirso"
+          - option "São Brás de Alportel"
+          - option "São João da Madeira"
+          - option "São João da Pesqueira"
+          - option "São Pedro do Sul"
+          - option "São Vicente"
+          - option "Sardoal"
+          - option "Sátão"
+          - option "Seia"
+          - option "Seixal"
+          - option "Sernancelhe"
+          - option "Serpa"
+          - option "Sertã"
+          - option "Sesimbra"
+          - option "Setúbal"
+          - option "Sever do Vouga"
+          - option "Silves"
+          - option "Sines"
+          - option "Sintra"
+          - option "Sobral de Monte Agraço"
+          - option "Soure"
+          - option "Sousel"
+          - option "Tábua"
+          - option "Tabuaço"
+          - option "Tarouca"
+          - option "Tavira"
+          - option "Terras de Bouro"
+          - option "Tomar"
+          - option "Tondela"
+          - option "Torre de Moncorvo"
+          - option "Torres Novas"
+          - option "Torres Vedras"
+          - option "Trancoso"
+          - option "Trofa"
+          - option "Vagos"
+          - option "Vale de Cambra"
+          - option "Valença"
+          - option "Valongo"
+          - option "Valpaços"
+          - option "Velas"
+          - option "Vendas Novas"
+          - option "Viana do Alentejo"
+          - option "Viana do Castelo"
+          - option "Vidigueira"
+          - option "Vieira do Minho"
+          - option "Vila de Rei"
+          - option "Vila do Bispo"
+          - option "Vila do Conde"
+          - option "Vila do Corvo"
+          - option "Vila do Porto"
+          - option "Vila Flor"
+          - option "Vila Franca de Xira"
+          - option "Vila Nova da Barquinha"
+          - option "Vila Nova de Cerveira"
+          - option "Vila Nova de Famalicão"
+          - option "Vila Nova de Foz Coa"
+          - option "Vila Nova de Gaia"
+          - option "Vila Nova de Paiva"
+          - option "Vila Nova de Poiares"
+          - option "Vila Pouca de Aguiar"
+          - option "Vila Real"
+          - option "Vila Real de Santo António"
+          - option "Vila Velha de Rodão"
+          - option "Vila Verde"
+          - option "Vila Viçosa"
+          - option "Vimioso"
+          - option "Vinhais"
+          - option "Viseu"
+          - option "Vizela"
+          - option "Vouzela"
+        - generic [ref=e38]:
+          - img "1" [ref=e40]
+          - generic [ref=e41]: 17º
+        - generic [ref=e43]: 
+    - generic [ref=e44]:
+      - button "Fechar" [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: 
+      - generic [ref=e48]:
+        - link "Categorias" [ref=e49] [cursor=pointer]:
+          - /url: https://www.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list [ref=e50]:
+          - listitem [ref=e51]:
+            - link "Jornais" [ref=e52] [cursor=pointer]:
+              - /url: https://sapo.pt/noticias/jornais/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e53]:
+            - link "Notícias" [ref=e54] [cursor=pointer]:
+              - /url: https://sapo.pt/noticias/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e55]:
+            - link "Desporto" [ref=e56] [cursor=pointer]:
+              - /url: https://sapo.pt/desporto/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e57]:
+            - link "Cultura e Lifestyle" [ref=e58] [cursor=pointer]:
+              - /url: https://sapo.pt/cultura-lifestyle/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - link "Serviços e Classificados" [ref=e60] [cursor=pointer]:
+          - /url: https://sobre.sapo.pt/mundo-sapo/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list [ref=e61]:
+          - listitem [ref=e62]:
+            - link "SAPO Mail" [ref=e63] [cursor=pointer]:
+              - /url: https://mail.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e64]:
+            - link "Auto SAPO" [ref=e65] [cursor=pointer]:
+              - /url: https://auto.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e66]:
+            - link "SAPO Emprego" [ref=e67] [cursor=pointer]:
+              - /url: https://emprego.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e68]:
+            - link "SAPO Blogs" [ref=e69] [cursor=pointer]:
+              - /url: https://blogs.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e70]:
+            - link "SAPO Promos" [ref=e71] [cursor=pointer]:
+              - /url: https://promos.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e72]:
+            - link "SUPER CASA" [ref=e73] [cursor=pointer]:
+              - /url: https://supercasa.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - link "Nova APP SAPO" [ref=e75] [cursor=pointer]:
+          - /url: https://sapo.pt/app/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list
+        - link "Parceiros SAPO" [ref=e77] [cursor=pointer]:
+          - /url: https://sobre.sapo.pt/mundo-sapo/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list
+        - generic [ref=e80]:
+          - generic [ref=e81]: "Subscrever:"
+          - link " SMS" [ref=e82] [cursor=pointer]:
+            - /url: https://alertas.sapo.pt/home
+            - generic [ref=e83]: 
+            - text: SMS
+        - generic [ref=e85]:
+          - generic [ref=e86]: "Siga-nos:"
+          - generic [ref=e87]:
+            - link "Facebook" [ref=e88] [cursor=pointer]:
+              - /url: https://www.facebook.com/sapo
+              - generic [ref=e89]: 
+            - link "Instagram" [ref=e90] [cursor=pointer]:
+              - /url: https://www.instagram.com/sapo/
+              - generic [ref=e91]: 
+            - link "LinkedIn" [ref=e92] [cursor=pointer]:
+              - /url: https://pt.linkedin.com/company/sapo
+              - generic [ref=e93]: 
+            - link "TikTok" [ref=e94] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@sapotiktok
+              - generic [ref=e95]: 
+            - link "X/Twitter" [ref=e96] [cursor=pointer]:
+              - /url: https://twitter.com/sapo
+              - generic [ref=e97]: 
+  - banner [ref=e98]:
+    - navigation [ref=e100]:
+      - link "AutoSAPO - Carros usados" [ref=e102] [cursor=pointer]:
+        - /url: /
+        - img [ref=e103]
+      - text: 
+      - list [ref=e114]:
+        - listitem [ref=e115]:
+          - button "Carro novo " [ref=e116] [cursor=pointer]
+        - listitem [ref=e117]:
+          - button "Carro usado " [ref=e118] [cursor=pointer]
+        - listitem [ref=e119]:
+          - link "Anunciar Grátis" [ref=e120] [cursor=pointer]:
+            - /url: https://auto-frontoffice.sapo.pt
+        - listitem [ref=e121]:
+          - link "Mensagens" [ref=e122] [cursor=pointer]:
+            - /url: /user/messages
+        - listitem [ref=e124]:
+          - link "Propostas" [ref=e125] [cursor=pointer]:
+            - /url: /user/procurement
+        - listitem [ref=e127]:
+          - button "Entrar" [ref=e128] [cursor=pointer]:
+            - generic [ref=e129]: 
+            - text: Entrar
+  - main [ref=e131]:
+    - generic [ref=e132]:
+      - generic [ref=e136]:
+        - generic [ref=e137]:
+          - heading "Car-Match Diga-nos o que procura e tratamos de tudo para Si." [level=1] [ref=e138]:
+            - text: Car-Match
+            - generic [ref=e139]: Diga-nos o que procura
+            - generic [ref=e140]: e tratamos de tudo para Si.
+          - link "Quero comprar Carro Novo" [ref=e141] [cursor=pointer]:
+            - /url: /carro/novo/pedir-proposta
+            - text: Quero comprar
+            - strong [ref=e142]: Carro Novo
+          - link "Quero comprar Carro usado" [ref=e143] [cursor=pointer]:
+            - /url: /carros-usados/pedir-proposta
+            - text: Quero comprar
+            - strong [ref=e144]: Carro usado
+        - generic [ref=e147]:
+          - heading "Encontre o seu carro ideal" [level=2] [ref=e148]
+          - generic [ref=e149]:
+            - textbox "Pesquise por Marca, Modelo, Nome do Stand..." [ref=e152]
+            - generic [ref=e153]:
+              - link "Pesquisa avançada" [ref=e154] [cursor=pointer]:
+                - /url: /carros-usados
+              - button "Pesquisar" [ref=e155] [cursor=pointer]
+      - generic [ref=e158]:
+        - heading "Usados em destaque" [level=2] [ref=e159]
+        - generic [ref=e160]:
+          - article [ref=e162]:
+            - generic [ref=e163]:
+              - link "Mercedes-Benz Classe E 300 de Avantgarde" [ref=e164] [cursor=pointer]:
+                - /url: /carro-usado/694e7b00c27aa43c779abc47/mercedes-benz-classe-e-300-de-avantgarde
+                - img "Mercedes-Benz Classe E 300 de Avantgarde de 2020" [ref=e166]
+              - generic [ref=e167] [cursor=pointer]: Em destaque
+            - generic [ref=e168]:
+              - heading "Mercedes-Benz Classe E 300 de Avantgarde - 306cv - 5P" [level=3] [ref=e169]:
+                - link "Mercedes-Benz Classe E 300 de Avantgarde - 306cv - 5P" [ref=e170] [cursor=pointer]:
+                  - /url: /carro-usado/694e7b00c27aa43c779abc47/mercedes-benz-classe-e-300-de-avantgarde
+                  - text: Mercedes-Benz Classe E
+                  - generic [ref=e171]: 300 de Avantgarde - 306cv - 5P
+              - button "Favorito" [ref=e172] [cursor=pointer]:
+                - generic [ref=e173]: 
+              - generic [ref=e174]:
+                - list [ref=e175]:
+                  - listitem [ref=e176]: "2020"
+                  - listitem [ref=e177]: 179.000 km
+                  - listitem [ref=e178]: Híbrido (Diesel)
+                - generic [ref=e181]: 30.500€
+          - article [ref=e183]:
+            - generic [ref=e184]:
+              - link "Mercedes-Benz Classe CLA 250 e Shooting Brake Style Plus" [ref=e185] [cursor=pointer]:
+                - /url: /carro-usado/694e7af6c27aa43c779abc43/mercedes-benz-classe-cla-250-e-shooting-brake-style-plus
+                - img "Mercedes-Benz Classe CLA 250 e Shooting Brake Style Plus de 2022" [ref=e187]
+              - generic [ref=e188] [cursor=pointer]: Em destaque
+            - generic [ref=e189]:
+              - heading "Mercedes-Benz Classe CLA 250 e Shooting Brake Style Plus - 218cv - 5P" [level=3] [ref=e190]:
+                - link "Mercedes-Benz Classe CLA 250 e Shooting Brake Style Plus - 218cv - 5P" [ref=e191] [cursor=pointer]:
+                  - /url: /carro-usado/694e7af6c27aa43c779abc43/mercedes-benz-classe-cla-250-e-shooting-brake-style-plus
+                  - text: Mercedes-Benz Classe CLA
+                  - generic [ref=e192]: 250 e Shooting Brake Style Plus - 218cv - 5P
+              - button "Favorito" [ref=e193] [cursor=pointer]:
+                - generic [ref=e194]: 
+              - generic [ref=e195]:
+                - list [ref=e196]:
+                  - listitem [ref=e197]: "2022"
+                  - listitem [ref=e198]: 106.500 km
+                  - listitem [ref=e199]: Híbrido (Gasolina)
+                - generic [ref=e202]: 28.950€
+          - article [ref=e204]:
+            - generic [ref=e205]:
+              - link "BMW Série 3" [ref=e206] [cursor=pointer]:
+                - /url: /carro-usado/6859940ebd6003b6324f9dbc/bmw-serie-3
+                - img "BMW Série 3 de 2017" [ref=e208]
+              - generic [ref=e209] [cursor=pointer]: Em destaque
+            - generic [ref=e210]:
+              - heading "BMW Série 3 150cv - 5P" [level=3] [ref=e211]:
+                - link "BMW Série 3 150cv - 5P" [ref=e212] [cursor=pointer]:
+                  - /url: /carro-usado/6859940ebd6003b6324f9dbc/bmw-serie-3
+                  - text: BMW Série 3
+                  - generic [ref=e213]: 150cv - 5P
+              - button "Favorito" [ref=e214] [cursor=pointer]:
+                - generic [ref=e215]: 
+              - generic [ref=e216]:
+                - list [ref=e217]:
+                  - listitem [ref=e218]: "2017"
+                  - listitem [ref=e219]: 104.603 km
+                  - listitem [ref=e220]: Diesel
+                - generic [ref=e223]: 22.800€
+          - article [ref=e225]:
+            - generic [ref=e226]:
+              - link "Renault Mégane" [ref=e227] [cursor=pointer]:
+                - /url: /carro-usado/690249a3990f878a767b3dce/renault-megane
+                - img "Renault Mégane de 2023" [ref=e229]
+              - generic [ref=e230] [cursor=pointer]: Em destaque
+            - generic [ref=e231]:
+              - heading "Renault Mégane 220cv - 5P" [level=3] [ref=e232]:
+                - link "Renault Mégane 220cv - 5P" [ref=e233] [cursor=pointer]:
+                  - /url: /carro-usado/690249a3990f878a767b3dce/renault-megane
+                  - text: Renault Mégane
+                  - generic [ref=e234]: 220cv - 5P
+              - button "Favorito" [ref=e235] [cursor=pointer]:
+                - generic [ref=e236]: 
+              - generic [ref=e237]:
+                - list [ref=e238]:
+                  - listitem [ref=e239]: "2023"
+                  - listitem [ref=e240]: 19.573 km
+                  - listitem [ref=e241]: Eléctrico
+                - generic [ref=e244]: 34.800€
+          - article [ref=e246]:
+            - generic [ref=e247]:
+              - link "Mercedes-Benz Classe A 160 CDi BlueEfficiency" [ref=e248] [cursor=pointer]:
+                - /url: /carro-usado/69b42d68e820b5803a678cfd/mercedes-benz-classe-a-160-cdi-blueefficiency
+                - img "Mercedes-Benz Classe A 160 CDi BlueEfficiency de 2014" [ref=e250]
+              - generic [ref=e251] [cursor=pointer]: Em destaque
+            - generic [ref=e252]:
+              - heading "Mercedes-Benz Classe A 160 CDi BlueEfficiency - 90cv - 5P" [level=3] [ref=e253]:
+                - link "Mercedes-Benz Classe A 160 CDi BlueEfficiency - 90cv - 5P" [ref=e254] [cursor=pointer]:
+                  - /url: /carro-usado/69b42d68e820b5803a678cfd/mercedes-benz-classe-a-160-cdi-blueefficiency
+                  - text: Mercedes-Benz Classe A
+                  - generic [ref=e255]: 160 CDi BlueEfficiency - 90cv - 5P
+              - button "Favorito" [ref=e256] [cursor=pointer]:
+                - generic [ref=e257]: 
+              - generic [ref=e258]:
+                - list [ref=e259]:
+                  - listitem [ref=e260]: "2014"
+                  - listitem [ref=e261]: 152.781 km
+                  - listitem [ref=e262]: Diesel
+                - generic [ref=e265]: 14.900€
+          - article [ref=e267]:
+            - generic [ref=e268]:
+              - link "BMW X1 16 d sDrive xLine" [ref=e269] [cursor=pointer]:
+                - /url: /carro-usado/69b2d167f2173f770933b4d3/bmw-x1-16-d-sdrive-xline
+                - img "BMW X1 16 d sDrive xLine de 2017" [ref=e271]
+              - generic [ref=e272] [cursor=pointer]: Em destaque
+            - generic [ref=e273]:
+              - heading "BMW X1 16 d sDrive xLine - 116cv - 5P" [level=3] [ref=e274]:
+                - link "BMW X1 16 d sDrive xLine - 116cv - 5P" [ref=e275] [cursor=pointer]:
+                  - /url: /carro-usado/69b2d167f2173f770933b4d3/bmw-x1-16-d-sdrive-xline
+                  - text: BMW X1
+                  - generic [ref=e276]: 16 d sDrive xLine - 116cv - 5P
+              - button "Favorito" [ref=e277] [cursor=pointer]:
+                - generic [ref=e278]: 
+              - generic [ref=e279]:
+                - list [ref=e280]:
+                  - listitem [ref=e281]: "2017"
+                  - listitem [ref=e282]: 159.195 km
+                  - listitem [ref=e283]: Diesel
+                - generic [ref=e286]: 19.900€
+          - article [ref=e288]:
+            - generic [ref=e289]:
+              - link "Dacia Sandero" [ref=e290] [cursor=pointer]:
+                - /url: /carro-usado/68ee2a932b434432eeb7924d/dacia-sandero
+                - img "Dacia Sandero de 2018" [ref=e292]
+              - generic [ref=e293] [cursor=pointer]: Em destaque
+            - generic [ref=e294]:
+              - heading "Dacia Sandero 90cv - 5P" [level=3] [ref=e295]:
+                - link "Dacia Sandero 90cv - 5P" [ref=e296] [cursor=pointer]:
+                  - /url: /carro-usado/68ee2a932b434432eeb7924d/dacia-sandero
+                  - text: Dacia Sandero
+                  - generic [ref=e297]: 90cv - 5P
+              - button "Favorito" [ref=e298] [cursor=pointer]:
+                - generic [ref=e299]: 
+              - generic [ref=e300]:
+                - list [ref=e301]:
+                  - listitem [ref=e302]: "2018"
+                  - listitem [ref=e303]: 103.124 km
+                  - listitem [ref=e304]: GPL
+                - generic [ref=e307]: 11.850€
+          - article [ref=e309]:
+            - generic [ref=e310]:
+              - link "Mercedes-Benz Classe CLA 200 d Shooting Brake Style Aut." [ref=e311] [cursor=pointer]:
+                - /url: /carro-usado/6945979cc27aa43c7794e16d/mercedes-benz-classe-cla-200-d-shooting-brake-style-aut
+                - img "Mercedes-Benz Classe CLA 200 d Shooting Brake Style Aut. de 2019" [ref=e313]
+              - generic [ref=e314] [cursor=pointer]: Em destaque
+            - generic [ref=e315]:
+              - heading "Mercedes-Benz Classe CLA 200 d Shooting Brake Style Aut. - 150cv - 5P" [level=3] [ref=e316]:
+                - link "Mercedes-Benz Classe CLA 200 d Shooting Brake Style Aut. - 150cv - 5P" [ref=e317] [cursor=pointer]:
+                  - /url: /carro-usado/6945979cc27aa43c7794e16d/mercedes-benz-classe-cla-200-d-shooting-brake-style-aut
+                  - text: Mercedes-Benz Classe CLA
+                  - generic [ref=e318]: 200 d Shooting Brake Style Aut. - 150cv - 5P
+              - button "Favorito" [ref=e319] [cursor=pointer]:
+                - generic [ref=e320]: 
+              - generic [ref=e321]:
+                - list [ref=e322]:
+                  - listitem [ref=e323]: "2019"
+                  - listitem [ref=e324]: 218.161 km
+                  - listitem [ref=e325]: Diesel
+                - generic [ref=e328]: 20.950€
+        - link "Procurar carro usado" [ref=e330] [cursor=pointer]:
+          - /url: /carros-usados
+      - generic [ref=e333]:
+        - paragraph [ref=e334]:
+          - img "Auto Sapo Venda Já" [ref=e335]
+          - text: Sabe quanto vale o seu carro?
+        - link "Descubra aqui" [ref=e336] [cursor=pointer]:
+          - /url: https://auto.sapo.pt/VendaJa
+          - generic [ref=e337]: Descubra aqui
+      - generic [ref=e339]:
+        - heading "Ler e acompanhar" [level=2] [ref=e340]
+        - generic [ref=e341]:
+          - article [ref=e343]:
+            - link "BYD ATTO 3 EVO chega a Portugal com mais autonomia e carregamento ultrarrápido" [ref=e345] [cursor=pointer]:
+              - /url: /noticias/69b6b00082793daa2be607cc/byd-atto-3-evo-chega-a-portugal-com-mais-autonomia-e-carregamento-ultrarrapido
+              - img "BYD ATTO 3 EVO chega a Portugal com mais autonomia e carregamento ultrarrápido" [ref=e347]
+            - generic [ref=e348]:
+              - heading "BYD ATTO 3 EVO chega a Portugal com mais autonomia e carregamento ultrarrápido" [level=4] [ref=e349]:
+                - link "BYD ATTO 3 EVO chega a Portugal com mais autonomia e carregamento ultrarrápido" [ref=e350] [cursor=pointer]:
+                  - /url: /noticias/69b6b00082793daa2be607cc/byd-atto-3-evo-chega-a-portugal-com-mais-autonomia-e-carregamento-ultrarrapido
+              - generic [ref=e351]: 15 março 2026
+              - generic [ref=e352]: Pplware
+          - article [ref=e354]:
+            - link "Iates ao preço de carros? “Jeff Bezos chinês” acredita que é possível" [ref=e356] [cursor=pointer]:
+              - /url: /noticias/69b6837b82793daa2be607ca/iates-ao-preco-de-carros-jeff-bezos-chines-acredita-que-e-possivel
+              - img "Iates ao preço de carros? “Jeff Bezos chinês” acredita que é possível" [ref=e358]
+            - generic [ref=e359]:
+              - heading "Iates ao preço de carros? “Jeff Bezos chinês” acredita que é possível" [level=4] [ref=e360]:
+                - link "Iates ao preço de carros? “Jeff Bezos chinês” acredita que é possível" [ref=e361] [cursor=pointer]:
+                  - /url: /noticias/69b6837b82793daa2be607ca/iates-ao-preco-de-carros-jeff-bezos-chines-acredita-que-e-possivel
+              - generic [ref=e362]: 15 março 2026
+              - generic [ref=e363]: Pplware
+          - article [ref=e365]:
+            - 'link "Combustíveis: afinal quanto vai pagar a partir de segunda-feira?" [ref=e367] [cursor=pointer]':
+              - /url: /noticias/69b677c082793daa2be607c8/combustiveis-afinal-quanto-vai-pagar-a-partir-de-segunda-feira
+              - 'img "Combustíveis: afinal quanto vai pagar a partir de segunda-feira?" [ref=e369]'
+            - generic [ref=e370]:
+              - 'heading "Combustíveis: afinal quanto vai pagar a partir de segunda-feira?" [level=4] [ref=e371]':
+                - 'link "Combustíveis: afinal quanto vai pagar a partir de segunda-feira?" [ref=e372] [cursor=pointer]':
+                  - /url: /noticias/69b677c082793daa2be607c8/combustiveis-afinal-quanto-vai-pagar-a-partir-de-segunda-feira
+              - generic [ref=e373]: 15 março 2026
+              - generic [ref=e374]: Pplware
+          - article [ref=e376]:
+            - 'link "EyeDAR: o radar que pode dar “novos olhos” aos carros autónomos" [ref=e378] [cursor=pointer]':
+              - /url: /noticias/69b5d3b282793daa2be607c6/eyedar-o-radar-que-pode-dar-novos-olhos-aos-carros-autonomos
+              - 'img "EyeDAR: o radar que pode dar “novos olhos” aos carros autónomos" [ref=e380]'
+            - generic [ref=e381]:
+              - 'heading "EyeDAR: o radar que pode dar “novos olhos” aos carros autónomos" [level=4] [ref=e382]':
+                - 'link "EyeDAR: o radar que pode dar “novos olhos” aos carros autónomos" [ref=e383] [cursor=pointer]':
+                  - /url: /noticias/69b5d3b282793daa2be607c6/eyedar-o-radar-que-pode-dar-novos-olhos-aos-carros-autonomos
+              - generic [ref=e384]: 14 março 2026
+              - generic [ref=e385]: Pplware
+        - link "Ver mais" [ref=e387] [cursor=pointer]:
+          - /url: /noticias
+      - generic [ref=e390]:
+        - heading "Pesquisar por marca" [level=2] [ref=e391]
+        - tabpanel [ref=e393]:
+          - list [ref=e394]:
+            - listitem [ref=e395]:
+              - link "Audi" [ref=e396] [cursor=pointer]:
+                - /url: /carros-usados?marca=audi
+            - listitem [ref=e397]:
+              - link "BMW" [ref=e398] [cursor=pointer]:
+                - /url: /carros-usados?marca=bmw
+            - listitem [ref=e399]:
+              - link "Citroen" [ref=e400] [cursor=pointer]:
+                - /url: /carros-usados?marca=citroen
+            - listitem [ref=e401]:
+              - link "Fiat" [ref=e402] [cursor=pointer]:
+                - /url: /carros-usados?marca=fiat
+            - listitem [ref=e403]:
+              - link "Ford" [ref=e404] [cursor=pointer]:
+                - /url: /carros-usados?marca=ford
+            - listitem [ref=e405]:
+              - link "Mercedes-Benz" [ref=e406] [cursor=pointer]:
+                - /url: /carros-usados?marca=mercedes-benz
+            - listitem [ref=e407]:
+              - link "Opel" [ref=e408] [cursor=pointer]:
+                - /url: /carros-usados?marca=opel
+            - listitem [ref=e409]:
+              - link "Peugeot" [ref=e410] [cursor=pointer]:
+                - /url: /carros-usados?marca=peugeot
+            - listitem [ref=e411]:
+              - link "Renault" [ref=e412] [cursor=pointer]:
+                - /url: /carros-usados?marca=renault
+            - listitem [ref=e413]:
+              - link "Volkswagen" [ref=e414] [cursor=pointer]:
+                - /url: /carros-usados?marca=volkswagen
+          - generic [ref=e415]:
+            - generic [ref=e416] [cursor=pointer]:
+              - text: Ver todas as marcas
+              - generic [ref=e417]: 
+            - text: 
+      - text:  
+  - contentinfo [ref=e418]:
+    - generic [ref=e419]:
+      - link "AutoSAPO - Carros usados" [ref=e422] [cursor=pointer]:
+        - /url: /
+        - img [ref=e423]
+      - list [ref=e433]:
+        - listitem [ref=e434]:
+          - heading "Comprar Carro" [level=3] [ref=e435]
+          - list [ref=e436]:
+            - listitem [ref=e437]:
+              - link "Procurar carros usados" [ref=e438] [cursor=pointer]:
+                - /url: /carros-usados
+            - listitem [ref=e439]:
+              - link "Carros Novos" [ref=e440] [cursor=pointer]:
+                - /url: /carro/novo/pedir-proposta
+            - listitem [ref=e441]:
+              - link "Carros usados por marca" [ref=e442] [cursor=pointer]:
+                - /url: /carro/usado/marca
+            - listitem [ref=e443]:
+              - link "Carros usados por localização" [ref=e444] [cursor=pointer]:
+                - /url: /carro/usado/localizacao
+        - listitem [ref=e445]:
+          - heading "Vender Carro" [level=3] [ref=e446]
+          - list [ref=e447]:
+            - listitem [ref=e448]:
+              - link "Vender em 24h " [ref=e449] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/VendaJa
+                - text: Vender em 24h
+                - generic [ref=e450]: 
+            - listitem [ref=e451]:
+              - link "Serviço de Venda Premium " [ref=e452] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/premium
+                - text: Serviço de Venda Premium
+                - generic [ref=e453]: 
+            - listitem [ref=e454]:
+              - link "Anunciar Grátis" [ref=e455] [cursor=pointer]:
+                - /url: https://auto-frontoffice.sapo.pt
+        - listitem [ref=e456]:
+          - heading "Serviços" [level=3] [ref=e457]
+          - list [ref=e458]:
+            - listitem [ref=e459]:
+              - link "Venda Já " [ref=e460] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/VendaJa
+                - text: Venda Já
+                - generic [ref=e461]: 
+            - listitem [ref=e462]:
+              - link "Premium " [ref=e463] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/premium
+                - text: Premium
+                - generic [ref=e464]: 
+        - listitem [ref=e465]:
+          - heading "Sobre Nós" [level=3] [ref=e466]
+          - list [ref=e467]:
+            - listitem [ref=e468]:
+              - link "Auto SAPO" [ref=e469] [cursor=pointer]:
+                - /url: /sobre_nos
+            - listitem [ref=e470]:
+              - link "Ajuda" [ref=e471] [cursor=pointer]:
+                - /url: https://ajuda.sapo.pt/auto-sapo-94846
+            - listitem [ref=e472]:
+              - link "Termos de utilização" [ref=e473] [cursor=pointer]:
+                - /url: https://ajudasapo.blogs.sapo.pt/condicoes-de-utilizacao-auto-sapo-21153
+            - listitem [ref=e474]:
+              - link "Comerciantes no Auto SAPO" [ref=e475] [cursor=pointer]:
+                - /url: https://auto-frontoffice.sapo.pt
+      - list [ref=e476]:
+        - listitem [ref=e477]:
+          - link "Sobre o SAPO" [ref=e478] [cursor=pointer]:
+            - /url: https://sobre.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e479]:
+          - link "Condições de Utilização" [ref=e480] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/condicoes-de-utilizacao?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e481]:
+          - link "Política de Privacidade" [ref=e482] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/politica-de-privacidade?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e483]:
+          - link "RGPD" [ref=e484] [cursor=pointer]:
+            - /url: https://www.altice.pt/pt/rgpd?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e485]:
+          - link "Sobre Cookies" [ref=e486] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/politica-de-cookies/o-que-sao-cookies?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e487]:
+          - link "Ajuda" [ref=e488] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt?ref=auto.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e489]:
+          - link "Definições de Privacidade" [ref=e490] [cursor=pointer]:
+            - /url: "javascript:window.__tcfapi(\"displayConsentUi\", 2, function() {} ); "
+      - generic [ref=e491]:
+        - link "SAPO" [ref=e492] [cursor=pointer]:
+          - /url: https://www.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - generic [ref=e493]:
+          - text: Produzido por
+          - link "SAPO" [ref=e494] [cursor=pointer]:
+            - /url: http://www.sapo.pt/
+          - text: "- Todos os direitos reservados."

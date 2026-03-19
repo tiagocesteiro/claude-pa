@@ -1,0 +1,88 @@
+Searching YouTube for "Next.js 15 new features" (last 12 months, up to 10 results)...
+This may take 30–90 seconds for full metadata extraction.
+
+────────────────────────────────────────────────────────────
+  YouTube Search: "Next.js 15 new features"
+  Showing 10 result(s) from the last 12 month(s)
+────────────────────────────────────────────────────────────
+
+#1 · Next.js 16 Beta Revealed | All new features in 6min
+  Channel : Tobi Mey  │  Subs: 16.4K
+  Views   : 11.5K  │  Duration: 6:27  │  Uploaded: Oct 12, 2025
+  Engage  : 0.7×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=60rSbeiTVTI
+
+────────────────────────────────────────────────────────────
+
+#2 · Learn NextJS in 7 Minutes
+  Channel : PedroTech  │  Subs: 281.0K
+  Views   : 126.7K  │  Duration: 7:35  │  Uploaded: May 06, 2025
+  Engage  : 0.45×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=xnOwOBYaA3w
+
+────────────────────────────────────────────────────────────
+
+#3 · They Weren’t Joking… Next.js 16 Changed EVERYTHING!
+  Channel : OrcDev  │  Subs: 26.8K
+  Views   : 17.0K  │  Duration: 10:09  │  Uploaded: Oct 22, 2025
+  Engage  : 0.64×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=sDcgvEIJsbg
+
+────────────────────────────────────────────────────────────
+
+#4 · NEW Next.js TypeScript Features
+  Channel : Web Dev Simplified  │  Subs: 1.76M
+  Views   : 36.3K  │  Duration: 7:09  │  Uploaded: Sep 02, 2025
+  Engage  : 0.02×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=rVdR0_Ujgq4
+
+────────────────────────────────────────────────────────────
+
+#5 · Next.js 16 HUGE UPDATE - I Can't Believe They Changed This
+  Channel : ByteGrad  │  Subs: 201.0K
+  Views   : 43.6K  │  Duration: 37:48  │  Uploaded: Oct 18, 2025
+  Engage  : 0.22×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=JhFrgQjc1p8
+
+────────────────────────────────────────────────────────────
+
+#6 · Next.js 16 Full Course | Build and Deploy a Production-Ready Full Stack App
+  Channel : Ankita Kulkarni  │  Subs: 25.3K
+  Views   : 47.5K  │  Duration: 4:58:13  │  Uploaded: Dec 09, 2025
+  Engage  : 1.88×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=tI_Nt32_4wM
+
+────────────────────────────────────────────────────────────
+
+#7 · Next.js Server Actions vs API Routes: The Final Answer for 2025
+  Channel : Tobi Mey  │  Subs: 16.4K
+  Views   : 36.8K  │  Duration: 7:21  │  Uploaded: Jun 27, 2025
+  Engage  : 2.25×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=NWx8oVLEdwE
+
+────────────────────────────────────────────────────────────
+
+#8 · Best NextJS Folder Structures | Beginner - Intermediate - Advanced
+  Channel : PedroTech  │  Subs: 281.0K
+  Views   : 30.5K  │  Duration: 25:45  │  Uploaded: Sep 02, 2025
+  Engage  : 0.11×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=5HAKUIvYo-Q
+
+────────────────────────────────────────────────────────────
+
+#9 · Next.js 16 Just Changed EVERYTHING (Cache Components, MCP,  Proxy, Turbopack)
+  Channel : Jan Marshal  │  Subs: 52.1K
+  Views   : 20.1K  │  Duration: 26:51  │  Uploaded: Oct 24, 2025
+  Engage  : 0.39×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=AYaAUABRChQ
+
+────────────────────────────────────────────────────────────
+
+#10 · Next.js 16 Finally Fixes The Most Annoying Things (and gets faster)
+  Channel : Tobi Mey  │  Subs: 16.4K
+  Views   : 16.1K  │  Duration: 5:07  │  Uploaded: Jul 27, 2025
+  Engage  : 0.98×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=mI7yNPNVmkI
+
+────────────────────────────────────────────────────────────
+

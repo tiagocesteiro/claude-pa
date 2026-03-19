@@ -1,0 +1,299 @@
+[     731ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[    1737ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  295932ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  297138ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  310852ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  312019ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  324593ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  325708ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  356102ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  357253ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  401760ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  402237ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  403689ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=10000&marca=toyota&modelo=auris&tipo-vendedor[]=1:0
+[  404073ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  404344ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  406038ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=10000&marca=ford&modelo=focus&tipo-vendedor[]=1:0
+[  406379ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  406726ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  408386ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=10000&marca=volkswagen&modelo=golf&tipo-vendedor[]=1:0
+[  408680ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  409076ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  410641ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=10000&marca=hyundai&modelo=i30&tipo-vendedor[]=1:0
+[  410924ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  411334ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  413176ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  413644ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  415174ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/carros-usados?km-max=100000&preco-max=10000&marca=opel&modelo=astra&tipo-vendedor[]=1:0
+[  415510ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  416455ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  427279ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  428266ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  547206ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  548055ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  549041ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  549440ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  550904ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  551856ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  552688ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  553617ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  554504ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  555405ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  556230ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  557135ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  558035ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  559111ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)
+[  559858ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10
+[  560251ms] Uncaught (in promise) SyntaxError: Unexpected end of JSON input
+    at success (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:52:3092)
+    at e.then.then.Object.assign.h.status (https://js.sapo.pt/Projects/CPU/latest/prebid10.17.0.js:16:124669)

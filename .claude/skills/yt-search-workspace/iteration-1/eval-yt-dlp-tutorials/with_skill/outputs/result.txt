@@ -1,0 +1,168 @@
+Searching YouTube for "yt-dlp tutorial" (last 3 months, up to 20 results)...
+This may take 30–90 seconds for full metadata extraction.
+
+────────────────────────────────────────────────────────────
+  YouTube Search: "yt-dlp tutorial"
+  Showing 20 result(s) from the last 3 month(s)
+────────────────────────────────────────────────────────────
+
+#1 · 🐍 Python programming - video downloader script with yt-dlp
+  Channel : DeAndre Wilson  │  Subs: 6.3K
+  Views   : 6.6K  │  Duration: 17:54  │  Uploaded: Jan 01, 2026
+  Engage  : 1.06×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=SMKiELjUrlI
+
+────────────────────────────────────────────────────────────
+
+#2 · Que es yt-dlp y como se usa? | video explicativo
+  Channel : Dragón Sonic  │  Subs: 71
+  Views   : 2.4K  │  Duration: 11:29  │  Uploaded: Feb 05, 2026
+  Engage  : 34.28×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=vfhNm2VEDqA
+
+────────────────────────────────────────────────────────────
+
+#3 · How to Download High Quality Videos with yt-dlp (Step-by-Step)
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 3.8K  │  Duration: 1:14  │  Uploaded: Jan 20, 2026
+  Engage  : 179.33×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=gqZRlHBPVVE
+
+────────────────────────────────────────────────────────────
+
+#4 · How to Download Videos with yt-dlp (Beginner Guide)
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 9.6K  │  Duration: 1:10  │  Uploaded: Dec 30, 2025
+  Engage  : 456.86×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=INnnoOgLu_s
+
+────────────────────────────────────────────────────────────
+
+#5 · How to Install and Set Up yt-dlp on Windows (2026)
+  Channel : TECH_TIPS  │  Subs: 19
+  Views   : 3.9K  │  Duration: 4:11  │  Uploaded: Feb 28, 2026
+  Engage  : 207.05×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=4_BL7c5gl4s
+
+────────────────────────────────────────────────────────────
+
+#6 · Install yt-dlp on Windows (2 Easy Methods)
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 4.5K  │  Duration: 0:56  │  Uploaded: Feb 01, 2026
+  Engage  : 215.71×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=rYEvwhDIjec
+
+────────────────────────────────────────────────────────────
+
+#7 · This youtube lawsuit could kill yt-dlp, obs-studio, and every screen recorder you use
+  Channel : Louis Rossmann  │  Subs: 2.52M
+  Views   : 219.1K  │  Duration: 11:18  │  Uploaded: Feb 24, 2026
+  Engage  : 0.09×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=V099NR32fE4
+
+────────────────────────────────────────────────────────────
+
+#8 · YT‑DLp PC/Laptop Me Install Kaise Karein (Step‑by‑Step Tutorial)
+  Channel : Techno Lohar  │  Subs: 38.4K
+  Views   : 552  │  Duration: 10:26  │  Uploaded: Feb 16, 2026
+  Engage  : 0.01×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=cKVJWdeFMa0
+
+────────────────────────────────────────────────────────────
+
+#9 · How to Download Instagram Videos FREE with yt-dlp | Terminal Tutorial 2026
+  Channel : Dev Kant Kumar  │  Subs: 74
+  Views   : 592  │  Duration: 4:40  │  Uploaded: Jan 13, 2026
+  Engage  : 8.0×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=sZmDcY9rH34
+
+────────────────────────────────────────────────────────────
+
+#10 · How to Download ANY YouTube Playlist in 2026 (Fast & Easy Tutorial)
+  Channel : Easy Learning   │  Subs: 38
+  Views   : 1.5K  │  Duration: 2:27  │  Uploaded: Dec 25, 2025
+  Engage  : 39.29×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=-1ztDZA6DJI
+
+────────────────────────────────────────────────────────────
+
+#11 · How to Get Audio from Videos Using yt-dlp (Windows)
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 522  │  Duration: 0:59  │  Uploaded: Feb 06, 2026
+  Engage  : 24.86×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=obm7wUvnizI
+
+────────────────────────────────────────────────────────────
+
+#12 · yt-dlp Tutorial: Download Chapters, Metadata & Embed Thumbnails
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 28  │  Duration: 0:53  │  Uploaded: Feb 18, 2026
+  Engage  : 1.33×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=FEa1fLpgmSw
+
+────────────────────────────────────────────────────────────
+
+#13 · yt-dlp Tutorial: Download Playlists Without Duplicates
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 129  │  Duration: 0:53  │  Uploaded: Feb 07, 2026
+  Engage  : 6.14×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=YbkklcRm1W4
+
+────────────────────────────────────────────────────────────
+
+#14 · How to fix: yt-dlp - 'HTTP Error 403: Forbidden' 2026 | Harmony
+  Channel : HarmonyMLG  │  Subs: 2.3K
+  Views   : 5.5K  │  Duration: 3:36  │  Uploaded: Jan 17, 2026
+  Engage  : 2.42×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=4YPaBPs27FM
+
+────────────────────────────────────────────────────────────
+
+#15 · yt-dlp Custom Output Guide | Never Lose Downloads Again
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 58  │  Duration: 1:06  │  Uploaded: Feb 09, 2026
+  Engage  : 2.76×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=6dLjXjQiO70
+
+────────────────────────────────────────────────────────────
+
+#16 · How to Download Dailymotion Videos for Free | yt dlp tutorial
+  Channel : HHM Smart Reviews  │  Subs: 187
+  Views   : 39  │  Duration: 1:39  │  Uploaded: Feb 20, 2026
+  Engage  : 0.21×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=gpFNZDx1Qpc
+
+────────────────────────────────────────────────────────────
+
+#17 · How to download YouTube video via yt-dlp (วิธีใช้ yt-dlp )
+  Channel : Nawapon Chaisang  │  Subs: 2
+  Views   : 1.2K  │  Duration: 4:07  │  Uploaded: Jan 20, 2026
+  Engage  : 581.0×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=tGbVqB0HnpI
+
+────────────────────────────────────────────────────────────
+
+#18 · yt-dlp Smart Download | 1080p Resolution Best Settings
+  Channel : Tech Tutoring  │  Subs: 21
+  Views   : 138  │  Duration: 0:55  │  Uploaded: Feb 15, 2026
+  Engage  : 6.57×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=QAgB9hqfv5A
+
+────────────────────────────────────────────────────────────
+
+#19 · How to Set Up Yt-dlp (only Way)
+  Channel : Lucca and Miguel - Tutorials  │  Subs: 427
+  Views   : 107  │  Duration: 1:45  │  Uploaded: Feb 19, 2026
+  Engage  : 0.25×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=yjGobkZpolk
+
+────────────────────────────────────────────────────────────
+
+#20 · Download YouTube Videos Using Termux 🔥 | yt-dlp Full Guide
+  Channel : DarkTecz  │  Subs: 1.6K
+  Views   : 120  │  Duration: 3:53  │  Uploaded: Feb 08, 2026
+  Engage  : 0.07×  (views/subscriber ratio)
+  URL     : https://www.youtube.com/watch?v=TNK_9lM4R8k
+
+────────────────────────────────────────────────────────────
+

@@ -1,0 +1,827 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - link "Saltar os links da Barra SAPO" [ref=e6] [cursor=pointer]:
+        - /url: "#bsu-v4-end"
+      - generic [ref=e7]:
+        - button "MENU" [ref=e8] [cursor=pointer]
+        - link "Mail" [ref=e10] [cursor=pointer]:
+          - /url: https://mail.sapo.pt/login?loginType=bsu&utm_source=bsu&utm_medium=web&utm_campaign=bsu_mainmenu&utm_content=auto.sapo.pt
+        - link "Jornais" [ref=e11] [cursor=pointer]:
+          - /url: https://sapo.pt/noticias/jornais?utm_source=bsu&utm_medium=web&utm_campaign=bsu_mainmenu&utm_content=auto.sapo.pt
+      - link "30 Anos" [ref=e12] [cursor=pointer]:
+        - /url: https://www.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_logo&utm_content=auto.sapo.pt
+        - img [ref=e13]
+      - generic [ref=e23]:
+        - link "Autenticar" [ref=e25] [cursor=pointer]:
+          - /url: https://login.sapo.pt/Login.do?to=https%3A%2F%2Fauto.sapo.pt%2Fcarros-usados%3Fkm-max%3D100000%26marca%3Dskoda%26modelo%3Doctavia%26preco-max%3D12000%26tipo-vendedor%255B%255D%3D1
+          - generic [ref=e26]: 
+        - link "Autenticar" [ref=e28] [cursor=pointer]:
+          - /url: https://login.sapo.pt/Login.do?to=https%3A%2F%2Fauto.sapo.pt%2Fcarros-usados%3Fkm-max%3D100000%26marca%3Dskoda%26modelo%3Doctavia%26preco-max%3D12000%26tipo-vendedor%255B%255D%3D1
+          - generic [ref=e29]: 
+      - generic "Lisboa - Céu Limpo" [ref=e32] [cursor=pointer]:
+        - combobox [ref=e36]:
+          - option "Abrantes"
+          - option "Águeda"
+          - option "Aguiar da Beira"
+          - option "Alandroal"
+          - option "Albergaria-a-Velha"
+          - option "Albufeira"
+          - option "Alcácer do Sal"
+          - option "Alcanena"
+          - option "Alcobaça"
+          - option "Alcochete"
+          - option "Alcoutim"
+          - option "Alenquer"
+          - option "Alfandega da Fé"
+          - option "Alijó"
+          - option "Aljezur"
+          - option "Aljustrel"
+          - option "Almada"
+          - option "Almeida"
+          - option "Almeirim"
+          - option "Almodôvar"
+          - option "Alpiarça"
+          - option "Alter do Chão"
+          - option "Alvaiázere"
+          - option "Alvito"
+          - option "Amadora"
+          - option "Amarante"
+          - option "Amares"
+          - option "Anadia"
+          - option "Angra do Heroísmo"
+          - option "Ansião"
+          - option "Arcos de Valdevez"
+          - option "Arganil"
+          - option "Armamar"
+          - option "Arouca"
+          - option "Arraiolos"
+          - option "Arronches"
+          - option "Arruda dos Vinhos"
+          - option "Aveiro"
+          - option "Avis"
+          - option "Azambuja"
+          - option "Baião"
+          - option "Barcelos"
+          - option "Barrancos"
+          - option "Barreiro"
+          - option "Batalha"
+          - option "Beja"
+          - option "Belmonte"
+          - option "Benavente"
+          - option "Bombarral"
+          - option "Borba"
+          - option "Boticas"
+          - option "Braga"
+          - option "Bragança"
+          - option "Cabeceiras de Basto"
+          - option "Cadaval"
+          - option "Caldas da Rainha"
+          - option "Câmara de Lobos"
+          - option "Caminha"
+          - option "Campo Maior"
+          - option "Cantanhede"
+          - option "Carrazeda de Ansiães"
+          - option "Carregal do Sal"
+          - option "Cartaxo"
+          - option "Cascais"
+          - option "Castanheira de Pêra"
+          - option "Castelo Branco"
+          - option "Castelo de Paiva"
+          - option "Castelo de Vide"
+          - option "Castro Daire"
+          - option "Castro Marim"
+          - option "Castro Verde"
+          - option "Celorico da Beira"
+          - option "Celorico de Basto"
+          - option "Chamusca"
+          - option "Chaves"
+          - option "Cinfães"
+          - option "Coimbra"
+          - option "Condeixa-a-Nova"
+          - option "Constância"
+          - option "Coruche"
+          - option "Covilhã"
+          - option "Crato"
+          - option "Cuba"
+          - option "Elvas"
+          - option "Entroncamento"
+          - option "Espinho"
+          - option "Esposende"
+          - option "Estarreja"
+          - option "Estremoz"
+          - option "Évora"
+          - option "Fafe"
+          - option "Faro"
+          - option "Felgueiras"
+          - option "Ferreira do Alentejo"
+          - option "Ferreira do Zêzere"
+          - option "Figueira da Foz"
+          - option "Figueira de Castelo Rodrigo"
+          - option "Figueiró dos Vinhos"
+          - option "Fornos de Algodres"
+          - option "Freixo Espada à Cinta"
+          - option "Fronteira"
+          - option "Funchal"
+          - option "Fundão"
+          - option "Gavião"
+          - option "Góis"
+          - option "Golegã"
+          - option "Gondomar"
+          - option "Gouveia"
+          - option "Grândola"
+          - option "Guarda"
+          - option "Guimarães"
+          - option "Horta"
+          - option "Idanha-a-Nova"
+          - option "Ílhavo"
+          - option "Lagoa"
+          - option "Lagos"
+          - option "Lamego"
+          - option "Leiria"
+          - option "Lisboa" [selected]
+          - option "Loulé"
+          - option "Loures"
+          - option "Lourinhã"
+          - option "Lousã"
+          - option "Lousada"
+          - option "Mação"
+          - option "Macedo de Cavaleiros"
+          - option "Machico"
+          - option "Madalena"
+          - option "Mafra"
+          - option "Maia"
+          - option "Mangualde"
+          - option "Manteigas"
+          - option "Marco de Canaveses"
+          - option "Marinha Grande"
+          - option "Marvão"
+          - option "Matosinhos"
+          - option "Mealhada"
+          - option "Meda"
+          - option "Melgaço"
+          - option "Mértola"
+          - option "Mesão Frio"
+          - option "Mira"
+          - option "Miranda do Corvo"
+          - option "Miranda do Douro"
+          - option "Mirandela"
+          - option "Mogadouro"
+          - option "Moimenta da Beira"
+          - option "Moita"
+          - option "Monção"
+          - option "Monchique"
+          - option "Mondim de Basto"
+          - option "Monforte"
+          - option "Montalegre"
+          - option "Montemor-o-Novo"
+          - option "Montemor-o-Velho"
+          - option "Montijo"
+          - option "Mora"
+          - option "Mortágua"
+          - option "Moura"
+          - option "Mourão"
+          - option "Murça"
+          - option "Murtosa"
+          - option "Nazaré"
+          - option "Nelas"
+          - option "Nisa"
+          - option "Nordeste"
+          - option "Óbidos"
+          - option "Odemira"
+          - option "Odivelas"
+          - option "Oeiras"
+          - option "Oleiros"
+          - option "Olhão"
+          - option "Oliveira de Azeméis"
+          - option "Oliveira de Frades"
+          - option "Oliveira do Bairro"
+          - option "Oliveira do Hospital"
+          - option "Ourém"
+          - option "Ourique"
+          - option "Ovar"
+          - option "Paços de Ferreira"
+          - option "Palmela"
+          - option "Pampilhosa da Serra"
+          - option "Paredes"
+          - option "Paredes de Coura"
+          - option "Pedrógão Grande"
+          - option "Penacova"
+          - option "Penafiel"
+          - option "Penalva do Castelo"
+          - option "Penamacor"
+          - option "Penedono"
+          - option "Penela"
+          - option "Peniche"
+          - option "Peso da Régua"
+          - option "Pinhel"
+          - option "Pombal"
+          - option "Ponta Delgada"
+          - option "Ponte da Barca"
+          - option "Ponte de Lima"
+          - option "Ponte de Sor"
+          - option "Portalegre"
+          - option "Portel"
+          - option "Portimão"
+          - option "Porto"
+          - option "Porto de Mós"
+          - option "Porto Moniz"
+          - option "Porto Santo"
+          - option "Póvoa de Lanhoso"
+          - option "Póvoa de Varzim"
+          - option "Proença-a-Nova"
+          - option "Redondo"
+          - option "Reguengos de Monsaraz"
+          - option "Resende"
+          - option "Ribeira de Pena"
+          - option "Rio Maior"
+          - option "Sabrosa"
+          - option "Sabugal"
+          - option "Salvaterra de Magos"
+          - option "Santa Comba Dão"
+          - option "Santa Cruz - Aeroporto"
+          - option "Santa Cruz da Graciosa"
+          - option "Santa Cruz das Flores"
+          - option "Santa Maria da Feira"
+          - option "Santa Marta de Penaguião"
+          - option "Santana"
+          - option "Santarém"
+          - option "Santiago do Cacém"
+          - option "Santo Tirso"
+          - option "São Brás de Alportel"
+          - option "São João da Madeira"
+          - option "São João da Pesqueira"
+          - option "São Pedro do Sul"
+          - option "São Vicente"
+          - option "Sardoal"
+          - option "Sátão"
+          - option "Seia"
+          - option "Seixal"
+          - option "Sernancelhe"
+          - option "Serpa"
+          - option "Sertã"
+          - option "Sesimbra"
+          - option "Setúbal"
+          - option "Sever do Vouga"
+          - option "Silves"
+          - option "Sines"
+          - option "Sintra"
+          - option "Sobral de Monte Agraço"
+          - option "Soure"
+          - option "Sousel"
+          - option "Tábua"
+          - option "Tabuaço"
+          - option "Tarouca"
+          - option "Tavira"
+          - option "Terras de Bouro"
+          - option "Tomar"
+          - option "Tondela"
+          - option "Torre de Moncorvo"
+          - option "Torres Novas"
+          - option "Torres Vedras"
+          - option "Trancoso"
+          - option "Trofa"
+          - option "Vagos"
+          - option "Vale de Cambra"
+          - option "Valença"
+          - option "Valongo"
+          - option "Valpaços"
+          - option "Velas"
+          - option "Vendas Novas"
+          - option "Viana do Alentejo"
+          - option "Viana do Castelo"
+          - option "Vidigueira"
+          - option "Vieira do Minho"
+          - option "Vila de Rei"
+          - option "Vila do Bispo"
+          - option "Vila do Conde"
+          - option "Vila do Corvo"
+          - option "Vila do Porto"
+          - option "Vila Flor"
+          - option "Vila Franca de Xira"
+          - option "Vila Nova da Barquinha"
+          - option "Vila Nova de Cerveira"
+          - option "Vila Nova de Famalicão"
+          - option "Vila Nova de Foz Coa"
+          - option "Vila Nova de Gaia"
+          - option "Vila Nova de Paiva"
+          - option "Vila Nova de Poiares"
+          - option "Vila Pouca de Aguiar"
+          - option "Vila Real"
+          - option "Vila Real de Santo António"
+          - option "Vila Velha de Rodão"
+          - option "Vila Verde"
+          - option "Vila Viçosa"
+          - option "Vimioso"
+          - option "Vinhais"
+          - option "Viseu"
+          - option "Vizela"
+          - option "Vouzela"
+        - generic [ref=e38]:
+          - img "1" [ref=e40]
+          - generic [ref=e41]: 17º
+        - generic [ref=e43]: 
+    - generic [ref=e44]:
+      - button "Fechar" [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: 
+      - generic [ref=e48]:
+        - link "Categorias" [ref=e49] [cursor=pointer]:
+          - /url: https://www.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list [ref=e50]:
+          - listitem [ref=e51]:
+            - link "Jornais" [ref=e52] [cursor=pointer]:
+              - /url: https://sapo.pt/noticias/jornais/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e53]:
+            - link "Notícias" [ref=e54] [cursor=pointer]:
+              - /url: https://sapo.pt/noticias/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e55]:
+            - link "Desporto" [ref=e56] [cursor=pointer]:
+              - /url: https://sapo.pt/desporto/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e57]:
+            - link "Cultura e Lifestyle" [ref=e58] [cursor=pointer]:
+              - /url: https://sapo.pt/cultura-lifestyle/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - link "Serviços e Classificados" [ref=e60] [cursor=pointer]:
+          - /url: https://sobre.sapo.pt/mundo-sapo/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list [ref=e61]:
+          - listitem [ref=e62]:
+            - link "SAPO Mail" [ref=e63] [cursor=pointer]:
+              - /url: https://mail.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e64]:
+            - link "Auto SAPO" [ref=e65] [cursor=pointer]:
+              - /url: https://auto.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e66]:
+            - link "SAPO Emprego" [ref=e67] [cursor=pointer]:
+              - /url: https://emprego.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e68]:
+            - link "SAPO Blogs" [ref=e69] [cursor=pointer]:
+              - /url: https://blogs.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e70]:
+            - link "SAPO Promos" [ref=e71] [cursor=pointer]:
+              - /url: https://promos.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e72]:
+            - link "SUPER CASA" [ref=e73] [cursor=pointer]:
+              - /url: https://supercasa.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - link "Nova APP SAPO" [ref=e75] [cursor=pointer]:
+          - /url: https://sapo.pt/app/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list
+        - link "Parceiros SAPO" [ref=e77] [cursor=pointer]:
+          - /url: https://sobre.sapo.pt/mundo-sapo/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list
+        - generic [ref=e80]:
+          - generic [ref=e81]: "Subscrever:"
+          - link " SMS" [ref=e82] [cursor=pointer]:
+            - /url: https://alertas.sapo.pt/home
+            - generic [ref=e83]: 
+            - text: SMS
+        - generic [ref=e85]:
+          - generic [ref=e86]: "Siga-nos:"
+          - generic [ref=e87]:
+            - link "Facebook" [ref=e88] [cursor=pointer]:
+              - /url: https://www.facebook.com/sapo
+              - generic [ref=e89]: 
+            - link "Instagram" [ref=e90] [cursor=pointer]:
+              - /url: https://www.instagram.com/sapo/
+              - generic [ref=e91]: 
+            - link "LinkedIn" [ref=e92] [cursor=pointer]:
+              - /url: https://pt.linkedin.com/company/sapo
+              - generic [ref=e93]: 
+            - link "TikTok" [ref=e94] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@sapotiktok
+              - generic [ref=e95]: 
+            - link "X/Twitter" [ref=e96] [cursor=pointer]:
+              - /url: https://twitter.com/sapo
+              - generic [ref=e97]: 
+  - banner [ref=e98]:
+    - navigation [ref=e100]:
+      - link "AutoSAPO - Carros usados" [ref=e102] [cursor=pointer]:
+        - /url: /
+        - img [ref=e103]
+      - text: 
+      - list [ref=e114]:
+        - listitem [ref=e115]:
+          - button "Carro novo " [ref=e116] [cursor=pointer]
+        - listitem [ref=e117]:
+          - button "Carro usado " [ref=e118] [cursor=pointer]
+        - listitem [ref=e119]:
+          - link "Anunciar Grátis" [ref=e120] [cursor=pointer]:
+            - /url: https://auto-frontoffice.sapo.pt
+        - listitem [ref=e121]:
+          - link "Mensagens" [ref=e122] [cursor=pointer]:
+            - /url: /user/messages
+        - listitem [ref=e124]:
+          - link "Propostas" [ref=e125] [cursor=pointer]:
+            - /url: /user/procurement
+        - listitem [ref=e127]:
+          - button "Entrar" [ref=e128] [cursor=pointer]:
+            - generic [ref=e129]: 
+            - text: Entrar
+  - main [ref=e131]:
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - generic [ref=e135]:
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - heading "Skoda Octavia" [level=1] [ref=e138]
+              - generic [ref=e139]: Carros usados
+            - generic [ref=e140]:
+              - link "Pesquisas guardadas" [ref=e141] [cursor=pointer]:
+                - /url: /
+                - text: Pesquisas guardadas
+              - link "Favoritos" [ref=e142] [cursor=pointer]:
+                - /url: /user/favorites
+              - text:  
+          - generic [ref=e143]:
+            - text: 
+            - generic [ref=e145]:
+              - generic [ref=e146]:
+                - generic [ref=e147] [cursor=pointer]: Marca
+                - generic [ref=e148]:
+                  - link "" [ref=e149] [cursor=pointer]:
+                    - /url: "#"
+                    - generic [ref=e150]: 
+                  - generic [ref=e151]:
+                    - listbox "Marca" [ref=e152] [cursor=pointer]:
+                      - group:
+                        - option "Audi" [ref=e153]
+                        - option "BMW" [ref=e154]
+                        - option "Citroen" [ref=e155]
+                        - option "Fiat" [ref=e156]
+                        - option "Ford" [ref=e157]
+                        - option "Mercedes-Benz" [ref=e158]
+                        - option "Opel" [ref=e159]
+                        - option "Peugeot" [ref=e160]
+                        - option "Renault" [ref=e161]
+                        - option "Volkswagen" [ref=e162]
+                      - group:
+                        - option "Skoda" [selected] [ref=e163]
+                        - option "Abarth" [ref=e164]
+                        - option "Aiways" [ref=e165]
+                        - option "Aixam" [ref=e166]
+                        - option "Alfa Romeo" [ref=e167]
+                        - option "Aston Martin" [ref=e168]
+                        - option "Bentley" [ref=e169]
+                        - option "BYD" [ref=e170]
+                        - option "Chausson" [ref=e171]
+                        - option "Chevrolet" [ref=e172]
+                        - option "Cupra" [ref=e173]
+                        - option "Dacia" [ref=e174]
+                        - option "Daewoo" [ref=e175]
+                        - option "Daihatsu" [ref=e176]
+                        - option "Dodge" [ref=e177]
+                        - option "DS" [ref=e178]
+                        - option "Ferrari" [ref=e179]
+                        - option "FUSO" [ref=e180]
+                        - option "Honda" [ref=e181]
+                        - option "Hummer" [ref=e182]
+                        - option "Hyundai" [ref=e183]
+                        - option "Infiniti" [ref=e184]
+                        - option "Isuzu" [ref=e185]
+                        - option "Iveco" [ref=e186]
+                        - option "Jaguar" [ref=e187]
+                        - option "Jeep" [ref=e188]
+                        - option "Jiayuan" [ref=e189]
+                        - option "Kia" [ref=e190]
+                        - option "Lada" [ref=e191]
+                        - option "Lamborghini" [ref=e192]
+                        - option "Lancia" [ref=e193]
+                        - option "Land Rover" [ref=e194]
+                        - option "Lexus" [ref=e195]
+                        - option "Ligier" [ref=e196]
+                        - option "Lincoln" [ref=e197]
+                        - option "Lotus" [ref=e198]
+                        - option "Maserati" [ref=e199]
+                        - option "Maxus" [ref=e200]
+                        - option "Maybach" [ref=e201]
+                        - option "Mazda" [ref=e202]
+                        - option "MG" [ref=e203]
+                        - option "Microcar" [ref=e204]
+                        - option "Microlino" [ref=e205]
+                        - option "MINI" [ref=e206]
+                        - option "Mitsubishi" [ref=e207]
+                        - option "Morgan" [ref=e208]
+                        - option "Morris" [ref=e209]
+                        - option "Nissan" [ref=e210]
+                        - option "NSU" [ref=e211]
+                        - option "Polestar" [ref=e212]
+                        - option "Porsche" [ref=e213]
+                        - option "Rolls-Royce" [ref=e214]
+                        - option "Rover" [ref=e215]
+                        - option "Saab" [ref=e216]
+                        - option "Seat" [ref=e217]
+                        - option "Smart" [ref=e218]
+                        - option "SsangYong" [ref=e219]
+                        - option "Steyr-Puch" [ref=e220]
+                        - option "Subaru" [ref=e221]
+                        - option "Suzuki" [ref=e222]
+                        - option "TEC" [ref=e223]
+                        - option "Tesla" [ref=e224]
+                        - option "Toyota" [ref=e225]
+                        - option "Triumph" [ref=e226]
+                        - option "UMM" [ref=e227]
+                        - option "Volvo" [ref=e228]
+                        - option "XEV" [ref=e229]
+                        - option "Xpeng" [ref=e230]
+                    - combobox "Skoda" [ref=e231] [cursor=pointer]:
+                      - generic [ref=e234]: Skoda
+                      - text:                                                                              
+              - generic [ref=e235]:
+                - generic [ref=e236] [cursor=pointer]: Modelo
+                - generic [ref=e237]:
+                  - link "" [ref=e238] [cursor=pointer]:
+                    - /url: "#"
+                    - generic [ref=e239]: 
+                  - generic [ref=e240]:
+                    - listbox "Modelo" [ref=e241] [cursor=pointer]:
+                      - group:
+                        - option "Octavia" [selected] [ref=e242]
+                        - option "Fabia" [ref=e243]
+                        - option "Kamiq" [ref=e244]
+                        - option "Scala" [ref=e245]
+                        - option "Superb" [ref=e246]
+                        - option "Enyaq" [ref=e247]
+                        - option "Karoq" [ref=e248]
+                        - option "Kodiaq" [ref=e249]
+                        - option "Citigo" [ref=e250]
+                        - option "Felicia" [ref=e251]
+                        - option "Rapid Spaceback" [ref=e252]
+                        - option "Roomster" [ref=e253]
+                        - option "Rapid" [ref=e254]
+                    - combobox "Octavia" [ref=e255] [cursor=pointer]:
+                      - generic [ref=e258]: Octavia
+                      - text:             
+              - generic [ref=e260]:
+                - generic [ref=e261]:
+                  - generic [ref=e262] [cursor=pointer]: Ano
+                  - textbox "De..." [ref=e264]
+                - textbox "Até..." [ref=e267]
+              - generic [ref=e269]:
+                - generic [ref=e270]:
+                  - generic [ref=e271] [cursor=pointer]: Preço
+                  - textbox "De..." [ref=e273]
+                - textbox "Até..." [ref=e276]: "12000"
+              - generic [ref=e277]:
+                - generic [ref=e278] [cursor=pointer]: Combustível
+                - generic [ref=e280]:
+                  - listbox "Combustível" [ref=e281] [cursor=pointer]:
+                    - option "Diesel" [ref=e282]
+                    - option "Eléctrico" [ref=e283]
+                    - option "Gasolina" [ref=e284]
+                    - option "GPL" [ref=e285]
+                    - option "Híbrido" [ref=e286]
+                    - option "Híbrido (Diesel)" [ref=e287]
+                    - option "Híbrido (Gasolina)" [ref=e288]
+                    - option "Outro" [ref=e289]
+                  - combobox "Escolha..." [ref=e290] [cursor=pointer]:
+                    - generic [ref=e293]: Escolha...
+                    - text:         
+              - generic [ref=e295]:
+                - generic [ref=e296]:
+                  - generic [ref=e297] [cursor=pointer]: Quilómetros
+                  - textbox "De..." [ref=e299]
+                - textbox "Até..." [ref=e302]: "100000"
+              - generic [ref=e303]:
+                - generic [ref=e304] [cursor=pointer]: Carroçaria
+                - generic [ref=e306]:
+                  - listbox "Carroçaria" [ref=e307] [cursor=pointer]:
+                    - option "Autocaravana" [ref=e308]
+                    - option "Cabrio" [ref=e309]
+                    - option "Carrinha" [ref=e310]
+                    - option "Citadino" [ref=e311]
+                    - option "Clássico" [ref=e312]
+                    - option "Desportivo/Coupé" [ref=e313]
+                    - option "Furgão" [ref=e314]
+                    - option "Ligeiro de Mercadorias" [ref=e315]
+                    - option "Minibus" [ref=e316]
+                    - option "Monovolume" [ref=e317]
+                    - option "Pick-Up" [ref=e318]
+                    - option "Sedan" [ref=e319]
+                    - option "SUV/TT" [ref=e320]
+                    - option "Utilitário" [ref=e321]
+                  - combobox "Escolha..." [ref=e322] [cursor=pointer]:
+                    - generic [ref=e325]: Escolha...
+                    - text:               
+              - generic [ref=e326]:
+                - generic [ref=e327] [cursor=pointer]: Caixa
+                - generic [ref=e329]:
+                  - listbox "Caixa" [ref=e330] [cursor=pointer]:
+                    - option "Automática" [ref=e331]
+                    - option "Manual" [ref=e332]
+                    - option "Semi-automática" [ref=e333]
+                  - combobox "Escolha..." [ref=e334] [cursor=pointer]:
+                    - generic [ref=e337]: Escolha...
+                    - text:    
+              - generic [ref=e338]:
+                - generic [ref=e339] [cursor=pointer]: Localização
+                - generic [ref=e341]:
+                  - listbox "Localização" [ref=e342] [cursor=pointer]:
+                    - option "Aveiro" [ref=e343]
+                    - option "Beja" [ref=e344]
+                    - option "Braga" [ref=e345]
+                    - option "Bragança" [ref=e346]
+                    - option "Castelo Branco" [ref=e347]
+                    - option "Coimbra" [ref=e348]
+                    - option "Évora" [ref=e349]
+                    - option "Faro" [ref=e350]
+                    - option "Guarda" [ref=e351]
+                    - option "Ilha da Madeira" [ref=e352]
+                    - option "Ilha de São Miguel" [ref=e353]
+                    - option "Ilha do Pico" [ref=e354]
+                    - option "Ilha Graciosa" [ref=e355]
+                    - option "Ilha Terceira" [ref=e356]
+                    - option "Leiria" [ref=e357]
+                    - option "Lisboa" [ref=e358]
+                    - option "Portalegre" [ref=e359]
+                    - option "Porto" [ref=e360]
+                    - option "Santarém" [ref=e361]
+                    - option "Setúbal" [ref=e362]
+                    - option "Viana do Castelo" [ref=e363]
+                    - option "Vila Real" [ref=e364]
+                    - option "Viseu" [ref=e365]
+                  - combobox "Escolha..." [ref=e366] [cursor=pointer]:
+                    - generic [ref=e369]: Escolha...
+                    - text:                        
+              - generic [ref=e370]:
+                - generic [ref=e371] [cursor=pointer]: Pesquisa
+                - textbox "Stand, Marca, Modelo..." [ref=e373]
+              - text:                               
+              - generic [ref=e374]:
+                - button "Mais filtros " [expanded] [ref=e375] [cursor=pointer]:
+                  - text: Mais filtros
+                  - generic [ref=e376]: 
+                - link "Guardar pesquisa" [ref=e377] [cursor=pointer]:
+                  - /url: /
+                - link "Limpar" [ref=e378] [cursor=pointer]:
+                  - /url: /
+                - text: 
+                - link "Pesquisar" [ref=e379] [cursor=pointer]:
+                  - /url: "#"
+                  - text: Pesquisar 
+        - generic [ref=e381]:
+          - generic [ref=e382]:
+            - heading "1 carro usado" [level=2] [ref=e384]:
+              - text: "1"
+              - strong [ref=e385]: carro usado
+            - generic [ref=e386]:
+              - generic [ref=e387] [cursor=pointer]:
+                - generic [ref=e388]: Mostrar
+                - generic [ref=e390]:
+                  - generic [ref=e392]: 
+                  - generic [ref=e394]: 
+              - generic [ref=e395]:
+                - generic [ref=e396] [cursor=pointer]: Ordenar
+                - generic [ref=e397]:
+                  - text: 
+                  - combobox "Ordenar" [ref=e398] [cursor=pointer]:
+                    - option "Destacados" [selected]
+                    - option "Mais recente"
+                    - option "Mais antigos"
+                    - option "Ano mais alto"
+                    - option "Ano mais baixo"
+                    - option "Preço mais alto"
+                    - option "Preço mais baixo"
+                    - option "Mais Kms"
+                    - option "Menos Kms"
+          - article [ref=e401]:
+            - link "Skoda Octavia" [ref=e403] [cursor=pointer]:
+              - /url: /carro-usado/698a02cb1e4572b53295aab5/skoda-octavia
+              - img "Skoda Octavia de 2011" [ref=e405]
+            - generic [ref=e406]:
+              - heading "Skoda Octavia 105cv - 5P" [level=3] [ref=e407]:
+                - link "Skoda Octavia 105cv - 5P" [ref=e408] [cursor=pointer]:
+                  - /url: /carro-usado/698a02cb1e4572b53295aab5/skoda-octavia
+                  - text: Skoda Octavia
+                  - generic [ref=e409]: 105cv - 5P
+              - button "Favorito" [ref=e410] [cursor=pointer]:
+                - generic [ref=e411]: 
+              - generic [ref=e412]:
+                - list [ref=e413]:
+                  - listitem [ref=e414]: "2011"
+                  - listitem [ref=e415]: 1 km
+                  - listitem [ref=e416]: Diesel
+                - generic [ref=e419]: 9.500€
+          - navigation "Page navigation" [ref=e420]:
+            - list [ref=e421]:
+              - listitem [ref=e422]:
+                - link "Primeira página":
+                  - /url: "?km-max=100000&preco-max=12000&marca=skoda&modelo=octavia&tipo-vendedor[]=1"
+                  - generic: 
+              - listitem [ref=e423]:
+                - link "Página anterior":
+                  - /url: "?km-max=100000&preco-max=12000&marca=skoda&modelo=octavia&tipo-vendedor[]=1&p=0"
+                  - generic: 
+              - listitem [ref=e424]:
+                - link "Página 1" [ref=e425] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&marca=skoda&modelo=octavia&tipo-vendedor[]=1"
+                  - text: "1"
+              - listitem [ref=e426]:
+                - link "Página seguinte":
+                  - /url: "?km-max=100000&preco-max=12000&marca=skoda&modelo=octavia&tipo-vendedor[]=1&p=2"
+                  - generic: 
+              - listitem [ref=e427]:
+                - link "Última página":
+                  - /url: "?km-max=100000&preco-max=12000&marca=skoda&modelo=octavia&tipo-vendedor[]=1"
+                  - generic: 
+            - paragraph [ref=e428]: Pág. 1 de 1 / 1 viaturas
+      - generic [ref=e431]:
+        - paragraph [ref=e432]:
+          - img "Auto Sapo Venda Já" [ref=e433]
+          - text: Sabe quanto vale o seu carro?
+        - link "Descubra aqui" [ref=e434] [cursor=pointer]:
+          - /url: https://auto.sapo.pt/VendaJa
+          - generic [ref=e435]: Descubra aqui
+      - text:          
+  - contentinfo [ref=e436]:
+    - generic [ref=e437]:
+      - link "AutoSAPO - Carros usados" [ref=e440] [cursor=pointer]:
+        - /url: /
+        - img [ref=e441]
+      - list [ref=e451]:
+        - listitem [ref=e452]:
+          - heading "Comprar Carro" [level=3] [ref=e453]
+          - list [ref=e454]:
+            - listitem [ref=e455]:
+              - link "Procurar carros usados" [ref=e456] [cursor=pointer]:
+                - /url: /carros-usados
+            - listitem [ref=e457]:
+              - link "Carros Novos" [ref=e458] [cursor=pointer]:
+                - /url: /carro/novo/pedir-proposta
+            - listitem [ref=e459]:
+              - link "Carros usados por marca" [ref=e460] [cursor=pointer]:
+                - /url: /carro/usado/marca
+            - listitem [ref=e461]:
+              - link "Carros usados por localização" [ref=e462] [cursor=pointer]:
+                - /url: /carro/usado/localizacao
+        - listitem [ref=e463]:
+          - heading "Vender Carro" [level=3] [ref=e464]
+          - list [ref=e465]:
+            - listitem [ref=e466]:
+              - link "Vender em 24h " [ref=e467] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/VendaJa
+                - text: Vender em 24h
+                - generic [ref=e468]: 
+            - listitem [ref=e469]:
+              - link "Serviço de Venda Premium " [ref=e470] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/premium
+                - text: Serviço de Venda Premium
+                - generic [ref=e471]: 
+            - listitem [ref=e472]:
+              - link "Anunciar Grátis" [ref=e473] [cursor=pointer]:
+                - /url: https://auto-frontoffice.sapo.pt
+        - listitem [ref=e474]:
+          - heading "Serviços" [level=3] [ref=e475]
+          - list [ref=e476]:
+            - listitem [ref=e477]:
+              - link "Venda Já " [ref=e478] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/VendaJa
+                - text: Venda Já
+                - generic [ref=e479]: 
+            - listitem [ref=e480]:
+              - link "Premium " [ref=e481] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/premium
+                - text: Premium
+                - generic [ref=e482]: 
+        - listitem [ref=e483]:
+          - heading "Sobre Nós" [level=3] [ref=e484]
+          - list [ref=e485]:
+            - listitem [ref=e486]:
+              - link "Auto SAPO" [ref=e487] [cursor=pointer]:
+                - /url: /sobre_nos
+            - listitem [ref=e488]:
+              - link "Ajuda" [ref=e489] [cursor=pointer]:
+                - /url: https://ajuda.sapo.pt/auto-sapo-94846
+            - listitem [ref=e490]:
+              - link "Termos de utilização" [ref=e491] [cursor=pointer]:
+                - /url: https://ajudasapo.blogs.sapo.pt/condicoes-de-utilizacao-auto-sapo-21153
+            - listitem [ref=e492]:
+              - link "Comerciantes no Auto SAPO" [ref=e493] [cursor=pointer]:
+                - /url: https://auto-frontoffice.sapo.pt
+      - list [ref=e494]:
+        - listitem [ref=e495]:
+          - link "Sobre o SAPO" [ref=e496] [cursor=pointer]:
+            - /url: https://sobre.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e497]:
+          - link "Condições de Utilização" [ref=e498] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/condicoes-de-utilizacao?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e499]:
+          - link "Política de Privacidade" [ref=e500] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/politica-de-privacidade?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e501]:
+          - link "RGPD" [ref=e502] [cursor=pointer]:
+            - /url: https://www.altice.pt/pt/rgpd?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e503]:
+          - link "Sobre Cookies" [ref=e504] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/politica-de-cookies/o-que-sao-cookies?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e505]:
+          - link "Ajuda" [ref=e506] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt?ref=auto.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e507]:
+          - link "Definições de Privacidade" [ref=e508] [cursor=pointer]:
+            - /url: "javascript:window.__tcfapi(\"displayConsentUi\", 2, function() {} ); "
+      - generic [ref=e509]:
+        - link "SAPO" [ref=e510] [cursor=pointer]:
+          - /url: https://www.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - generic [ref=e511]:
+          - text: Produzido por
+          - link "SAPO" [ref=e512] [cursor=pointer]:
+            - /url: http://www.sapo.pt/
+          - text: "- Todos os direitos reservados."

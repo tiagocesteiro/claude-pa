@@ -1,0 +1,2 @@
+[    1556ms] [WARNING] Image with src "https://media.printables.com/media/prints/152557/images/1434712_ec778d33-550d-44db-a3b6-cb7d0a96ea59/broomholder1.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3004/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297

@@ -1,0 +1,60 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "PrintPal" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - img [ref=e5]
+        - text: PrintPal
+      - navigation [ref=e8]:
+        - link "Catalog" [ref=e9] [cursor=pointer]:
+          - /url: /en/catalog
+        - link "Makers" [ref=e10] [cursor=pointer]:
+          - /url: /en/makers
+      - generic [ref=e11]:
+        - button "PT" [ref=e12]:
+          - img [ref=e13]
+          - text: PT
+        - generic [ref=e16]:
+          - link "Sign in" [ref=e17] [cursor=pointer]:
+            - /url: /en/auth/signin
+          - link "Sign up" [ref=e18] [cursor=pointer]:
+            - /url: /en/auth/signup
+  - main [ref=e19]:
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - img [ref=e23]
+        - generic [ref=e26]: PrintPal
+      - heading "Create account" [level=1] [ref=e27]
+      - paragraph [ref=e28]:
+        - text: Already have an account?
+        - link "Sign in" [ref=e29] [cursor=pointer]:
+          - /url: /en/auth/signin
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: I want to...
+          - generic [ref=e33]:
+            - button "Buy printed models" [ref=e34]
+            - button "Sell prints as a maker" [ref=e35]
+            - button "Both" [ref=e36]
+        - generic [ref=e37]:
+          - generic [ref=e38]: Display name
+          - textbox [ref=e39]
+        - generic [ref=e40]:
+          - generic [ref=e41]: Your city
+          - textbox [ref=e42]
+        - generic [ref=e43]:
+          - generic [ref=e44]: Email
+          - textbox [ref=e45]
+        - generic [ref=e46]:
+          - generic [ref=e47]: Password
+          - textbox [ref=e48]
+        - button "Create account" [ref=e49]
+  - contentinfo [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - img [ref=e53]
+        - text: PrintPal
+      - paragraph [ref=e56]: Click Globally, Print Locally
+      - paragraph [ref=e57]: © 2026 PrintPal
+  - button "Open Next.js Dev Tools" [ref=e63] [cursor=pointer]:
+    - img [ref=e64]

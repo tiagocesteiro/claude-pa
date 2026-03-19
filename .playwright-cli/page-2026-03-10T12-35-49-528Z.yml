@@ -1,0 +1,209 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "PrintPal" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - img [ref=e5]
+        - text: PrintPal
+      - navigation [ref=e8]:
+        - link "Catalog" [ref=e9] [cursor=pointer]:
+          - /url: /en/catalog
+        - link "Makers" [ref=e10] [cursor=pointer]:
+          - /url: /en/makers
+      - generic [ref=e11]:
+        - button "PT" [ref=e12]:
+          - img [ref=e13]
+          - text: PT
+        - generic [ref=e16]:
+          - link "Sign in" [ref=e17] [cursor=pointer]:
+            - /url: /en/auth/signin
+          - link "Sign up" [ref=e18] [cursor=pointer]:
+            - /url: /en/auth/signup
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - img [ref=e25]
+          - text: Starting in Lisbon, Portugal
+        - heading "Click Globally, Print Locally" [level=1] [ref=e28]
+        - paragraph [ref=e29]: Browse thousands of 3D models and get them printed by a local maker near you.
+        - generic [ref=e30]:
+          - link "Browse catalog" [ref=e31] [cursor=pointer]:
+            - /url: /en/catalog
+            - text: Browse catalog
+            - img [ref=e32]
+          - link "Become a maker" [ref=e34] [cursor=pointer]:
+            - /url: /en/auth/signup
+      - generic [ref=e43]:
+        - heading "How it works" [level=2] [ref=e44]
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - img [ref=e49]
+            - generic [ref=e51]:
+              - paragraph [ref=e52]: "01"
+              - heading "Browse models" [level=3] [ref=e53]
+              - paragraph [ref=e54]: Choose from hundreds of CC-licensed 3D models across every category.
+          - generic [ref=e55]:
+            - img [ref=e58]
+            - generic [ref=e61]:
+              - paragraph [ref=e62]: "02"
+              - heading "Pick your maker" [level=3] [ref=e63]
+              - paragraph [ref=e64]: We match you with the nearest maker. Compare prices, ratings, and delivery time.
+          - generic [ref=e65]:
+            - img [ref=e68]
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: "03"
+              - heading "Receive it locally" [level=3] [ref=e73]
+              - paragraph [ref=e74]: Your maker prints and ships it to you. Fast, local, sustainable.
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - heading "Popular models" [level=2] [ref=e77]
+          - link "View all" [ref=e78] [cursor=pointer]:
+            - /url: /en/catalog
+            - text: View all
+            - img [ref=e79]
+        - generic [ref=e81]:
+          - link "Gravity Broom Holder CC Attribution — Share Alike Gravity Broom Holder by LoboCNC 28,150 1,624 Other House Equipment" [ref=e82] [cursor=pointer]:
+            - /url: /en/model/152557
+            - generic [ref=e83]:
+              - img "Gravity Broom Holder" [ref=e84]
+              - generic [ref=e85]: CC Attribution — Share Alike
+            - generic [ref=e86]:
+              - paragraph [ref=e87]: Gravity Broom Holder
+              - paragraph [ref=e88]: by LoboCNC
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - img [ref=e91]
+                  - text: 28,150
+                - generic [ref=e93]:
+                  - img [ref=e94]
+                  - text: 1,624
+                - generic [ref=e98]: Other House Equipment
+          - link "Dummy 13 - version 1.0! CC Attribution Dummy 13 - version 1.0! by soozafone 27,620 2,687 Action Figures & Statues" [ref=e99] [cursor=pointer]:
+            - /url: /en/model/981111
+            - generic [ref=e100]:
+              - img "Dummy 13 - version 1.0!" [ref=e101]
+              - generic [ref=e102]: CC Attribution
+            - generic [ref=e103]:
+              - paragraph [ref=e104]: Dummy 13 - version 1.0!
+              - paragraph [ref=e105]: by soozafone
+              - generic [ref=e106]:
+                - generic [ref=e107]:
+                  - img [ref=e108]
+                  - text: 27,620
+                - generic [ref=e110]:
+                  - img [ref=e111]
+                  - text: 2,687
+                - generic [ref=e115]: Action Figures & Statues
+          - link "DUMMY 13 Printable Jointed Figure (BETA FILES) CC Attribution DUMMY 13 Printable Jointed Figure (BETA FILES) by soozafone 22,676 2,126 Action Figures & Statues" [ref=e116] [cursor=pointer]:
+            - /url: /en/model/593185
+            - generic [ref=e117]:
+              - img "DUMMY 13 Printable Jointed Figure (BETA FILES)" [ref=e118]
+              - generic [ref=e119]: CC Attribution
+            - generic [ref=e120]:
+              - paragraph [ref=e121]: DUMMY 13 Printable Jointed Figure (BETA FILES)
+              - paragraph [ref=e122]: by soozafone
+              - generic [ref=e123]:
+                - generic [ref=e124]:
+                  - img [ref=e125]
+                  - text: 22,676
+                - generic [ref=e127]:
+                  - img [ref=e128]
+                  - text: 2,126
+                - generic [ref=e132]: Action Figures & Statues
+          - link "Rotating Rings Toy CC Attribution — Share Alike Rotating Rings Toy by Marvin 21,441 2,892 Other Toys & Games" [ref=e133] [cursor=pointer]:
+            - /url: /en/model/7876
+            - generic [ref=e134]:
+              - img "Rotating Rings Toy" [ref=e135]
+              - generic [ref=e136]: CC Attribution — Share Alike
+            - generic [ref=e137]:
+              - paragraph [ref=e138]: Rotating Rings Toy
+              - paragraph [ref=e139]: by Marvin
+              - generic [ref=e140]:
+                - generic [ref=e141]:
+                  - img [ref=e142]
+                  - text: 21,441
+                - generic [ref=e144]:
+                  - img [ref=e145]
+                  - text: 2,892
+                - generic [ref=e149]: Other Toys & Games
+          - link "3D BENCHY CC0 3D BENCHY by Prusa Research 20,904 8,666 Test Models" [ref=e150] [cursor=pointer]:
+            - /url: /en/model/3161
+            - generic [ref=e151]:
+              - img "3D BENCHY" [ref=e152]
+              - generic [ref=e153]: CC0
+            - generic [ref=e154]:
+              - paragraph [ref=e155]: 3D BENCHY
+              - paragraph [ref=e156]: by Prusa Research
+              - generic [ref=e157]:
+                - generic [ref=e158]:
+                  - img [ref=e159]
+                  - text: 20,904
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: 8,666
+                - generic [ref=e166]: Test Models
+          - link "Customizable & stackable beer crate for all types of batteries CC0 Customizable & stackable beer crate for all types of batteries by CAD-Guy 20,606 2,050 Organizers" [ref=e167] [cursor=pointer]:
+            - /url: /en/model/173788
+            - generic [ref=e168]:
+              - img "Customizable & stackable beer crate for all types of batteries" [ref=e169]
+              - generic [ref=e170]: CC0
+            - generic [ref=e171]:
+              - paragraph [ref=e172]: Customizable & stackable beer crate for all types of batteries
+              - paragraph [ref=e173]: by CAD-Guy
+              - generic [ref=e174]:
+                - generic [ref=e175]:
+                  - img [ref=e176]
+                  - text: 20,606
+                - generic [ref=e178]:
+                  - img [ref=e179]
+                  - text: 2,050
+                - generic [ref=e183]: Organizers
+          - link "LUCKY 13 Printable Jointed Figure CC Attribution LUCKY 13 Printable Jointed Figure by soozafone 19,952 1,798 Action Figures & Statues" [ref=e184] [cursor=pointer]:
+            - /url: /en/model/148367
+            - generic [ref=e185]:
+              - img "LUCKY 13 Printable Jointed Figure" [ref=e186]
+              - generic [ref=e187]: CC Attribution
+            - generic [ref=e188]:
+              - paragraph [ref=e189]: LUCKY 13 Printable Jointed Figure
+              - paragraph [ref=e190]: by soozafone
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - img [ref=e193]
+                  - text: 19,952
+                - generic [ref=e195]:
+                  - img [ref=e196]
+                  - text: 1,798
+                - generic [ref=e200]: Action Figures & Statues
+          - link "Small Clip - for herb bags & other packaging CC0 Small Clip - for herb bags & other packaging by Mikolas Zuza 18,247 1,296 Kitchen" [ref=e201] [cursor=pointer]:
+            - /url: /en/model/6806
+            - generic [ref=e202]:
+              - img "Small Clip - for herb bags & other packaging" [ref=e203]
+              - generic [ref=e204]: CC0
+            - generic [ref=e205]:
+              - paragraph [ref=e206]: Small Clip - for herb bags & other packaging
+              - paragraph [ref=e207]: by Mikolas Zuza
+              - generic [ref=e208]:
+                - generic [ref=e209]:
+                  - img [ref=e210]
+                  - text: 18,247
+                - generic [ref=e212]:
+                  - img [ref=e213]
+                  - text: 1,296
+                - generic [ref=e217]: Kitchen
+      - generic [ref=e219]:
+        - heading "Have a 3D printer?" [level=2] [ref=e220]
+        - paragraph [ref=e221]: Join PrintPal as a maker and earn from your printer.
+        - link "Become a maker" [ref=e222] [cursor=pointer]:
+          - /url: /en/auth/signup
+          - text: Become a maker
+          - img [ref=e223]
+  - contentinfo [ref=e225]:
+    - generic [ref=e226]:
+      - generic [ref=e227]:
+        - img [ref=e228]
+        - text: PrintPal
+      - paragraph [ref=e231]: Click Globally, Print Locally
+      - paragraph [ref=e232]: © 2026 PrintPal
+  - button "Open Next.js Dev Tools" [ref=e238] [cursor=pointer]:
+    - img [ref=e239]

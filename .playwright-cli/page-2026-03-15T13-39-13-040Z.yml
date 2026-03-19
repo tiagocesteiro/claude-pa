@@ -1,0 +1,1172 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - link "Saltar os links da Barra SAPO" [ref=e6] [cursor=pointer]:
+        - /url: "#bsu-v4-end"
+      - generic [ref=e7]:
+        - button "MENU" [ref=e8] [cursor=pointer]
+        - link "Mail" [ref=e10] [cursor=pointer]:
+          - /url: https://mail.sapo.pt/login?loginType=bsu&utm_source=bsu&utm_medium=web&utm_campaign=bsu_mainmenu&utm_content=auto.sapo.pt
+        - link "Jornais" [ref=e11] [cursor=pointer]:
+          - /url: https://sapo.pt/noticias/jornais?utm_source=bsu&utm_medium=web&utm_campaign=bsu_mainmenu&utm_content=auto.sapo.pt
+      - link "30 Anos" [ref=e12] [cursor=pointer]:
+        - /url: https://www.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_logo&utm_content=auto.sapo.pt
+        - img [ref=e13]
+      - generic [ref=e23]:
+        - link "Autenticar" [ref=e25] [cursor=pointer]:
+          - /url: https://login.sapo.pt/Login.do?to=https%3A%2F%2Fauto.sapo.pt%2Fcarros-usados%3Fkm-max%3D100000%26preco-max%3D12000%26tipo-vendedor%255B%255D%3D1
+          - generic [ref=e26]: 
+        - link "Autenticar" [ref=e28] [cursor=pointer]:
+          - /url: https://login.sapo.pt/Login.do?to=https%3A%2F%2Fauto.sapo.pt%2Fcarros-usados%3Fkm-max%3D100000%26preco-max%3D12000%26tipo-vendedor%255B%255D%3D1
+          - generic [ref=e29]: 
+      - generic "Lisboa - Céu Limpo" [ref=e32] [cursor=pointer]:
+        - combobox [ref=e36]:
+          - option "Abrantes"
+          - option "Águeda"
+          - option "Aguiar da Beira"
+          - option "Alandroal"
+          - option "Albergaria-a-Velha"
+          - option "Albufeira"
+          - option "Alcácer do Sal"
+          - option "Alcanena"
+          - option "Alcobaça"
+          - option "Alcochete"
+          - option "Alcoutim"
+          - option "Alenquer"
+          - option "Alfandega da Fé"
+          - option "Alijó"
+          - option "Aljezur"
+          - option "Aljustrel"
+          - option "Almada"
+          - option "Almeida"
+          - option "Almeirim"
+          - option "Almodôvar"
+          - option "Alpiarça"
+          - option "Alter do Chão"
+          - option "Alvaiázere"
+          - option "Alvito"
+          - option "Amadora"
+          - option "Amarante"
+          - option "Amares"
+          - option "Anadia"
+          - option "Angra do Heroísmo"
+          - option "Ansião"
+          - option "Arcos de Valdevez"
+          - option "Arganil"
+          - option "Armamar"
+          - option "Arouca"
+          - option "Arraiolos"
+          - option "Arronches"
+          - option "Arruda dos Vinhos"
+          - option "Aveiro"
+          - option "Avis"
+          - option "Azambuja"
+          - option "Baião"
+          - option "Barcelos"
+          - option "Barrancos"
+          - option "Barreiro"
+          - option "Batalha"
+          - option "Beja"
+          - option "Belmonte"
+          - option "Benavente"
+          - option "Bombarral"
+          - option "Borba"
+          - option "Boticas"
+          - option "Braga"
+          - option "Bragança"
+          - option "Cabeceiras de Basto"
+          - option "Cadaval"
+          - option "Caldas da Rainha"
+          - option "Câmara de Lobos"
+          - option "Caminha"
+          - option "Campo Maior"
+          - option "Cantanhede"
+          - option "Carrazeda de Ansiães"
+          - option "Carregal do Sal"
+          - option "Cartaxo"
+          - option "Cascais"
+          - option "Castanheira de Pêra"
+          - option "Castelo Branco"
+          - option "Castelo de Paiva"
+          - option "Castelo de Vide"
+          - option "Castro Daire"
+          - option "Castro Marim"
+          - option "Castro Verde"
+          - option "Celorico da Beira"
+          - option "Celorico de Basto"
+          - option "Chamusca"
+          - option "Chaves"
+          - option "Cinfães"
+          - option "Coimbra"
+          - option "Condeixa-a-Nova"
+          - option "Constância"
+          - option "Coruche"
+          - option "Covilhã"
+          - option "Crato"
+          - option "Cuba"
+          - option "Elvas"
+          - option "Entroncamento"
+          - option "Espinho"
+          - option "Esposende"
+          - option "Estarreja"
+          - option "Estremoz"
+          - option "Évora"
+          - option "Fafe"
+          - option "Faro"
+          - option "Felgueiras"
+          - option "Ferreira do Alentejo"
+          - option "Ferreira do Zêzere"
+          - option "Figueira da Foz"
+          - option "Figueira de Castelo Rodrigo"
+          - option "Figueiró dos Vinhos"
+          - option "Fornos de Algodres"
+          - option "Freixo Espada à Cinta"
+          - option "Fronteira"
+          - option "Funchal"
+          - option "Fundão"
+          - option "Gavião"
+          - option "Góis"
+          - option "Golegã"
+          - option "Gondomar"
+          - option "Gouveia"
+          - option "Grândola"
+          - option "Guarda"
+          - option "Guimarães"
+          - option "Horta"
+          - option "Idanha-a-Nova"
+          - option "Ílhavo"
+          - option "Lagoa"
+          - option "Lagos"
+          - option "Lamego"
+          - option "Leiria"
+          - option "Lisboa" [selected]
+          - option "Loulé"
+          - option "Loures"
+          - option "Lourinhã"
+          - option "Lousã"
+          - option "Lousada"
+          - option "Mação"
+          - option "Macedo de Cavaleiros"
+          - option "Machico"
+          - option "Madalena"
+          - option "Mafra"
+          - option "Maia"
+          - option "Mangualde"
+          - option "Manteigas"
+          - option "Marco de Canaveses"
+          - option "Marinha Grande"
+          - option "Marvão"
+          - option "Matosinhos"
+          - option "Mealhada"
+          - option "Meda"
+          - option "Melgaço"
+          - option "Mértola"
+          - option "Mesão Frio"
+          - option "Mira"
+          - option "Miranda do Corvo"
+          - option "Miranda do Douro"
+          - option "Mirandela"
+          - option "Mogadouro"
+          - option "Moimenta da Beira"
+          - option "Moita"
+          - option "Monção"
+          - option "Monchique"
+          - option "Mondim de Basto"
+          - option "Monforte"
+          - option "Montalegre"
+          - option "Montemor-o-Novo"
+          - option "Montemor-o-Velho"
+          - option "Montijo"
+          - option "Mora"
+          - option "Mortágua"
+          - option "Moura"
+          - option "Mourão"
+          - option "Murça"
+          - option "Murtosa"
+          - option "Nazaré"
+          - option "Nelas"
+          - option "Nisa"
+          - option "Nordeste"
+          - option "Óbidos"
+          - option "Odemira"
+          - option "Odivelas"
+          - option "Oeiras"
+          - option "Oleiros"
+          - option "Olhão"
+          - option "Oliveira de Azeméis"
+          - option "Oliveira de Frades"
+          - option "Oliveira do Bairro"
+          - option "Oliveira do Hospital"
+          - option "Ourém"
+          - option "Ourique"
+          - option "Ovar"
+          - option "Paços de Ferreira"
+          - option "Palmela"
+          - option "Pampilhosa da Serra"
+          - option "Paredes"
+          - option "Paredes de Coura"
+          - option "Pedrógão Grande"
+          - option "Penacova"
+          - option "Penafiel"
+          - option "Penalva do Castelo"
+          - option "Penamacor"
+          - option "Penedono"
+          - option "Penela"
+          - option "Peniche"
+          - option "Peso da Régua"
+          - option "Pinhel"
+          - option "Pombal"
+          - option "Ponta Delgada"
+          - option "Ponte da Barca"
+          - option "Ponte de Lima"
+          - option "Ponte de Sor"
+          - option "Portalegre"
+          - option "Portel"
+          - option "Portimão"
+          - option "Porto"
+          - option "Porto de Mós"
+          - option "Porto Moniz"
+          - option "Porto Santo"
+          - option "Póvoa de Lanhoso"
+          - option "Póvoa de Varzim"
+          - option "Proença-a-Nova"
+          - option "Redondo"
+          - option "Reguengos de Monsaraz"
+          - option "Resende"
+          - option "Ribeira de Pena"
+          - option "Rio Maior"
+          - option "Sabrosa"
+          - option "Sabugal"
+          - option "Salvaterra de Magos"
+          - option "Santa Comba Dão"
+          - option "Santa Cruz - Aeroporto"
+          - option "Santa Cruz da Graciosa"
+          - option "Santa Cruz das Flores"
+          - option "Santa Maria da Feira"
+          - option "Santa Marta de Penaguião"
+          - option "Santana"
+          - option "Santarém"
+          - option "Santiago do Cacém"
+          - option "Santo Tirso"
+          - option "São Brás de Alportel"
+          - option "São João da Madeira"
+          - option "São João da Pesqueira"
+          - option "São Pedro do Sul"
+          - option "São Vicente"
+          - option "Sardoal"
+          - option "Sátão"
+          - option "Seia"
+          - option "Seixal"
+          - option "Sernancelhe"
+          - option "Serpa"
+          - option "Sertã"
+          - option "Sesimbra"
+          - option "Setúbal"
+          - option "Sever do Vouga"
+          - option "Silves"
+          - option "Sines"
+          - option "Sintra"
+          - option "Sobral de Monte Agraço"
+          - option "Soure"
+          - option "Sousel"
+          - option "Tábua"
+          - option "Tabuaço"
+          - option "Tarouca"
+          - option "Tavira"
+          - option "Terras de Bouro"
+          - option "Tomar"
+          - option "Tondela"
+          - option "Torre de Moncorvo"
+          - option "Torres Novas"
+          - option "Torres Vedras"
+          - option "Trancoso"
+          - option "Trofa"
+          - option "Vagos"
+          - option "Vale de Cambra"
+          - option "Valença"
+          - option "Valongo"
+          - option "Valpaços"
+          - option "Velas"
+          - option "Vendas Novas"
+          - option "Viana do Alentejo"
+          - option "Viana do Castelo"
+          - option "Vidigueira"
+          - option "Vieira do Minho"
+          - option "Vila de Rei"
+          - option "Vila do Bispo"
+          - option "Vila do Conde"
+          - option "Vila do Corvo"
+          - option "Vila do Porto"
+          - option "Vila Flor"
+          - option "Vila Franca de Xira"
+          - option "Vila Nova da Barquinha"
+          - option "Vila Nova de Cerveira"
+          - option "Vila Nova de Famalicão"
+          - option "Vila Nova de Foz Coa"
+          - option "Vila Nova de Gaia"
+          - option "Vila Nova de Paiva"
+          - option "Vila Nova de Poiares"
+          - option "Vila Pouca de Aguiar"
+          - option "Vila Real"
+          - option "Vila Real de Santo António"
+          - option "Vila Velha de Rodão"
+          - option "Vila Verde"
+          - option "Vila Viçosa"
+          - option "Vimioso"
+          - option "Vinhais"
+          - option "Viseu"
+          - option "Vizela"
+          - option "Vouzela"
+        - generic [ref=e38]:
+          - img "1" [ref=e40]
+          - generic [ref=e41]: 17º
+        - generic [ref=e43]: 
+    - generic [ref=e44]:
+      - button "Fechar" [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: 
+      - generic [ref=e48]:
+        - link "Categorias" [ref=e49] [cursor=pointer]:
+          - /url: https://www.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list [ref=e50]:
+          - listitem [ref=e51]:
+            - link "Jornais" [ref=e52] [cursor=pointer]:
+              - /url: https://sapo.pt/noticias/jornais/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e53]:
+            - link "Notícias" [ref=e54] [cursor=pointer]:
+              - /url: https://sapo.pt/noticias/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e55]:
+            - link "Desporto" [ref=e56] [cursor=pointer]:
+              - /url: https://sapo.pt/desporto/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e57]:
+            - link "Cultura e Lifestyle" [ref=e58] [cursor=pointer]:
+              - /url: https://sapo.pt/cultura-lifestyle/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - link "Serviços e Classificados" [ref=e60] [cursor=pointer]:
+          - /url: https://sobre.sapo.pt/mundo-sapo/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list [ref=e61]:
+          - listitem [ref=e62]:
+            - link "SAPO Mail" [ref=e63] [cursor=pointer]:
+              - /url: https://mail.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e64]:
+            - link "Auto SAPO" [ref=e65] [cursor=pointer]:
+              - /url: https://auto.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e66]:
+            - link "SAPO Emprego" [ref=e67] [cursor=pointer]:
+              - /url: https://emprego.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e68]:
+            - link "SAPO Blogs" [ref=e69] [cursor=pointer]:
+              - /url: https://blogs.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e70]:
+            - link "SAPO Promos" [ref=e71] [cursor=pointer]:
+              - /url: https://promos.sapo.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+          - listitem [ref=e72]:
+            - link "SUPER CASA" [ref=e73] [cursor=pointer]:
+              - /url: https://supercasa.pt/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - link "Nova APP SAPO" [ref=e75] [cursor=pointer]:
+          - /url: https://sapo.pt/app/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list
+        - link "Parceiros SAPO" [ref=e77] [cursor=pointer]:
+          - /url: https://sobre.sapo.pt/mundo-sapo/?utm_source=bsu&utm_medium=web&utm_campaign=bsu_moremenu&utm_content=auto.sapo.pt
+        - list
+        - generic [ref=e80]:
+          - generic [ref=e81]: "Subscrever:"
+          - link " SMS" [ref=e82] [cursor=pointer]:
+            - /url: https://alertas.sapo.pt/home
+            - generic [ref=e83]: 
+            - text: SMS
+        - generic [ref=e85]:
+          - generic [ref=e86]: "Siga-nos:"
+          - generic [ref=e87]:
+            - link "Facebook" [ref=e88] [cursor=pointer]:
+              - /url: https://www.facebook.com/sapo
+              - generic [ref=e89]: 
+            - link "Instagram" [ref=e90] [cursor=pointer]:
+              - /url: https://www.instagram.com/sapo/
+              - generic [ref=e91]: 
+            - link "LinkedIn" [ref=e92] [cursor=pointer]:
+              - /url: https://pt.linkedin.com/company/sapo
+              - generic [ref=e93]: 
+            - link "TikTok" [ref=e94] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@sapotiktok
+              - generic [ref=e95]: 
+            - link "X/Twitter" [ref=e96] [cursor=pointer]:
+              - /url: https://twitter.com/sapo
+              - generic [ref=e97]: 
+  - banner [ref=e98]:
+    - navigation [ref=e100]:
+      - link "AutoSAPO - Carros usados" [ref=e102] [cursor=pointer]:
+        - /url: /
+        - img [ref=e103]
+      - text: 
+      - list [ref=e114]:
+        - listitem [ref=e115]:
+          - button "Carro novo " [ref=e116] [cursor=pointer]
+        - listitem [ref=e117]:
+          - button "Carro usado " [ref=e118] [cursor=pointer]
+        - listitem [ref=e119]:
+          - link "Anunciar Grátis" [ref=e120] [cursor=pointer]:
+            - /url: https://auto-frontoffice.sapo.pt
+        - listitem [ref=e121]:
+          - link "Mensagens" [ref=e122] [cursor=pointer]:
+            - /url: /user/messages
+        - listitem [ref=e124]:
+          - link "Propostas" [ref=e125] [cursor=pointer]:
+            - /url: /user/procurement
+        - listitem [ref=e127]:
+          - button "Entrar" [ref=e128] [cursor=pointer]:
+            - generic [ref=e129]: 
+            - text: Entrar
+  - main [ref=e131]:
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - generic [ref=e135]:
+          - generic [ref=e136]:
+            - heading "Procurar carro usado" [level=1] [ref=e138]
+            - generic [ref=e139]:
+              - link "Pesquisas guardadas" [ref=e140] [cursor=pointer]:
+                - /url: /
+                - text: Pesquisas guardadas
+              - link "Favoritos" [ref=e141] [cursor=pointer]:
+                - /url: /user/favorites
+              - text:  
+          - generic [ref=e142]:
+            - text: 
+            - generic [ref=e144]:
+              - generic [ref=e145]:
+                - generic [ref=e146] [cursor=pointer]: Marca
+                - generic [ref=e148]:
+                  - listbox "Marca" [ref=e149] [cursor=pointer]:
+                    - group:
+                      - option "Audi" [ref=e150]
+                      - option "BMW" [ref=e151]
+                      - option "Citroen" [ref=e152]
+                      - option "Fiat" [ref=e153]
+                      - option "Ford" [ref=e154]
+                      - option "Mercedes-Benz" [ref=e155]
+                      - option "Opel" [ref=e156]
+                      - option "Peugeot" [ref=e157]
+                      - option "Renault" [ref=e158]
+                      - option "Volkswagen" [ref=e159]
+                    - group:
+                      - option "Abarth" [ref=e160]
+                      - option "Aiways" [ref=e161]
+                      - option "Aixam" [ref=e162]
+                      - option "Alfa Romeo" [ref=e163]
+                      - option "Aston Martin" [ref=e164]
+                      - option "Bentley" [ref=e165]
+                      - option "BYD" [ref=e166]
+                      - option "Chausson" [ref=e167]
+                      - option "Chevrolet" [ref=e168]
+                      - option "Cupra" [ref=e169]
+                      - option "Dacia" [ref=e170]
+                      - option "Daewoo" [ref=e171]
+                      - option "Daihatsu" [ref=e172]
+                      - option "Dodge" [ref=e173]
+                      - option "DS" [ref=e174]
+                      - option "Ferrari" [ref=e175]
+                      - option "FUSO" [ref=e176]
+                      - option "Honda" [ref=e177]
+                      - option "Hummer" [ref=e178]
+                      - option "Hyundai" [ref=e179]
+                      - option "Infiniti" [ref=e180]
+                      - option "Isuzu" [ref=e181]
+                      - option "Iveco" [ref=e182]
+                      - option "Jaguar" [ref=e183]
+                      - option "Jeep" [ref=e184]
+                      - option "Jiayuan" [ref=e185]
+                      - option "Kia" [ref=e186]
+                      - option "Lada" [ref=e187]
+                      - option "Lamborghini" [ref=e188]
+                      - option "Lancia" [ref=e189]
+                      - option "Land Rover" [ref=e190]
+                      - option "Lexus" [ref=e191]
+                      - option "Ligier" [ref=e192]
+                      - option "Lincoln" [ref=e193]
+                      - option "Lotus" [ref=e194]
+                      - option "Maserati" [ref=e195]
+                      - option "Maxus" [ref=e196]
+                      - option "Maybach" [ref=e197]
+                      - option "Mazda" [ref=e198]
+                      - option "MG" [ref=e199]
+                      - option "Microcar" [ref=e200]
+                      - option "Microlino" [ref=e201]
+                      - option "MINI" [ref=e202]
+                      - option "Mitsubishi" [ref=e203]
+                      - option "Morgan" [ref=e204]
+                      - option "Morris" [ref=e205]
+                      - option "Nissan" [ref=e206]
+                      - option "NSU" [ref=e207]
+                      - option "Polestar" [ref=e208]
+                      - option "Porsche" [ref=e209]
+                      - option "Rolls-Royce" [ref=e210]
+                      - option "Rover" [ref=e211]
+                      - option "Saab" [ref=e212]
+                      - option "Seat" [ref=e213]
+                      - option "Skoda" [ref=e214]
+                      - option "Smart" [ref=e215]
+                      - option "SsangYong" [ref=e216]
+                      - option "Steyr-Puch" [ref=e217]
+                      - option "Subaru" [ref=e218]
+                      - option "Suzuki" [ref=e219]
+                      - option "TEC" [ref=e220]
+                      - option "Tesla" [ref=e221]
+                      - option "Toyota" [ref=e222]
+                      - option "Triumph" [ref=e223]
+                      - option "UMM" [ref=e224]
+                      - option "Volvo" [ref=e225]
+                      - option "XEV" [ref=e226]
+                      - option "Xpeng" [ref=e227]
+                  - combobox "Escolha..." [ref=e228] [cursor=pointer]:
+                    - generic [ref=e231]: Escolha...
+                    - text:                                                                               
+              - generic [ref=e232]:
+                - generic [ref=e233] [cursor=pointer]: Modelo
+                - generic [ref=e235]:
+                  - listbox "Modelo" [ref=e236] [cursor=pointer]
+                  - combobox "Escolha..." [ref=e237] [cursor=pointer]:
+                    - generic [ref=e240]: Escolha...
+                    - text: 
+              - generic [ref=e242]:
+                - generic [ref=e243]:
+                  - generic [ref=e244] [cursor=pointer]: Ano
+                  - textbox "De..." [ref=e246]
+                - textbox "Até..." [ref=e249]
+              - generic [ref=e251]:
+                - generic [ref=e252]:
+                  - generic [ref=e253] [cursor=pointer]: Preço
+                  - textbox "De..." [ref=e255]
+                - textbox "Até..." [ref=e258]: "12000"
+              - generic [ref=e259]:
+                - generic [ref=e260] [cursor=pointer]: Combustível
+                - generic [ref=e262]:
+                  - listbox "Combustível" [ref=e263] [cursor=pointer]:
+                    - option "Diesel" [ref=e264]
+                    - option "Eléctrico" [ref=e265]
+                    - option "Gasolina" [ref=e266]
+                    - option "GPL" [ref=e267]
+                    - option "Híbrido" [ref=e268]
+                    - option "Híbrido (Diesel)" [ref=e269]
+                    - option "Híbrido (Gasolina)" [ref=e270]
+                    - option "Outro" [ref=e271]
+                  - combobox "Escolha..." [ref=e272] [cursor=pointer]:
+                    - generic [ref=e275]: Escolha...
+                    - text:         
+              - generic [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279] [cursor=pointer]: Quilómetros
+                  - textbox "De..." [ref=e281]
+                - textbox "Até..." [ref=e284]: "100000"
+              - generic [ref=e285]:
+                - generic [ref=e286] [cursor=pointer]: Carroçaria
+                - generic [ref=e288]:
+                  - listbox "Carroçaria" [ref=e289] [cursor=pointer]:
+                    - option "Autocaravana" [ref=e290]
+                    - option "Cabrio" [ref=e291]
+                    - option "Carrinha" [ref=e292]
+                    - option "Citadino" [ref=e293]
+                    - option "Clássico" [ref=e294]
+                    - option "Desportivo/Coupé" [ref=e295]
+                    - option "Furgão" [ref=e296]
+                    - option "Ligeiro de Mercadorias" [ref=e297]
+                    - option "Minibus" [ref=e298]
+                    - option "Monovolume" [ref=e299]
+                    - option "Pick-Up" [ref=e300]
+                    - option "Sedan" [ref=e301]
+                    - option "SUV/TT" [ref=e302]
+                    - option "Utilitário" [ref=e303]
+                  - combobox "Escolha..." [ref=e304] [cursor=pointer]:
+                    - generic [ref=e307]: Escolha...
+                    - text:               
+              - generic [ref=e308]:
+                - generic [ref=e309] [cursor=pointer]: Caixa
+                - generic [ref=e311]:
+                  - listbox "Caixa" [ref=e312] [cursor=pointer]:
+                    - option "Automática" [ref=e313]
+                    - option "Manual" [ref=e314]
+                    - option "Semi-automática" [ref=e315]
+                  - combobox "Escolha..." [ref=e316] [cursor=pointer]:
+                    - generic [ref=e319]: Escolha...
+                    - text:    
+              - generic [ref=e320]:
+                - generic [ref=e321] [cursor=pointer]: Localização
+                - generic [ref=e323]:
+                  - listbox "Localização" [ref=e324] [cursor=pointer]:
+                    - option "Lisboa" [ref=e325]
+                    - option "Porto" [ref=e326]
+                    - option "Braga" [ref=e327]
+                    - option "Aveiro" [ref=e328]
+                    - option "Setúbal" [ref=e329]
+                    - option "Leiria" [ref=e330]
+                    - option "Faro" [ref=e331]
+                    - option "Santarém" [ref=e332]
+                    - option "Viseu" [ref=e333]
+                    - option "Coimbra" [ref=e334]
+                    - option "Viana do Castelo" [ref=e335]
+                    - option "Castelo Branco" [ref=e336]
+                    - option "Vila Real" [ref=e337]
+                    - option "Évora" [ref=e338]
+                    - option "Guarda" [ref=e339]
+                    - option "Portalegre" [ref=e340]
+                    - option "Ilha da Madeira" [ref=e341]
+                    - option "Beja" [ref=e342]
+                    - option "Bragança" [ref=e343]
+                    - option "Ilha de São Miguel" [ref=e344]
+                    - option "Ilha do Pico" [ref=e345]
+                    - option "Ilha Graciosa" [ref=e346]
+                    - option "Ilha Terceira" [ref=e347]
+                  - combobox "Escolha..." [ref=e348] [cursor=pointer]:
+                    - generic [ref=e351]: Escolha...
+                    - text:                        
+              - generic [ref=e352]:
+                - generic [ref=e353] [cursor=pointer]: Pesquisa
+                - textbox "Stand, Marca, Modelo..." [ref=e355]
+              - text:                               
+              - generic [ref=e356]:
+                - button "Mais filtros " [expanded] [ref=e357] [cursor=pointer]:
+                  - text: Mais filtros
+                  - generic [ref=e358]: 
+                - link "Guardar pesquisa" [ref=e359] [cursor=pointer]:
+                  - /url: /
+                - link "Limpar" [ref=e360] [cursor=pointer]:
+                  - /url: /
+                - text: 
+                - link "Pesquisar" [ref=e361] [cursor=pointer]:
+                  - /url: "#"
+                  - text: Pesquisar 
+        - generic [ref=e363]:
+          - generic [ref=e364]:
+            - heading "893 carros usados" [level=2] [ref=e366]:
+              - text: "893"
+              - strong [ref=e367]: carros usados
+            - generic [ref=e368]:
+              - generic [ref=e369] [cursor=pointer]:
+                - generic [ref=e370]: Mostrar
+                - generic [ref=e372]:
+                  - generic [ref=e374]: 
+                  - generic [ref=e376]: 
+              - generic [ref=e377]:
+                - generic [ref=e378] [cursor=pointer]: Ordenar
+                - generic [ref=e379]:
+                  - text: 
+                  - combobox "Ordenar" [ref=e380] [cursor=pointer]:
+                    - option "Destacados" [selected]
+                    - option "Mais recente"
+                    - option "Mais antigos"
+                    - option "Ano mais alto"
+                    - option "Ano mais baixo"
+                    - option "Preço mais alto"
+                    - option "Preço mais baixo"
+                    - option "Mais Kms"
+                    - option "Menos Kms"
+          - generic [ref=e381]:
+            - article [ref=e383]:
+              - generic [ref=e384]:
+                - link "Opel Corsa" [ref=e385] [cursor=pointer]:
+                  - /url: /carro-usado/698df041803b07767b3f13fd/opel-corsa
+                  - img "Opel Corsa de 2011" [ref=e387]
+                - generic [ref=e388] [cursor=pointer]: Em destaque
+              - generic [ref=e389]:
+                - heading "Opel Corsa 75cv - 3P" [level=3] [ref=e390]:
+                  - link "Opel Corsa 75cv - 3P" [ref=e391] [cursor=pointer]:
+                    - /url: /carro-usado/698df041803b07767b3f13fd/opel-corsa
+                    - text: Opel Corsa
+                    - generic [ref=e392]: 75cv - 3P
+                - button "Favorito" [ref=e393] [cursor=pointer]:
+                  - generic [ref=e394]: 
+                - generic [ref=e395]:
+                  - list [ref=e396]:
+                    - listitem [ref=e397]: "2011"
+                    - listitem [ref=e398]: 1 km
+                    - listitem [ref=e399]: Diesel
+                  - generic [ref=e402]: 7.950€
+            - article [ref=e404]:
+              - link "Suzuki Swift 1.2 VVT GLX" [ref=e406] [cursor=pointer]:
+                - /url: /carro-usado/69b5d540fb4a83af70b9eb7f/suzuki-swift-12-vvt-glx
+                - img "Suzuki Swift 1.2 VVT GLX de 2010" [ref=e408]
+              - generic [ref=e409]:
+                - heading "Suzuki Swift 1.2 VVT GLX - 94cv - 5P" [level=3] [ref=e410]:
+                  - link "Suzuki Swift 1.2 VVT GLX - 94cv - 5P" [ref=e411] [cursor=pointer]:
+                    - /url: /carro-usado/69b5d540fb4a83af70b9eb7f/suzuki-swift-12-vvt-glx
+                    - text: Suzuki Swift
+                    - generic [ref=e412]: 1.2 VVT GLX - 94cv - 5P
+                - button "Favorito" [ref=e413] [cursor=pointer]:
+                  - generic [ref=e414]: 
+                - generic [ref=e415]:
+                  - list [ref=e416]:
+                    - listitem [ref=e417]: "2010"
+                    - listitem [ref=e418]: 86.650 km
+                    - listitem [ref=e419]: Gasolina
+                  - generic [ref=e422]: 8.500€
+            - article [ref=e424]:
+              - link "Fiat 500C" [ref=e426] [cursor=pointer]:
+                - /url: /carro-usado/69b526f6fb4a83af70b979a3/fiat-500c
+                - img "Fiat 500C de 2017" [ref=e428]
+              - generic [ref=e429]:
+                - heading "Fiat 500C 69cv - 2P" [level=3] [ref=e430]:
+                  - link "Fiat 500C 69cv - 2P" [ref=e431] [cursor=pointer]:
+                    - /url: /carro-usado/69b526f6fb4a83af70b979a3/fiat-500c
+                    - text: Fiat 500C
+                    - generic [ref=e432]: 69cv - 2P
+                - button "Favorito" [ref=e433] [cursor=pointer]:
+                  - generic [ref=e434]: 
+                - generic [ref=e435]:
+                  - list [ref=e436]:
+                    - listitem [ref=e437]: "2017"
+                    - listitem [ref=e438]: 57.640 km
+                    - listitem [ref=e439]: Gasolina
+                  - generic [ref=e442]: 10.750€
+            - article [ref=e444]:
+              - link "Citroen C1 1.0 VTi Feel" [ref=e446] [cursor=pointer]:
+                - /url: /carro-usado/69b525d6fb4a83af70b977d7/citroen-c1-10-vti-feel
+                - img "Citroen C1 1.0 VTi Feel de 2018" [ref=e448]
+              - generic [ref=e449]:
+                - heading "Citroen C1 1.0 VTi Feel - 68cv - 5P" [level=3] [ref=e450]:
+                  - link "Citroen C1 1.0 VTi Feel - 68cv - 5P" [ref=e451] [cursor=pointer]:
+                    - /url: /carro-usado/69b525d6fb4a83af70b977d7/citroen-c1-10-vti-feel
+                    - text: Citroen C1
+                    - generic [ref=e452]: 1.0 VTi Feel - 68cv - 5P
+                - button "Favorito" [ref=e453] [cursor=pointer]:
+                  - generic [ref=e454]: 
+                - generic [ref=e455]:
+                  - list [ref=e456]:
+                    - listitem [ref=e457]: "2018"
+                    - listitem [ref=e458]: 47.000 km
+                    - listitem [ref=e459]: Gasolina
+                  - generic [ref=e462]: 8.990€
+            - article [ref=e464]:
+              - link "Citroen C3 1.2 PureTech Feel" [ref=e466] [cursor=pointer]:
+                - /url: /carro-usado/69b435dfe820b5803a6798c4/citroen-c3-12-puretech-feel
+                - img "Citroen C3 1.2 PureTech Feel de 2021" [ref=e468]
+              - generic [ref=e469]:
+                - heading "Citroen C3 1.2 PureTech Feel - 83cv - 5P" [level=3] [ref=e470]:
+                  - link "Citroen C3 1.2 PureTech Feel - 83cv - 5P" [ref=e471] [cursor=pointer]:
+                    - /url: /carro-usado/69b435dfe820b5803a6798c4/citroen-c3-12-puretech-feel
+                    - text: Citroen C3
+                    - generic [ref=e472]: 1.2 PureTech Feel - 83cv - 5P
+                - button "Favorito" [ref=e473] [cursor=pointer]:
+                  - generic [ref=e474]: 
+                - generic [ref=e475]:
+                  - list [ref=e476]:
+                    - listitem [ref=e477]: "2021"
+                    - listitem [ref=e478]: 61.530 km
+                    - listitem [ref=e479]: Gasolina
+                  - generic [ref=e482]: 10.299€
+            - article [ref=e484]:
+              - link "Renault Kangoo" [ref=e486] [cursor=pointer]:
+                - /url: /carro-usado/69b43105e820b5803a679230/renault-kangoo
+                - img "Renault Kangoo de 2019" [ref=e488]
+              - generic [ref=e489]:
+                - heading "Renault Kangoo 60cv - 5P" [level=3] [ref=e490]:
+                  - link "Renault Kangoo 60cv - 5P" [ref=e491] [cursor=pointer]:
+                    - /url: /carro-usado/69b43105e820b5803a679230/renault-kangoo
+                    - text: Renault Kangoo
+                    - generic [ref=e492]: 60cv - 5P
+                - button "Favorito" [ref=e493] [cursor=pointer]:
+                  - generic [ref=e494]: 
+                - generic [ref=e495]:
+                  - list [ref=e496]:
+                    - listitem [ref=e497]: "2019"
+                    - listitem [ref=e498]: 26.635 km
+                    - listitem [ref=e499]: Eléctrico
+                  - generic [ref=e502]: 11.750€
+            - article [ref=e504]:
+              - link "Citroen C3 1.2 PureTech Feel" [ref=e506] [cursor=pointer]:
+                - /url: /carro-usado/69b41b27e820b5803a677adc/citroen-c3-12-puretech-feel
+                - img "Citroen C3 1.2 PureTech Feel de 2021" [ref=e508]
+              - generic [ref=e509]:
+                - heading "Citroen C3 1.2 PureTech Feel - 83cv - 5P" [level=3] [ref=e510]:
+                  - link "Citroen C3 1.2 PureTech Feel - 83cv - 5P" [ref=e511] [cursor=pointer]:
+                    - /url: /carro-usado/69b41b27e820b5803a677adc/citroen-c3-12-puretech-feel
+                    - text: Citroen C3
+                    - generic [ref=e512]: 1.2 PureTech Feel - 83cv - 5P
+                - button "Favorito" [ref=e513] [cursor=pointer]:
+                  - generic [ref=e514]: 
+                - generic [ref=e515]:
+                  - list [ref=e516]:
+                    - listitem [ref=e517]: "2021"
+                    - listitem [ref=e518]: 80.068 km
+                    - listitem [ref=e519]: Gasolina
+                  - generic [ref=e522]: 9.999€
+            - article [ref=e524]:
+              - link "Opel Corsa 1.2 Edition" [ref=e526] [cursor=pointer]:
+                - /url: /carro-usado/69b40bbc061d0cc8ac78aadc/opel-corsa-12-edition
+                - img "Opel Corsa 1.2 Edition de 2021" [ref=e528]
+              - generic [ref=e529]:
+                - heading "Opel Corsa 1.2 Edition - 75cv - 5P" [level=3] [ref=e530]:
+                  - link "Opel Corsa 1.2 Edition - 75cv - 5P" [ref=e531] [cursor=pointer]:
+                    - /url: /carro-usado/69b40bbc061d0cc8ac78aadc/opel-corsa-12-edition
+                    - text: Opel Corsa
+                    - generic [ref=e532]: 1.2 Edition - 75cv - 5P
+                - button "Favorito" [ref=e533] [cursor=pointer]:
+                  - generic [ref=e534]: 
+                - generic [ref=e535]:
+                  - list [ref=e536]:
+                    - listitem [ref=e537]: "2021"
+                    - listitem [ref=e538]: 57.559 km
+                    - listitem [ref=e539]: Gasolina
+                  - generic [ref=e542]: 11.900€
+            - article [ref=e544]:
+              - link "Volkswagen Up" [ref=e546] [cursor=pointer]:
+                - /url: /carro-usado/69b406da061d0cc8ac78a6bb/volkswagen-up
+                - img "Volkswagen Up de 2019" [ref=e548]
+              - generic [ref=e549]:
+                - heading "Volkswagen Up 60cv - 5P" [level=3] [ref=e550]:
+                  - link "Volkswagen Up 60cv - 5P" [ref=e551] [cursor=pointer]:
+                    - /url: /carro-usado/69b406da061d0cc8ac78a6bb/volkswagen-up
+                    - text: Volkswagen Up
+                    - generic [ref=e552]: 60cv - 5P
+                - button "Favorito" [ref=e553] [cursor=pointer]:
+                  - generic [ref=e554]: 
+                - generic [ref=e555]:
+                  - list [ref=e556]:
+                    - listitem [ref=e557]: "2019"
+                    - listitem [ref=e558]: 84.558 km
+                    - listitem [ref=e559]: Gasolina
+                  - generic [ref=e562]: 11.650€
+            - article [ref=e564]:
+              - link "Peugeot 108 1.0 VTi Active" [ref=e566] [cursor=pointer]:
+                - /url: /carro-usado/69b405c8061d0cc8ac78a644/peugeot-108-10-vti-active
+                - img "Peugeot 108 1.0 VTi Active de 2021" [ref=e568]
+              - generic [ref=e569]:
+                - heading "Peugeot 108 1.0 VTi Active - 72cv - 5P" [level=3] [ref=e570]:
+                  - link "Peugeot 108 1.0 VTi Active - 72cv - 5P" [ref=e571] [cursor=pointer]:
+                    - /url: /carro-usado/69b405c8061d0cc8ac78a644/peugeot-108-10-vti-active
+                    - text: Peugeot 108
+                    - generic [ref=e572]: 1.0 VTi Active - 72cv - 5P
+                - button "Favorito" [ref=e573] [cursor=pointer]:
+                  - generic [ref=e574]: 
+                - generic [ref=e575]:
+                  - list [ref=e576]:
+                    - listitem [ref=e577]: "2021"
+                    - listitem [ref=e578]: 84.773 km
+                    - listitem [ref=e579]: Gasolina
+                  - generic [ref=e582]: 9.699€
+            - article [ref=e584]:
+              - link "Citroen C3" [ref=e586] [cursor=pointer]:
+                - /url: /carro-usado/69b3e1e17d733d77d9dc8798/citroen-c3
+                - img "Citroen C3 de 2022" [ref=e588]
+              - generic [ref=e589]:
+                - heading "Citroen C3 83cv - 5P" [level=3] [ref=e590]:
+                  - link "Citroen C3 83cv - 5P" [ref=e591] [cursor=pointer]:
+                    - /url: /carro-usado/69b3e1e17d733d77d9dc8798/citroen-c3
+                    - text: Citroen C3
+                    - generic [ref=e592]: 83cv - 5P
+                - button "Favorito" [ref=e593] [cursor=pointer]:
+                  - generic [ref=e594]: 
+                - generic [ref=e595]:
+                  - list [ref=e596]:
+                    - listitem [ref=e597]: "2022"
+                    - listitem [ref=e598]: 77.000 km
+                    - listitem [ref=e599]: Gasolina
+                  - generic [ref=e602]: 10.950€
+            - article [ref=e604]:
+              - link "Opel Corsa 1.3 CDTi Street Edition" [ref=e606] [cursor=pointer]:
+                - /url: /carro-usado/69b3db747d733d77d9dc7d93/opel-corsa-13-cdti-street-edition
+                - img "Opel Corsa 1.3 CDTi Street Edition de 2008" [ref=e608]
+              - generic [ref=e609]:
+                - heading "Opel Corsa 1.3 CDTi Street Edition - 80cv - 5P" [level=3] [ref=e610]:
+                  - link "Opel Corsa 1.3 CDTi Street Edition - 80cv - 5P" [ref=e611] [cursor=pointer]:
+                    - /url: /carro-usado/69b3db747d733d77d9dc7d93/opel-corsa-13-cdti-street-edition
+                    - text: Opel Corsa
+                    - generic [ref=e612]: 1.3 CDTi Street Edition - 80cv - 5P
+                - button "Favorito" [ref=e613] [cursor=pointer]:
+                  - generic [ref=e614]: 
+                - generic [ref=e615]:
+                  - list [ref=e616]:
+                    - listitem [ref=e617]: "2008"
+                    - listitem [ref=e618]: 78.000 km
+                    - listitem [ref=e619]: Diesel
+                  - generic [ref=e622]: 5.500€
+            - article [ref=e624]:
+              - link "Peugeot 208" [ref=e626] [cursor=pointer]:
+                - /url: /carro-usado/69b3d6f2ec4d2277338e5030/peugeot-208
+                - img "Peugeot 208 de 2021" [ref=e628]
+              - generic [ref=e629]:
+                - heading "Peugeot 208 101cv - 5P" [level=3] [ref=e630]:
+                  - link "Peugeot 208 101cv - 5P" [ref=e631] [cursor=pointer]:
+                    - /url: /carro-usado/69b3d6f2ec4d2277338e5030/peugeot-208
+                    - text: Peugeot 208
+                    - generic [ref=e632]: 101cv - 5P
+                - button "Favorito" [ref=e633] [cursor=pointer]:
+                  - generic [ref=e634]: 
+                - generic [ref=e635]:
+                  - list [ref=e636]:
+                    - listitem [ref=e637]: "2021"
+                    - listitem [ref=e638]: 66.513 km
+                    - listitem [ref=e639]: Gasolina
+                  - generic [ref=e642]: 11.999€
+            - article [ref=e644]:
+              - link "Mitsubishi Space Star" [ref=e646] [cursor=pointer]:
+                - /url: /carro-usado/69b2f7af9c68406026dd0b99/mitsubishi-space-star
+                - img "Mitsubishi Space Star de 2020" [ref=e648]
+              - generic [ref=e649]:
+                - heading "Mitsubishi Space Star 71cv - 5P" [level=3] [ref=e650]:
+                  - link "Mitsubishi Space Star 71cv - 5P" [ref=e651] [cursor=pointer]:
+                    - /url: /carro-usado/69b2f7af9c68406026dd0b99/mitsubishi-space-star
+                    - text: Mitsubishi Space Star
+                    - generic [ref=e652]: 71cv - 5P
+                - button "Favorito" [ref=e653] [cursor=pointer]:
+                  - generic [ref=e654]: 
+                - generic [ref=e655]:
+                  - list [ref=e656]:
+                    - listitem [ref=e657]: "2020"
+                    - listitem [ref=e658]: 58.088 km
+                    - listitem [ref=e659]: Gasolina
+                  - generic [ref=e662]: 9.490€
+            - article [ref=e664]:
+              - link "Peugeot 2008 1.2 PureTech Style" [ref=e666] [cursor=pointer]:
+                - /url: /carro-usado/69b2aa5ea10abff2213a6830/peugeot-2008-12-puretech-style
+                - img "Peugeot 2008 1.2 PureTech Style de 2018" [ref=e668]
+              - generic [ref=e669]:
+                - heading "Peugeot 2008 1.2 PureTech Style - 82cv - 5P" [level=3] [ref=e670]:
+                  - link "Peugeot 2008 1.2 PureTech Style - 82cv - 5P" [ref=e671] [cursor=pointer]:
+                    - /url: /carro-usado/69b2aa5ea10abff2213a6830/peugeot-2008-12-puretech-style
+                    - text: Peugeot 2008
+                    - generic [ref=e672]: 1.2 PureTech Style - 82cv - 5P
+                - button "Favorito" [ref=e673] [cursor=pointer]:
+                  - generic [ref=e674]: 
+                - generic [ref=e675]:
+                  - list [ref=e676]:
+                    - listitem [ref=e677]: "2018"
+                    - listitem [ref=e678]: 90.000 km
+                    - listitem [ref=e679]: Gasolina
+                  - generic [ref=e682]: 9.500€
+            - article [ref=e684]:
+              - link "Ford Focus 1.0 EcoBoost Titanium" [ref=e686] [cursor=pointer]:
+                - /url: /carro-usado/69b1c24ddc4126f63878f3c9/ford-focus-10-ecoboost-titanium
+                - img "Ford Focus 1.0 EcoBoost Titanium de 2013" [ref=e688]
+              - generic [ref=e689]:
+                - heading "Ford Focus 1.0 EcoBoost Titanium - 125cv - 5P" [level=3] [ref=e690]:
+                  - link "Ford Focus 1.0 EcoBoost Titanium - 125cv - 5P" [ref=e691] [cursor=pointer]:
+                    - /url: /carro-usado/69b1c24ddc4126f63878f3c9/ford-focus-10-ecoboost-titanium
+                    - text: Ford Focus
+                    - generic [ref=e692]: 1.0 EcoBoost Titanium - 125cv - 5P
+                - button "Favorito" [ref=e693] [cursor=pointer]:
+                  - generic [ref=e694]: 
+                - generic [ref=e695]:
+                  - list [ref=e696]:
+                    - listitem [ref=e697]: "2013"
+                    - listitem [ref=e698]: 55.000 km
+                    - listitem [ref=e699]: Gasolina
+                  - generic [ref=e702]: 10.500€
+            - article [ref=e704]:
+              - link "Peugeot 208 1.2 PureTech Style" [ref=e706] [cursor=pointer]:
+                - /url: /carro-usado/69b0a3d42834d02a563256cd/peugeot-208-12-puretech-style
+                - img "Peugeot 208 1.2 PureTech Style de 2018" [ref=e708]
+              - generic [ref=e709]:
+                - heading "Peugeot 208 1.2 PureTech Style - 82cv - 5P" [level=3] [ref=e710]:
+                  - link "Peugeot 208 1.2 PureTech Style - 82cv - 5P" [ref=e711] [cursor=pointer]:
+                    - /url: /carro-usado/69b0a3d42834d02a563256cd/peugeot-208-12-puretech-style
+                    - text: Peugeot 208
+                    - generic [ref=e712]: 1.2 PureTech Style - 82cv - 5P
+                - button "Favorito" [ref=e713] [cursor=pointer]:
+                  - generic [ref=e714]: 
+                - generic [ref=e715]:
+                  - list [ref=e716]:
+                    - listitem [ref=e717]: "2018"
+                    - listitem [ref=e718]: 90.334 km
+                    - listitem [ref=e719]: Gasolina
+                  - generic [ref=e722]: 11.900€
+            - article [ref=e724]:
+              - link "Citroen C3" [ref=e726] [cursor=pointer]:
+                - /url: /carro-usado/69b06b5f2834d02a56321b4a/citroen-c3
+                - img "Citroen C3 de 2017" [ref=e728]
+              - generic [ref=e729]:
+                - heading "Citroen C3 82cv - 5P" [level=3] [ref=e730]:
+                  - link "Citroen C3 82cv - 5P" [ref=e731] [cursor=pointer]:
+                    - /url: /carro-usado/69b06b5f2834d02a56321b4a/citroen-c3
+                    - text: Citroen C3
+                    - generic [ref=e732]: 82cv - 5P
+                - button "Favorito" [ref=e733] [cursor=pointer]:
+                  - generic [ref=e734]: 
+                - generic [ref=e735]:
+                  - list [ref=e736]:
+                    - listitem [ref=e737]: "2017"
+                    - listitem [ref=e738]: 89.224 km
+                    - listitem [ref=e739]: Gasolina
+                  - generic [ref=e742]: 10.499€
+            - article [ref=e744]:
+              - link "Citroen C3 AirCross 1.2 PureTech Shine" [ref=e746] [cursor=pointer]:
+                - /url: /carro-usado/69b05c9e2834d02a563212bd/citroen-c3-aircross-12-puretech-shine
+                - img "Citroen C3 AirCross 1.2 PureTech Shine de 2021" [ref=e748]
+              - generic [ref=e749]:
+                - heading "Citroen C3 AirCross 1.2 PureTech Shine - 110cv - 5P" [level=3] [ref=e750]:
+                  - link "Citroen C3 AirCross 1.2 PureTech Shine - 110cv - 5P" [ref=e751] [cursor=pointer]:
+                    - /url: /carro-usado/69b05c9e2834d02a563212bd/citroen-c3-aircross-12-puretech-shine
+                    - text: Citroen C3 AirCross
+                    - generic [ref=e752]: 1.2 PureTech Shine - 110cv - 5P
+                - button "Favorito" [ref=e753] [cursor=pointer]:
+                  - generic [ref=e754]: 
+                - generic [ref=e755]:
+                  - list [ref=e756]:
+                    - listitem [ref=e757]: "2021"
+                    - listitem [ref=e758]: 94.000 km
+                    - listitem [ref=e759]: Gasolina
+                  - generic [ref=e762]: 11.250€
+            - article [ref=e764]:
+              - link "Citroen C3" [ref=e766] [cursor=pointer]:
+                - /url: /carro-usado/69b036c295314419a214f92f/citroen-c3
+                - img "Citroen C3 de 2022" [ref=e768]
+              - generic [ref=e769]:
+                - heading "Citroen C3 83cv - 5P" [level=3] [ref=e770]:
+                  - link "Citroen C3 83cv - 5P" [ref=e771] [cursor=pointer]:
+                    - /url: /carro-usado/69b036c295314419a214f92f/citroen-c3
+                    - text: Citroen C3
+                    - generic [ref=e772]: 83cv - 5P
+                - button "Favorito" [ref=e773] [cursor=pointer]:
+                  - generic [ref=e774]: 
+                - generic [ref=e775]:
+                  - list [ref=e776]:
+                    - listitem [ref=e777]: "2022"
+                    - listitem [ref=e778]: 98.000 km
+                    - listitem [ref=e779]: Gasolina
+                  - generic [ref=e782]: 10.890€
+          - navigation "Page navigation" [ref=e783]:
+            - list [ref=e784]:
+              - listitem [ref=e785]:
+                - link "Primeira página":
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1"
+                  - generic: 
+              - listitem [ref=e786]:
+                - link "Página anterior":
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=0"
+                  - generic: 
+              - listitem [ref=e787]:
+                - link "Página 1" [ref=e788] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1"
+                  - text: "1"
+              - listitem [ref=e789]:
+                - link "Página 2" [ref=e790] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=2"
+                  - text: "2"
+              - listitem [ref=e791]:
+                - link "Página 3" [ref=e792] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=3"
+                  - text: "3"
+              - listitem [ref=e793]:
+                - link "Página 4" [ref=e794] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=4"
+                  - text: "4"
+              - listitem [ref=e795]:
+                - link "Página 5" [ref=e796] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=5"
+                  - text: "5"
+              - listitem [ref=e797]:
+                - link "Página 6" [ref=e798] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=6"
+                  - text: "6"
+              - listitem [ref=e799]:
+                - link "Página 7" [ref=e800] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=7"
+                  - text: "7"
+              - listitem [ref=e801]:
+                - link "Página seguinte" [ref=e802] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=2"
+                  - generic [ref=e803]: 
+              - listitem [ref=e804]:
+                - link "Última página" [ref=e805] [cursor=pointer]:
+                  - /url: "?km-max=100000&preco-max=12000&tipo-vendedor[]=1&p=45"
+                  - generic [ref=e806]: 
+            - paragraph [ref=e807]: Pág. 1 de 45 / 893 viaturas
+      - generic [ref=e810]:
+        - paragraph [ref=e811]:
+          - img "Auto Sapo Venda Já" [ref=e812]
+          - text: Sabe quanto vale o seu carro?
+        - link "Descubra aqui" [ref=e813] [cursor=pointer]:
+          - /url: https://auto.sapo.pt/VendaJa
+          - generic [ref=e814]: Descubra aqui
+      - text:          
+  - contentinfo [ref=e815]:
+    - generic [ref=e816]:
+      - link "AutoSAPO - Carros usados" [ref=e819] [cursor=pointer]:
+        - /url: /
+        - img [ref=e820]
+      - list [ref=e830]:
+        - listitem [ref=e831]:
+          - heading "Comprar Carro" [level=3] [ref=e832]
+          - list [ref=e833]:
+            - listitem [ref=e834]:
+              - link "Procurar carros usados" [ref=e835] [cursor=pointer]:
+                - /url: /carros-usados
+            - listitem [ref=e836]:
+              - link "Carros Novos" [ref=e837] [cursor=pointer]:
+                - /url: /carro/novo/pedir-proposta
+            - listitem [ref=e838]:
+              - link "Carros usados por marca" [ref=e839] [cursor=pointer]:
+                - /url: /carro/usado/marca
+            - listitem [ref=e840]:
+              - link "Carros usados por localização" [ref=e841] [cursor=pointer]:
+                - /url: /carro/usado/localizacao
+        - listitem [ref=e842]:
+          - heading "Vender Carro" [level=3] [ref=e843]
+          - list [ref=e844]:
+            - listitem [ref=e845]:
+              - link "Vender em 24h " [ref=e846] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/VendaJa
+                - text: Vender em 24h
+                - generic [ref=e847]: 
+            - listitem [ref=e848]:
+              - link "Serviço de Venda Premium " [ref=e849] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/premium
+                - text: Serviço de Venda Premium
+                - generic [ref=e850]: 
+            - listitem [ref=e851]:
+              - link "Anunciar Grátis" [ref=e852] [cursor=pointer]:
+                - /url: https://auto-frontoffice.sapo.pt
+        - listitem [ref=e853]:
+          - heading "Serviços" [level=3] [ref=e854]
+          - list [ref=e855]:
+            - listitem [ref=e856]:
+              - link "Venda Já " [ref=e857] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/VendaJa
+                - text: Venda Já
+                - generic [ref=e858]: 
+            - listitem [ref=e859]:
+              - link "Premium " [ref=e860] [cursor=pointer]:
+                - /url: https://auto.sapo.pt/premium
+                - text: Premium
+                - generic [ref=e861]: 
+        - listitem [ref=e862]:
+          - heading "Sobre Nós" [level=3] [ref=e863]
+          - list [ref=e864]:
+            - listitem [ref=e865]:
+              - link "Auto SAPO" [ref=e866] [cursor=pointer]:
+                - /url: /sobre_nos
+            - listitem [ref=e867]:
+              - link "Ajuda" [ref=e868] [cursor=pointer]:
+                - /url: https://ajuda.sapo.pt/auto-sapo-94846
+            - listitem [ref=e869]:
+              - link "Termos de utilização" [ref=e870] [cursor=pointer]:
+                - /url: https://ajudasapo.blogs.sapo.pt/condicoes-de-utilizacao-auto-sapo-21153
+            - listitem [ref=e871]:
+              - link "Comerciantes no Auto SAPO" [ref=e872] [cursor=pointer]:
+                - /url: https://auto-frontoffice.sapo.pt
+      - list [ref=e873]:
+        - listitem [ref=e874]:
+          - link "Sobre o SAPO" [ref=e875] [cursor=pointer]:
+            - /url: https://sobre.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e876]:
+          - link "Condições de Utilização" [ref=e877] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/condicoes-de-utilizacao?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e878]:
+          - link "Política de Privacidade" [ref=e879] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/politica-de-privacidade?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e880]:
+          - link "RGPD" [ref=e881] [cursor=pointer]:
+            - /url: https://www.altice.pt/pt/rgpd?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e882]:
+          - link "Sobre Cookies" [ref=e883] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt/pt-pt/security/politica-de-cookies/o-que-sao-cookies?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e884]:
+          - link "Ajuda" [ref=e885] [cursor=pointer]:
+            - /url: https://ajuda.sapo.pt?ref=auto.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - listitem [ref=e886]:
+          - link "Definições de Privacidade" [ref=e887] [cursor=pointer]:
+            - /url: "javascript:window.__tcfapi(\"displayConsentUi\", 2, function() {} ); "
+      - generic [ref=e888]:
+        - link "SAPO" [ref=e889] [cursor=pointer]:
+          - /url: https://www.sapo.pt?utm_source=bsu&utm_medium=web&utm_campaign=bsu_footer&utm_content=auto.sapo.pt
+        - generic [ref=e890]:
+          - text: Produzido por
+          - link "SAPO" [ref=e891] [cursor=pointer]:
+            - /url: http://www.sapo.pt/
+          - text: "- Todos os direitos reservados."

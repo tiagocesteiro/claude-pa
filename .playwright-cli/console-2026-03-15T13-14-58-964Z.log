@@ -1,0 +1,68 @@
+[    1387ms] [ERROR] Failed to find a valid digest in the 'integrity' attribute for resource 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' with computed SHA-512 integrity 'z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='. The resource has been blocked. @ https://www.custojusto.pt/portugal/veiculos/carros-usados/skoda/octavia?price_max=10000&me=11:0
+[   61657ms] [ERROR] Failed to load resource: the server responded with a status of 504 () @ https://www.custojusto.pt/_next/static/chunks/9447.e1541fcab833502b.js:0
+[  181816ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181817ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181817ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181817ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181818ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181818ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181818ms] Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ag (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:46394)
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:121017)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:93944)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181819ms] Error: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at i (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:120676)
+    at uI (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:99001)
+    at uM (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:98871)
+    at ux (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:95642)
+    at uS (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:94197)
+    at x (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:199489)
+    at MessagePort.R (https://www.custojusto.pt/_next/static/chunks/framework-80a5f77b89853f8d.js:1:200010)
+[  181882ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://www.custojusto.pt/v2/auth/check:0
+[  276615ms] [ERROR] Failed to find a valid digest in the 'integrity' attribute for resource 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' with computed SHA-512 integrity 'z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='. The resource has been blocked. @ https://www.custojusto.pt/portugal/veiculos/carros-usados/skoda/octavia?price_max=10000&me=11:0

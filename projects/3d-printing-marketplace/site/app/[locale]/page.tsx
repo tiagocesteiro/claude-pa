@@ -11,8 +11,8 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
   const supabase = await createClient()
 
   const [{ data: featured }, { count: modelCount }] = await Promise.all([
-    supabase.from('models').select('*').eq('is_active', true).order('likes', { ascending: false }).limit(8),
-    supabase.from('models').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('catalog_models').select('*').order('likes', { ascending: false }).limit(8),
+    supabase.from('catalog_models').select('*', { count: 'exact', head: true }),
   ])
 
   const count = (modelCount ?? 177).toLocaleString()

@@ -1,0 +1,11 @@
+[    2158ms] [ERROR] TypeError: Cannot read properties of undefined (reading 'some')
+    at componentUpdated (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:73959)
+    at xo (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:54390)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:53797
+    at c (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:11188)
+    at _n (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:22257)
+    at r (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:10756)
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71589)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896
+    at k (https://auto.sapo.pt/static/lib/vue/vue.min.js:11:71371)
+    at https://auto.sapo.pt/static/lib/vue/vue.min.js:11:70896 @ https://auto.sapo.pt/static/lib/vue/vue.min.js:10

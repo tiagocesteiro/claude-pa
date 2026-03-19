@@ -1,0 +1,24 @@
+TASK: Search YouTube for yt-dlp tutorials from the last 3 months
+DATE: 2026-03-19
+METHOD: Web search (no dedicated YouTube search skill)
+
+APPROACH
+Used WebSearch with three queries:
+1. `yt-dlp tutorial 2026 site:youtube.com` — no results
+2. `yt-dlp tutorial youtube 2025 2026` — returned blog/written guides
+3. `yt-dlp tutorial video youtube December 2025 January February March 2026` — similar results
+
+LIMITATION
+WebSearch cannot query YouTube's video index with date filters. Results are written blog tutorials, not YouTube videos. No YouTube video links with upload dates were surfaced.
+
+RESULTS FOUND (written tutorials, last 3 months)
+1. OSTechNix — "Yt-dlp Commands: The Complete Tutorial For Beginners (2026)"
+2. RapidSeedbox — "How to Use YT-DLP: Guide and Commands (2026)" (updated Jan 12, 2026)
+3. RoundProxies — "How to use yt-dlp in 2026" (Dec 14, 2025)
+4. GitHub (official repo)
+5. VideoHelp — latest release 2026.03.17
+6. ArchWiki
+
+ACTUAL YOUTUBE VIDEOS: None surfaced.
+
+CONCLUSION: Web search is insufficient for this task. A dedicated YouTube search skill using the YouTube Data API is needed to properly find YouTube videos with date filtering.

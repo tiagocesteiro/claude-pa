@@ -1,0 +1,754 @@
+- generic [active] [ref=e1]:
+  - dialog "Uso responsável dos seus dados" [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e5]:
+        - img "logotipo" [ref=e7]
+        - link "Usercentrics Cookiebot - opens in a new window" [ref=e8] [cursor=pointer]:
+          - /url: https://www.cookiebot.com/en/what-is-behind-powered-by-cookiebot/?utm_source=banner_cb&utm_medium=referral&utm_content=v2
+          - img [ref=e9]
+      - tablist [ref=e36]:
+        - tab "Consentir" [selected] [ref=e37] [cursor=pointer]
+        - tab "Detalhes" [ref=e38] [cursor=pointer]
+        - tab "Configurações dos anúncios" [ref=e39] [cursor=pointer]
+        - tab "Sobre os cookies" [ref=e40] [cursor=pointer]
+      - tabpanel "Consentir" [ref=e42]:
+        - generic [ref=e44]:
+          - heading "Uso responsável dos seus dados" [level=2] [ref=e45]
+          - generic [ref=e46]:
+            - text: Nós e
+            - link "os nossos 1019 parceiros" [ref=e47] [cursor=pointer]:
+              - /url: "#"
+            - text: processamos os seus dados pessoais, p. ex., o seu número IP, usando tecnologia como os cookies para guardarmos e acedermos a informações no seu dispositivo, veicularmos anúncios e conteúdos personalizados, medição de anúncios e conteúdos, conhecimentos sobre o público e desenvolvimento de produtos. Tem preferência sobre quem usa os seus dados e para que fins.
+            - generic [ref=e48]:
+              - text: "Se permitir, gostaríamos também de:"
+              - list [ref=e49]:
+                - listitem [ref=e50]: Recolher informações sobre a sua localização geográfica as quais podem ter uma precisão de vários metros
+                - listitem [ref=e51]: Identificar o seu dispositivo analisando de forma ativa as características específicas (impressão digital)
+            - text: Saiba mais sobre como os seus dados pessoais são processados e defina as suas preferências na
+            - link "secção de detalhes" [ref=e52] [cursor=pointer]:
+              - /url: "#"
+            - text: . Pode alterar ou retirar o seu consentimento a qualquer momento da Declaração de Cookies.
+            - paragraph [ref=e53]
+      - generic [ref=e57]:
+        - button "Rejeitar" [ref=e58] [cursor=pointer]
+        - button "Saber mais" [ref=e59] [cursor=pointer]: Saber mais
+        - button "Aceitar e fechar" [ref=e61] [cursor=pointer]
+  - generic [ref=e63]:
+    - navigation [ref=e65]:
+      - generic [ref=e66]:
+        - link "Logo" [ref=e68] [cursor=pointer]:
+          - /url: /
+          - img "Logo" [ref=e69]
+        - list [ref=e70]:
+          - listitem [ref=e71]:
+            - link "Pesquisa" [ref=e72] [cursor=pointer]:
+              - /url: /portugal
+              - img [ref=e74]
+              - generic [ref=e77]: Pesquisa
+          - listitem [ref=e78]:
+            - link "Favoritos" [ref=e79] [cursor=pointer]:
+              - /url: /user/favourites/items
+              - img [ref=e81]
+              - generic [ref=e84]: Favoritos
+          - listitem [ref=e85]:
+            - link "Mensagens" [ref=e86] [cursor=pointer]:
+              - /url: /user/messages
+              - img [ref=e88]
+              - generic [ref=e90]: Mensagens
+          - listitem [ref=e91]:
+            - link "Login" [ref=e92] [cursor=pointer]:
+              - /url: /login
+              - img [ref=e94]
+              - generic [ref=e97]: Login
+          - link "Anunciar" [ref=e99] [cursor=pointer]:
+            - /url: /ai
+            - img [ref=e100]
+            - generic [ref=e103]: Anunciar
+    - main [ref=e104]:
+      - generic [ref=e107]:
+        - navigation "breadcrumb" [ref=e108]:
+          - list [ref=e109]:
+            - listitem [ref=e110]:
+              - link "Anúncios CustoJusto.pt" [ref=e111] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e112]:
+              - generic [ref=e113]: 
+            - listitem [ref=e114]:
+              - link "Em Portugal" [ref=e115] [cursor=pointer]:
+                - /url: /portugal
+            - listitem [ref=e116]:
+              - generic [ref=e117]: 
+            - listitem [ref=e118]:
+              - link "Carros" [ref=e119] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados
+        - generic [ref=e121]:
+          - textbox "O que procura?" [ref=e124]
+          - generic [ref=e126] [cursor=pointer]:
+            - combobox [ref=e127]:
+              - generic [ref=e128]: Carros
+            - textbox: "2020"
+            - img
+          - generic [ref=e130] [cursor=pointer]:
+            - combobox [ref=e131]:
+              - generic [ref=e132]: Em Portugal
+            - textbox: "0"
+            - img
+          - button "Pesquisar" [ref=e134] [cursor=pointer]:
+            - img [ref=e136]
+            - generic [ref=e139]: Pesquisar
+          - group [ref=e141]:
+            - generic [ref=e142]: "Mostrar apenas anúncios com:"
+            - generic [ref=e143] [cursor=pointer]:
+              - generic [ref=e144]:
+                - checkbox "Imagens" [ref=e145]
+                - img [ref=e146]
+              - generic [ref=e148]: Imagens
+            - generic [ref=e149] [cursor=pointer]:
+              - generic [ref=e150]:
+                - checkbox "Videos" [ref=e151]
+                - img [ref=e152]
+              - generic [ref=e154]: Videos
+          - generic [ref=e156]:
+            - generic [ref=e157]:
+              - generic [ref=e159] [cursor=pointer]:
+                - combobox [ref=e160]: Skoda
+                - textbox: "42"
+                - img
+              - generic [ref=e162] [cursor=pointer]:
+                - combobox [ref=e163]: Octavia
+                - textbox: "5"
+                - img
+            - generic [ref=e164]:
+              - generic [ref=e166] [cursor=pointer]:
+                - combobox [ref=e167]:
+                  - generic [ref=e168]: Preço de
+                - textbox
+                - img
+              - generic [ref=e170] [cursor=pointer]:
+                - combobox [ref=e171]:
+                  - generic [ref=e172]: Preço até
+                - textbox
+                - img
+            - generic [ref=e173]:
+              - generic [ref=e175] [cursor=pointer]:
+                - combobox [ref=e176]:
+                  - generic [ref=e177]: Ano de
+                - textbox
+                - img
+              - generic [ref=e179] [cursor=pointer]:
+                - combobox [ref=e180]:
+                  - generic [ref=e181]: Ano até
+                - textbox
+                - img
+            - generic [ref=e182]:
+              - generic [ref=e184] [cursor=pointer]:
+                - combobox [ref=e185]:
+                  - generic [ref=e186]: Quilometragem de
+                - textbox
+                - img
+              - generic [ref=e188] [cursor=pointer]:
+                - combobox [ref=e189]:
+                  - generic [ref=e190]: 99 999
+                - textbox: "11"
+                - img
+            - generic [ref=e191]:
+              - generic [ref=e193] [cursor=pointer]:
+                - combobox [ref=e194]:
+                  - generic [ref=e195]: Cilindrada de
+                - textbox
+                - img
+              - generic [ref=e197] [cursor=pointer]:
+                - combobox [ref=e198]:
+                  - generic [ref=e199]: Cilindrada até
+                - textbox
+                - img
+            - generic [ref=e200]:
+              - generic [ref=e202] [cursor=pointer]:
+                - combobox [ref=e203]:
+                  - generic [ref=e204]: Potência de
+                - textbox
+                - img
+              - generic [ref=e206] [cursor=pointer]:
+                - combobox [ref=e207]:
+                  - generic [ref=e208]: Potência até
+                - textbox
+                - img
+            - generic [ref=e211] [cursor=pointer]:
+              - combobox [ref=e212]:
+                - generic [ref=e213]: Caixa de velocidades
+              - textbox
+              - img
+            - generic [ref=e216] [cursor=pointer]:
+              - combobox [ref=e217]:
+                - generic [ref=e218]: Combustível
+              - textbox
+              - img
+            - generic [ref=e220]:
+              - button "Citadino Citadino" [ref=e222] [cursor=pointer]:
+                - img "Citadino" [ref=e225]
+                - generic [ref=e226]: Citadino
+              - button "Utilitário Utilitário" [ref=e228] [cursor=pointer]:
+                - img "Utilitário" [ref=e231]
+                - generic [ref=e232]: Utilitário
+              - button "Sedan Sedan" [ref=e234] [cursor=pointer]:
+                - img "Sedan" [ref=e237]
+                - generic [ref=e238]: Sedan
+              - button "Carrinha Carrinha" [ref=e240] [cursor=pointer]:
+                - img "Carrinha" [ref=e243]
+                - generic [ref=e244]: Carrinha
+              - button "Coupé / Cabrio Coupé / Cabrio" [ref=e246] [cursor=pointer]:
+                - img "Coupé / Cabrio" [ref=e249]
+                - generic [ref=e250]: Coupé / Cabrio
+              - button "Monovolume Monovolume" [ref=e252] [cursor=pointer]:
+                - img "Monovolume" [ref=e255]
+                - generic [ref=e256]: Monovolume
+              - button "SUV / TT SUV / TT" [ref=e258] [cursor=pointer]:
+                - img "SUV / TT" [ref=e261]
+                - generic [ref=e262]: SUV / TT
+              - button "Clássico Clássico" [ref=e264] [cursor=pointer]:
+                - img "Clássico" [ref=e267]
+                - generic [ref=e268]: Clássico
+              - button "Salvado Salvado" [ref=e270] [cursor=pointer]:
+                - img "Salvado" [ref=e273]
+                - generic [ref=e274]: Salvado
+            - list [ref=e276]:
+              - listitem [ref=e277]:
+                - button "Amarelo" [ref=e278]
+              - listitem [ref=e279]:
+                - button "Azul" [ref=e280]
+              - listitem [ref=e281]:
+                - button "Branco" [ref=e282]
+              - listitem [ref=e283]:
+                - button "Castanho" [ref=e284]
+              - listitem [ref=e285]:
+                - button "Cinza" [ref=e286]
+              - listitem [ref=e287]:
+                - button "Laranja" [ref=e288]
+              - listitem [ref=e289]:
+                - button "Outra" [ref=e290]
+              - listitem [ref=e291]:
+                - button "Preto" [ref=e292]
+              - listitem [ref=e293]:
+                - button "Verde" [ref=e294]
+              - listitem [ref=e295]:
+                - button "Vermelho" [ref=e296]
+      - generic [ref=e301]:
+        - heading "Skoda Octavia - Comprar carros usados em Portugal" [level=1] [ref=e303]
+        - list [ref=e305]:
+          - listitem [ref=e306]:
+            - button "Em Portugal 11" [ref=e307]
+          - listitem [ref=e308]:
+            - button "Particulares 5" [ref=e309]
+          - listitem [ref=e310]:
+            - button "Profissionais 6" [ref=e311]
+        - generic [ref=e312]:
+          - list [ref=e313]:
+            - listitem [ref=e314]:
+              - button "" [ref=e315]:
+                - generic [ref=e316]: 
+          - list [ref=e317]:
+            - listitem [ref=e318]:
+              - button " Data" [ref=e319]:
+                - generic [ref=e320]: 
+                - text: Data
+            - listitem [ref=e321]:
+              - button " Preço" [ref=e322]:
+                - generic [ref=e323]: 
+                - text: Preço
+          - list [ref=e324]:
+            - listitem [ref=e325]:
+              - button " Guardar" [ref=e326]:
+                - generic [ref=e327]: 
+                - text: Guardar
+        - generic [ref=e328]:
+          - link "Skoda Octavia IV Combi 1.4 TSI iV 204 hp - 24" [ref=e330] [cursor=pointer]:
+            - /url: /aveiro/veiculos/carros-usados/salvado/skoda-octavia-iv-combi-1-4-tsi-44195302
+          - link "Skoda Octavia Greenline - 12" [ref=e333] [cursor=pointer]:
+            - /url: /vila-real/veiculos/carros-usados/carrinha/skoda-octavia-greenline-44716084
+          - link "Skoda Octavia 1.4 TSI iV Style DSG - 21" [ref=e336] [cursor=pointer]:
+            - /url: /braga/veiculos/carros-usados/carrinha/skoda-octavia-1-4-tsi-iv-style-44380547
+          - link "Skoda Octavia 2.0 TDI Selection DSG - 24" [ref=e339] [cursor=pointer]:
+            - /url: /braga/veiculos/carros-usados/carrinha/skoda-octavia-2-0-tdi-selectio-44825730
+          - link "Skoda Octavia 2.0 TDI Selection DSG - 24" [ref=e342] [cursor=pointer]:
+            - /url: /braga/veiculos/carros-usados/carrinha/skoda-octavia-2-0-tdi-selectio-44825725
+          - link "Skoda Octavia 1.6 TDi Ambiente - 11" [ref=e345] [cursor=pointer]:
+            - /url: /aveiro/veiculos/carros-usados/carrinha/skoda-octavia-1-6-tdi-ambiente-44666893
+          - link "Skoda Octavia 1.4 plug-in - 24" [ref=e348] [cursor=pointer]:
+            - /url: /santarem/veiculos/carros-usados/carrinha/skoda-octavia-1-4-plug-in-43876045
+          - link "Skoda Octavia 2.0 TDI - 24" [ref=e351] [cursor=pointer]:
+            - /url: /castelo-branco/veiculos/carros-usados/sedan/skoda-octavia-2-0-tdi-44632135
+          - link "Skoda Octavia 1.4TSI Ultra DSG Plug-In - 20" [ref=e356] [cursor=pointer]:
+            - /url: /porto/veiculos/carros-usados/carrinha/skoda-octavia-1-4tsi-ultra-dsg-44633940
+          - link "Skoda Octavia Break 1.4 TSI IV DSG - 24" [ref=e359] [cursor=pointer]:
+            - /url: /vila-real/veiculos/carros-usados/carrinha/skoda-octavia-break-1-4-tsi-iv-44600861
+          - link "Skoda Octavia Style - 23" [ref=e362] [cursor=pointer]:
+            - /url: /lisboa/veiculos/carros-usados/carrinha/skoda-octavia-style-44333151
+          - navigation [ref=e367]:
+            - list [ref=e368]:
+              - listitem [ref=e369]:
+                - button "1" [ref=e370]
+        - generic [ref=e373]:
+          - heading "Montra de anúncios " [level=2] [ref=e374] [cursor=pointer]:
+            - text: Montra de anúncios
+            - generic [ref=e375]: 
+          - link "Subaru Impreza 2.0 GT 4WD CATALUNYA 250.CV 27 850 € Subaru Impreza 2.0 GT 4WD CATALUNYA 250.CV" [ref=e376] [cursor=pointer]:
+            - /url: /aveiro/veiculos/carros-usados/citadino/subaru-impreza-2-0-gt-4wd-cata-43980656
+            - generic [ref=e377]:
+              - img "Subaru Impreza 2.0 GT 4WD CATALUNYA 250.CV" [ref=e379]
+              - generic [ref=e380]:
+                - heading "27 850 €" [level=4] [ref=e381]
+                - heading "Subaru Impreza 2.0 GT 4WD CATALUNYA 250.CV" [level=2] [ref=e382]
+          - link "Ford Courier EcoBoost Titanium 10 650 € Ford Courier EcoBoost Titanium" [ref=e383] [cursor=pointer]:
+            - /url: /viana-do-castelo/veiculos/carros-usados/carrinha/ford-courier-ecoboost-titanium-44350242
+            - generic [ref=e384]:
+              - img "Ford Courier EcoBoost Titanium" [ref=e386]
+              - generic [ref=e387]:
+                - heading "10 650 €" [level=4] [ref=e388]
+                - heading "Ford Courier EcoBoost Titanium" [level=2] [ref=e389]
+          - link "MINI Clubman 1.6D 6 999 € MINI Clubman 1.6D" [ref=e390] [cursor=pointer]:
+            - /url: /coimbra/veiculos/carros-usados/carrinha/mini-clubman-1-6d-44400464
+            - generic [ref=e391]:
+              - img "MINI Clubman 1.6D" [ref=e393]
+              - generic [ref=e394]:
+                - heading "6 999 €" [level=4] [ref=e395]
+                - heading "MINI Clubman 1.6D" [level=2] [ref=e396]
+      - generic [ref=e398]:
+        - generic [ref=e399]:
+          - generic [ref=e400]: Pesquisas relacionadas
+          - generic [ref=e401]:
+            - heading "vendo autocaravana barata urgente aveiro •" [level=4] [ref=e402]:
+              - link "vendo autocaravana barata urgente aveiro" [ref=e403] [cursor=pointer]:
+                - /url: /aveiro/veiculos/autocaravanas-reboques
+              - text: •
+            - heading "carros usados estarreja •" [level=4] [ref=e404]:
+              - link "carros usados estarreja" [ref=e405] [cursor=pointer]:
+                - /url: /aveiro/estarreja/veiculos/carros-usados
+              - text: •
+            - heading "carros usados •" [level=4] [ref=e406]:
+              - link "carros usados" [ref=e407] [cursor=pointer]:
+                - /url: /aveiro/santa-maria-da-feira/veiculos/carros-usados
+              - text: •
+            - heading "feira de carros usados •" [level=4] [ref=e408]:
+              - link "feira de carros usados" [ref=e409] [cursor=pointer]:
+                - /url: /aveiro/santa-maria-da-feira/veiculos/carros-usados
+              - text: •
+            - heading "barcos isonautica usados •" [level=4] [ref=e410]:
+              - link "barcos isonautica usados" [ref=e411] [cursor=pointer]:
+                - /url: /aveiro/veiculos/barcos
+              - text: •
+            - heading "ofertas emprego viana do castelo •" [level=4] [ref=e412]:
+              - link "ofertas emprego viana do castelo" [ref=e413] [cursor=pointer]:
+                - /url: /viana-do-castelo/emprego-servicos/emprego-oferta
+              - text: •
+            - heading "motos trike usadas •" [level=4] [ref=e414]:
+              - link "motos trike usadas" [ref=e415] [cursor=pointer]:
+                - /url: /portugal/veiculos/motos/q/movie%20trike?expand=1&ttonly=1
+              - text: •
+            - heading "vespino •" [level=4] [ref=e416]:
+              - link "vespino" [ref=e417] [cursor=pointer]:
+                - /url: /portugal/veiculos/motos/q/vespino
+              - text: •
+            - heading "c15 •" [level=4] [ref=e418]:
+              - link "c15" [ref=e419] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/citroen/c15
+              - text: •
+            - heading "motor isuzu d'max 2.5 diesel" [level=4] [ref=e420]:
+              - link "motor isuzu d'max 2.5 diesel" [ref=e421] [cursor=pointer]:
+                - /url: /portugal/veiculos/pecas-acessorios/q/motor%20isuzu%202.5%204jk1
+        - generic [ref=e422]:
+          - generic [ref=e423]: Carros
+          - generic [ref=e424]:
+            - heading "Sedan •" [level=4] [ref=e425]:
+              - link "Sedan" [ref=e426] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/sedan
+              - text: •
+            - heading "Coupé / Cabrio •" [level=4] [ref=e427]:
+              - link "Coupé / Cabrio" [ref=e428] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/coupe-cabrio
+              - text: •
+            - heading "Monovolume •" [level=4] [ref=e429]:
+              - link "Monovolume" [ref=e430] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/monovolume
+              - text: •
+            - heading "Citadino •" [level=4] [ref=e431]:
+              - link "Citadino" [ref=e432] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/citadino
+              - text: •
+            - heading "Utilitário •" [level=4] [ref=e433]:
+              - link "Utilitário" [ref=e434] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/utilitario
+              - text: •
+            - heading "Carrinha •" [level=4] [ref=e435]:
+              - link "Carrinha" [ref=e436] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/carrinha
+              - text: •
+            - heading "SUV / TT •" [level=4] [ref=e437]:
+              - link "SUV / TT" [ref=e438] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/suv-tt
+              - text: •
+            - heading "Clássico •" [level=4] [ref=e439]:
+              - link "Clássico" [ref=e440] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/classico
+              - text: •
+            - heading "Salvado" [level=4] [ref=e441]:
+              - link "Salvado" [ref=e442] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/salvado
+        - generic [ref=e443]:
+          - generic [ref=e444]: Em outras regiões
+          - generic [ref=e445]:
+            - heading "Carros Viana do Castelo •" [level=4] [ref=e446]:
+              - link "Carros Viana do Castelo" [ref=e447] [cursor=pointer]:
+                - /url: /viana-do-castelo/veiculos/carros-usados
+              - text: •
+            - heading "Carros Braga •" [level=4] [ref=e448]:
+              - link "Carros Braga" [ref=e449] [cursor=pointer]:
+                - /url: /braga/veiculos/carros-usados
+              - text: •
+            - heading "Carros Vila Real •" [level=4] [ref=e450]:
+              - link "Carros Vila Real" [ref=e451] [cursor=pointer]:
+                - /url: /vila-real/veiculos/carros-usados
+              - text: •
+            - heading "Carros Bragança •" [level=4] [ref=e452]:
+              - link "Carros Bragança" [ref=e453] [cursor=pointer]:
+                - /url: /braganca/veiculos/carros-usados
+              - text: •
+            - heading "Carros Porto •" [level=4] [ref=e454]:
+              - link "Carros Porto" [ref=e455] [cursor=pointer]:
+                - /url: /porto/veiculos/carros-usados
+              - text: •
+            - heading "Carros Aveiro •" [level=4] [ref=e456]:
+              - link "Carros Aveiro" [ref=e457] [cursor=pointer]:
+                - /url: /aveiro/veiculos/carros-usados
+              - text: •
+            - heading "Carros Viseu •" [level=4] [ref=e458]:
+              - link "Carros Viseu" [ref=e459] [cursor=pointer]:
+                - /url: /viseu/veiculos/carros-usados
+              - text: •
+            - heading "Carros Guarda •" [level=4] [ref=e460]:
+              - link "Carros Guarda" [ref=e461] [cursor=pointer]:
+                - /url: /guarda/veiculos/carros-usados
+              - text: •
+            - heading "Carros Coimbra •" [level=4] [ref=e462]:
+              - link "Carros Coimbra" [ref=e463] [cursor=pointer]:
+                - /url: /coimbra/veiculos/carros-usados
+              - text: •
+            - heading "Carros Castelo Branco •" [level=4] [ref=e464]:
+              - link "Carros Castelo Branco" [ref=e465] [cursor=pointer]:
+                - /url: /castelo-branco/veiculos/carros-usados
+              - text: •
+            - heading "Carros Leiria •" [level=4] [ref=e466]:
+              - link "Carros Leiria" [ref=e467] [cursor=pointer]:
+                - /url: /leiria/veiculos/carros-usados
+              - text: •
+            - heading "Carros Santarém •" [level=4] [ref=e468]:
+              - link "Carros Santarém" [ref=e469] [cursor=pointer]:
+                - /url: /santarem/veiculos/carros-usados
+              - text: •
+            - heading "Carros Portalegre •" [level=4] [ref=e470]:
+              - link "Carros Portalegre" [ref=e471] [cursor=pointer]:
+                - /url: /portalegre/veiculos/carros-usados
+              - text: •
+            - heading "Carros Lisboa •" [level=4] [ref=e472]:
+              - link "Carros Lisboa" [ref=e473] [cursor=pointer]:
+                - /url: /lisboa/veiculos/carros-usados
+              - text: •
+            - heading "Carros Évora •" [level=4] [ref=e474]:
+              - link "Carros Évora" [ref=e475] [cursor=pointer]:
+                - /url: /evora/veiculos/carros-usados
+              - text: •
+            - heading "Carros Setúbal •" [level=4] [ref=e476]:
+              - link "Carros Setúbal" [ref=e477] [cursor=pointer]:
+                - /url: /setubal/veiculos/carros-usados
+              - text: •
+            - heading "Carros Beja •" [level=4] [ref=e478]:
+              - link "Carros Beja" [ref=e479] [cursor=pointer]:
+                - /url: /beja/veiculos/carros-usados
+              - text: •
+            - heading "Carros Faro •" [level=4] [ref=e480]:
+              - link "Carros Faro" [ref=e481] [cursor=pointer]:
+                - /url: /faro/veiculos/carros-usados
+              - text: •
+            - heading "Carros Açores •" [level=4] [ref=e482]:
+              - link "Carros Açores" [ref=e483] [cursor=pointer]:
+                - /url: /acores/veiculos/carros-usados
+              - text: •
+            - heading "Carros Madeira •" [level=4] [ref=e484]:
+              - link "Carros Madeira" [ref=e485] [cursor=pointer]:
+                - /url: /madeira/veiculos/carros-usados
+              - text: •
+            - heading "Carros Portugal" [level=4] [ref=e486]:
+              - link "Carros Portugal" [ref=e487] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados
+        - generic [ref=e488]:
+          - generic [ref=e489]: Top Marcas
+          - generic [ref=e490]:
+            - heading "Peugeot (3231) •" [level=4] [ref=e491]:
+              - link "Peugeot (3231)" [ref=e492] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/peugeot
+              - text: •
+            - heading "Mercedes-Benz (3114) •" [level=4] [ref=e493]:
+              - link "Mercedes-Benz (3114)" [ref=e494] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/mercedes-benz
+              - text: •
+            - heading "Renault (2899) •" [level=4] [ref=e495]:
+              - link "Renault (2899)" [ref=e496] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/renault
+              - text: •
+            - heading "BMW (2740) •" [level=4] [ref=e497]:
+              - link "BMW (2740)" [ref=e498] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/bmw
+              - text: •
+            - heading "Citroen (1993) •" [level=4] [ref=e499]:
+              - link "Citroen (1993)" [ref=e500] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/citroen
+              - text: •
+            - heading "VW (1766) •" [level=4] [ref=e501]:
+              - link "VW (1766)" [ref=e502] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/vw
+              - text: •
+            - heading "Opel (1583) •" [level=4] [ref=e503]:
+              - link "Opel (1583)" [ref=e504] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/opel
+              - text: •
+            - heading "Ford (1488) •" [level=4] [ref=e505]:
+              - link "Ford (1488)" [ref=e506] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/ford
+              - text: •
+            - heading "Fiat (1452) •" [level=4] [ref=e507]:
+              - link "Fiat (1452)" [ref=e508] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/fiat
+              - text: •
+            - heading "Audi (1214) •" [level=4] [ref=e509]:
+              - link "Audi (1214)" [ref=e510] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/audi
+              - text: •
+            - heading "Seat (993) •" [level=4] [ref=e511]:
+              - link "Seat (993)" [ref=e512] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/seat
+              - text: •
+            - heading "Toyota (913) •" [level=4] [ref=e513]:
+              - link "Toyota (913)" [ref=e514] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/toyota
+              - text: •
+            - heading "Nissan (862) •" [level=4] [ref=e515]:
+              - link "Nissan (862)" [ref=e516] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/nissan
+              - text: •
+            - heading "MINI (711) •" [level=4] [ref=e517]:
+              - link "MINI (711)" [ref=e518] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/mini
+              - text: •
+            - heading "Volvo (567) •" [level=4] [ref=e519]:
+              - link "Volvo (567)" [ref=e520] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/volvo
+              - text: •
+            - heading "Mitsubishi (422) •" [level=4] [ref=e521]:
+              - link "Mitsubishi (422)" [ref=e522] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/mitsubishi
+              - text: •
+            - heading "Smart (369) •" [level=4] [ref=e523]:
+              - link "Smart (369)" [ref=e524] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/smart
+              - text: •
+            - heading "Hyundai (324) •" [level=4] [ref=e525]:
+              - link "Hyundai (324)" [ref=e526] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/hyundai
+              - text: •
+            - heading "Alfa Romeo (272) •" [level=4] [ref=e527]:
+              - link "Alfa Romeo (272)" [ref=e528] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/alfa-romeo
+              - text: •
+            - heading "Mazda (212)" [level=4] [ref=e529]:
+              - link "Mazda (212)" [ref=e530] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/mazda
+        - generic [ref=e531]:
+          - generic [ref=e532]: Top Pesquisas
+          - generic [ref=e533]:
+            - heading "gatos •" [level=4] [ref=e534]:
+              - link "gatos" [ref=e535] [cursor=pointer]:
+                - /url: /portugal/animais/animais-domesticos/gatos
+              - text: •
+            - heading "cães •" [level=4] [ref=e536]:
+              - link "cães" [ref=e537] [cursor=pointer]:
+                - /url: /portugal/animais/animais-domesticos/caes
+              - text: •
+            - heading "bulldog frances •" [level=4] [ref=e538]:
+              - link "bulldog frances" [ref=e539] [cursor=pointer]:
+                - /url: /portugal/animais/animais-domesticos/caes/q/bulldog+frances
+              - text: •
+            - heading "chihuahua •" [level=4] [ref=e540]:
+              - link "chihuahua" [ref=e541] [cursor=pointer]:
+                - /url: /portugal/animais/animais-domesticos/caes?ab=10&c=6061
+              - text: •
+            - heading "iphone •" [level=4] [ref=e542]:
+              - link "iphone" [ref=e543] [cursor=pointer]:
+                - /url: /portugal/informatica/telefones-acessorios/telefones/q/iphone
+              - text: •
+            - heading "iPhone 14 •" [level=4] [ref=e544]:
+              - link "iPhone 14" [ref=e545] [cursor=pointer]:
+                - /url: /portugal/informatica/telefones-acessorios/telefones/q/iphone+14
+              - text: •
+            - heading "Samsung •" [level=4] [ref=e546]:
+              - link "Samsung" [ref=e547] [cursor=pointer]:
+                - /url: /portugal/informatica/telefones-acessorios/samsung/telefones
+              - text: •
+            - heading "huawei •" [level=4] [ref=e548]:
+              - link "huawei" [ref=e549] [cursor=pointer]:
+                - /url: /portugal/informatica/telefones-acessorios/huawei/telefones
+              - text: •
+            - heading "ps4 •" [level=4] [ref=e550]:
+              - link "ps4" [ref=e551] [cursor=pointer]:
+                - /url: /portugal/informatica/videojogos-consolas/q/ps4
+              - text: •
+            - heading "playstation •" [level=4] [ref=e552]:
+              - link "playstation" [ref=e553] [cursor=pointer]:
+                - /url: /portugal/informatica/videojogos-consolas/q/playstation
+              - text: •
+            - heading "xbox •" [level=4] [ref=e554]:
+              - link "xbox" [ref=e555] [cursor=pointer]:
+                - /url: /portugal/informatica/videojogos-consolas/q/xbox
+              - text: •
+            - heading "sofa •" [level=4] [ref=e556]:
+              - link "sofa" [ref=e557] [cursor=pointer]:
+                - /url: /portugal/casa-vestuario/moveis-decoracao/q/sofa
+              - text: •
+            - heading "bicicletas •" [level=4] [ref=e558]:
+              - link "bicicletas" [ref=e559] [cursor=pointer]:
+                - /url: /portugal/desporto-lazer/bicicleta/bicicletas
+              - text: •
+            - heading "carrinhos bebe •" [level=4] [ref=e560]:
+              - link "carrinhos bebe" [ref=e561] [cursor=pointer]:
+                - /url: /portugal/casa-vestuario/acessorios-bebe/q/carrinhos+bebe
+              - text: •
+            - heading "tractores •" [level=4] [ref=e562]:
+              - link "tractores" [ref=e563] [cursor=pointer]:
+                - /url: /portugal/equipamento/agricultura/tractores
+              - text: •
+            - heading "retroescavadora •" [level=4] [ref=e564]:
+              - link "retroescavadora" [ref=e565] [cursor=pointer]:
+                - /url: /portugal/equipamento/equipamento-construcao-civil/q/retroescavadoras
+              - text: •
+            - heading "mini giratoria •" [level=4] [ref=e566]:
+              - link "mini giratoria" [ref=e567] [cursor=pointer]:
+                - /url: /portugal/equipamento/equipamento-construcao-civil/q/mini+giratoria
+              - text: •
+            - heading "moto 4 •" [level=4] [ref=e568]:
+              - link "moto 4" [ref=e569] [cursor=pointer]:
+                - /url: /portugal/veiculos/motos/moto-4-quad
+              - text: •
+            - heading "carrinhas usadas •" [level=4] [ref=e570]:
+              - link "carrinhas usadas" [ref=e571] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados/carrinha
+              - text: •
+            - heading "carros baratos •" [level=4] [ref=e572]:
+              - link "carros baratos" [ref=e573] [cursor=pointer]:
+                - /url: /portugal/veiculos/carros-usados?pe=9
+              - text: •
+            - heading "comprar casa Lisboa •" [level=4] [ref=e574]:
+              - link "comprar casa Lisboa" [ref=e575] [cursor=pointer]:
+                - /url: /lisboa/lisboa/imobiliario/apartamentos-venda
+              - text: •
+            - heading "comprar casa Porto •" [level=4] [ref=e576]:
+              - link "comprar casa Porto" [ref=e577] [cursor=pointer]:
+                - /url: /porto/porto/imobiliario/apartamentos-venda
+              - text: •
+            - heading "arrendar casa Lisboa •" [level=4] [ref=e578]:
+              - link "arrendar casa Lisboa" [ref=e579] [cursor=pointer]:
+                - /url: /lisboa/lisboa/imobiliario/apartamentos-arrendar
+              - text: •
+            - heading "arrendar casa Porto •" [level=4] [ref=e580]:
+              - link "arrendar casa Porto" [ref=e581] [cursor=pointer]:
+                - /url: /porto/porto/imobiliario/apartamentos-arrendar
+              - text: •
+            - heading "casas de férias com piscina" [level=4] [ref=e582]:
+              - link "casas de férias com piscina" [ref=e583] [cursor=pointer]:
+                - /url: /portugal/imobiliario/ferias-arrendar/piscina
+      - generic [ref=e585]:
+        - paragraph [ref=e586]: Perguntas Frequentes
+        - button "Quais os carros usados mais económicos em Portugal?" [ref=e588] [cursor=pointer]:
+          - paragraph [ref=e590]: Quais os carros usados mais económicos em Portugal?
+          - img [ref=e592]
+        - button "Como avaliar se os quilómetros indicado no carro usado é confiável?" [ref=e595] [cursor=pointer]:
+          - paragraph [ref=e597]: Como avaliar se os quilómetros indicado no carro usado é confiável?
+          - img [ref=e599]
+        - button "Como escolher um carro usado em bom estado?" [ref=e602] [cursor=pointer]:
+          - paragraph [ref=e604]: Como escolher um carro usado em bom estado?
+          - img [ref=e606]
+        - button "Quais cuidados ter antes de comprar um carro usado?" [ref=e609] [cursor=pointer]:
+          - paragraph [ref=e611]: Quais cuidados ter antes de comprar um carro usado?
+          - img [ref=e613]
+        - button "Vale a pena comprar carros usados em vez de novos?" [ref=e616] [cursor=pointer]:
+          - paragraph [ref=e618]: Vale a pena comprar carros usados em vez de novos?
+          - img [ref=e620]
+    - contentinfo [ref=e622]:
+      - generic [ref=e623]:
+        - generic [ref=e626]:
+          - generic [ref=e627]:
+            - generic [ref=e628]: Sobre o CustoJusto
+            - link "Quem somos" [ref=e629] [cursor=pointer]:
+              - /url: /ajuda?section=sobre
+            - link "Carros usados" [ref=e630] [cursor=pointer]:
+              - /url: /carros-usados
+            - link "Contactos" [ref=e631] [cursor=pointer]:
+              - /url: /ajuda-contacto
+            - link "Blog" [ref=e632] [cursor=pointer]:
+              - /url: https://blog.custojusto.pt/
+          - generic [ref=e633]:
+            - generic [ref=e634]: Segurança
+            - link "Compra segura" [ref=e635] [cursor=pointer]:
+              - /url: /ajuda-compra
+            - link "Ajuda" [ref=e636] [cursor=pointer]:
+              - /url: /ajuda
+            - link "Testemunhos" [ref=e637] [cursor=pointer]:
+              - /url: /testemunhos
+          - generic [ref=e640]:
+            - generic [ref=e641]: Termos
+            - link "Regras" [ref=e642] [cursor=pointer]:
+              - /url: /ajuda-rules?section=regras
+            - link "Privacidade" [ref=e643] [cursor=pointer]:
+              - /url: /ajuda-rules?section=privacidade
+            - generic [ref=e644] [cursor=pointer]: Definições de privacidade
+            - link "Livro de Reclamações online" [ref=e645] [cursor=pointer]:
+              - /url: https://www.livroreclamacoes.pt/Inicio/
+          - generic [ref=e646]:
+            - generic [ref=e647]: Para Profissionais
+            - link "CustoJusto Pro" [ref=e648] [cursor=pointer]:
+              - /url: /pro
+            - link "Acesso a CustoJusto Pro" [ref=e649] [cursor=pointer]:
+              - /url: https://pro.custojusto.pt/
+            - link "Ver todas as lojas" [ref=e650] [cursor=pointer]:
+              - /url: /lojas
+            - link "Publicidade" [ref=e651] [cursor=pointer]:
+              - /url: /formatos
+          - generic [ref=e652]:
+            - link "Encontre-nos em" [ref=e653] [cursor=pointer]:
+              - /url: /apps
+            - generic [ref=e654]:
+              - link "Facebook" [ref=e655] [cursor=pointer]:
+                - /url: https://www.facebook.com/CustoJusto/
+                - img "Facebook" [ref=e656]
+              - link "Instagram" [ref=e657] [cursor=pointer]:
+                - /url: https://www.instagram.com/custojusto.pt/
+                - img "Instagram" [ref=e658]
+              - link "LinkedIn" [ref=e659] [cursor=pointer]:
+                - /url: https://pt.linkedin.com/company/custojusto
+                - img "LinkedIn" [ref=e660]
+          - generic [ref=e661]:
+            - generic [ref=e662]: As nossas apps
+            - generic [ref=e663]:
+              - link "App 1" [ref=e664] [cursor=pointer]:
+                - /url: https://cjt.pt/iOSapp
+                - img "App 1" [ref=e665]
+              - link "App 2" [ref=e666] [cursor=pointer]:
+                - /url: https://cjt.pt/androidapp
+                - img "App 2" [ref=e667]
+              - link "App 3" [ref=e668] [cursor=pointer]:
+                - /url: https://cjt.pt/cjt_apphuawei
+                - img "App 3" [ref=e669]
+        - generic [ref=e670]:
+          - text: © CustoJusto 2025
+          - separator [ref=e671]
+          - paragraph [ref=e672]: CustoJusto Portugal - Compre e venda grátis. Anúncios e classificados grátis de carros usados, motas, tractores, casas, apartamentos, mobile homes, vestuário, informática, animais, vinhos, livros e todo o tipo de artigos usados.
+  - iframe [ref=e673]:
+    
+  - alert [ref=e674]

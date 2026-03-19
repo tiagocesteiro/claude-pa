@@ -1,0 +1,3 @@
+[     134ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://auto.sapo.pt/usados/carros:0
+[     200ms] TypeError: $(...).tooltip is not a function
+    at HTMLDocument.<anonymous> (https://auto.sapo.pt/usados/carros:167:34)
