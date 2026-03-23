@@ -8,6 +8,7 @@ interface ModelCardProps {
     name: string
     summary?: string
     thumbnail?: string
+    enhanced_thumbnail?: string
     license_name?: string
     creator_username?: string
     category_name?: string
@@ -23,8 +24,8 @@ export default function ModelCard({ model, locale }: ModelCardProps) {
     <Link href={`/${locale}/model/${model.id}`}
       className="model-card-link group bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius)] overflow-hidden transition-all duration-200">
       <div className="aspect-[4/3] bg-[var(--accent-light)] relative overflow-hidden">
-        {model.thumbnail ? (
-          <Image src={model.thumbnail} alt={model.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+        {(model.enhanced_thumbnail || model.thumbnail) ? (
+          <Image src={model.enhanced_thumbnail ?? model.thumbnail!} alt={model.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Printer size={32} className="text-[var(--accent)] opacity-40" />
