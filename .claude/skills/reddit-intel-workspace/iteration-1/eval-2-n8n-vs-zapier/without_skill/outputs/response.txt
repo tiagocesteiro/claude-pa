@@ -1,0 +1,19 @@
+Research complete. Here's what I found on n8n vs Zapier switching reasons:
+
+Note: Reddit blocks Anthropic's crawler — pulled from n8n Community Forum, agency testimonials, and comparison articles instead.
+
+Key findings:
+
+Why people switch FROM Zapier TO n8n:
+- Cost is #1: Zapier bills per task, n8n per execution. Documented case: £1,200/mo → £40/mo after switch
+- Self-hosting: free, unlimited executions, GDPR-friendly, auditable code
+- Complexity ceiling: n8n handles branching, loops, JavaScript/Python; Zapier is linear only
+- Feature parity without upsells: premium connectors gated on Zapier, open on n8n
+
+Why people stay with or switch TO Zapier:
+- Zero learning curve for non-technical users
+- 8,000+ native connectors vs n8n's ~400
+- Zero server maintenance (fully managed)
+- Speed for simple use cases
+
+Main switching triggers: unexpected bill spike, needing custom code, GDPR requirements, workflow needing loops/branching.

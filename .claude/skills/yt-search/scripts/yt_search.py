@@ -57,16 +57,22 @@ def format_date(upload_date_str):
         return upload_date_str
 
 
+def days_ago(n):
+    """Return a datetime N days ago from today."""
+    return datetime.today() - timedelta(days=n)
+
+
 def months_ago(n):
     """Return a datetime N months ago from today."""
-    today = datetime.today()
-    # Approximate: 30 days per month
-    return today - timedelta(days=30 * n)
+    return datetime.today() - timedelta(days=30 * n)
 
 
-def search_youtube(query, limit, months):
+def search_youtube(query, limit, days=None, months=None):
     """Run yt-dlp search and return parsed video metadata."""
-    cutoff = months_ago(months)
+    if days is not None:
+        cutoff = days_ago(days)
+    else:
+        cutoff = months_ago(months)
     cutoff_str = cutoff.strftime("%Y%m%d")
 
     # Fetch more than needed to account for date filtering
@@ -132,12 +138,13 @@ def compute_engagement(view_count, subscriber_count):
     return round(int(view_count) / int(subscriber_count), 2)
 
 
-def print_results(videos, query, months, limit):
+def print_results(videos, query, limit, days=None, months=None):
     divider = "─" * 60
+    period = f"last {days} day(s)" if days is not None else f"last {months} month(s)"
 
     print(f"\n{divider}")
     print(f"  YouTube Search: \"{query}\"")
-    print(f"  Showing {len(videos)} result(s) from the last {months} month(s)")
+    print(f"  Showing {len(videos)} result(s) from the {period}")
     print(divider)
 
     if not videos:
@@ -174,21 +181,26 @@ def main():
     )
     parser.add_argument("query", help="Search query")
     parser.add_argument("--limit", type=int, default=20, help="Number of results (default: 20)")
+    parser.add_argument("--days", type=int, default=None, help="Filter to last N days (overrides --months)")
     parser.add_argument("--months", type=int, default=6, help="Filter to last N months (default: 6)")
     args = parser.parse_args()
 
     if args.limit < 1:
         print("Error: --limit must be at least 1", file=sys.stderr)
         sys.exit(1)
-    if args.months < 1:
+    if args.days is not None and args.days < 1:
+        print("Error: --days must be at least 1", file=sys.stderr)
+        sys.exit(1)
+    if args.days is None and args.months < 1:
         print("Error: --months must be at least 1", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Searching YouTube for \"{args.query}\" (last {args.months} months, up to {args.limit} results)...")
+    period = f"last {args.days} day(s)" if args.days is not None else f"last {args.months} month(s)"
+    print(f"Searching YouTube for \"{args.query}\" ({period}, up to {args.limit} results)...")
     print("This may take 30–90 seconds for full metadata extraction.")
 
-    videos = search_youtube(args.query, args.limit, args.months)
-    print_results(videos, args.query, args.months, args.limit)
+    videos = search_youtube(args.query, args.limit, days=args.days, months=args.months)
+    print_results(videos, args.query, args.limit, days=args.days, months=args.months)
 
 
 if __name__ == "__main__":

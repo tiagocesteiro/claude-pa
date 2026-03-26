@@ -4,5 +4,8 @@ CLAUDE.local.md
 node_modules/
 .obsidian/
 .firecrawl/
-
 .vercel
+logs/
+.playwright-cli/
+**/__pycache__/
+*.pyc

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Color Test — Flexi Rex</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f5; padding: 40px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  p.sub { color: #666; font-size: 14px; margin-bottom: 32px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 860px; }
+  .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+  /* Gradient bg on the div — never touched by CSS filters */
+  .img-wrap {
+    aspect-ratio: 4/3;
+    background: radial-gradient(ellipse at 50% 40%, #e8e8e8 0%, #b8b8b8 100%);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .img-wrap.original { background: none; }
+
+  /* Filter applied ONLY to the img — background div is unaffected */
+  .img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+  .label { padding: 14px 16px; }
+  .label h2 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .label p { font-size: 12px; color: #999; margin: 0; }
+
+  .controls { margin-bottom: 32px; }
+  .controls h3 { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 10px; }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .row label { font-size: 13px; width: 60px; color: #555; }
+  .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; cursor: pointer; transition: transform 0.1s; }
+  .swatch:hover { transform: scale(1.2); }
+  .swatch.active { box-shadow: 0 0 0 2.5px #000; }
+</style>
+</head>
+<body>
+
+<h1>Color Test — Flexi Rex</h1>
+<p class="sub">Transparent PNG on gradient div. CSS filter on img only — background never changes.</p>
+
+<div class="controls">
+  <h3>Pick colors</h3>
+  <div class="row">
+    <label>Card 2</label>
+    <div class="swatch active" style="background:#ef4444" data-hue="0"   onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#f97316" data-hue="25"  onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#eab308" data-hue="55"  onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#22c55e" data-hue="120" onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#06b6d4" data-hue="175" onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#3b82f6" data-hue="215" onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#a855f7" data-hue="270" onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#ec4899" data-hue="310" onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#e5e5e5;border:1px solid #ccc" data-hue="grey" onclick="setColor(this,2)"></div>
+    <div class="swatch" style="background:#1a1a1a" data-hue="black" onclick="setColor(this,2)"></div>
+  </div>
+  <div class="row">
+    <label>Card 3</label>
+    <div class="swatch" style="background:#ef4444" data-hue="0"   onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#f97316" data-hue="25"  onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#eab308" data-hue="55"  onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#22c55e" data-hue="120" onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#06b6d4" data-hue="175" onclick="setColor(this,3)"></div>
+    <div class="swatch active" style="background:#3b82f6" data-hue="215" onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#a855f7" data-hue="270" onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#ec4899" data-hue="310" onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#e5e5e5;border:1px solid #ccc" data-hue="grey" onclick="setColor(this,3)"></div>
+    <div class="swatch" style="background:#1a1a1a" data-hue="black" onclick="setColor(this,3)"></div>
+  </div>
+</div>
+
+<div class="grid">
+
+  <!-- BEFORE Flexi Rex -->
+  <div class="card">
+    <div class="img-wrap original">
+      <img src="https://media.printables.com/media/prints/46241/images/460061_192b3d1b-4544-4572-b316-8f405536938e/5e04faf6b1ebee0735ffb82771ca9051_display_large_46.jpg" alt="Original">
+    </div>
+    <div class="label"><h2>Flexi Rex — Original</h2><p>Complex articulated object</p></div>
+  </div>
+  <div class="card">
+    <div class="img-wrap">
+      <img id="img2" src="https://nxlgdzmtatqbdcumnalo.supabase.co/storage/v1/object/public/model-images/46241.png" alt="Studio">
+    </div>
+    <div class="label"><h2>Flexi Rex — <span id="label2">Red</span></h2><p>rembg result</p></div>
+  </div>
+  <div class="card"><div class="img-wrap original"></div><div class="label"><h2></h2></div></div>
+
+  <!-- BEFORE Small Clip -->
+  <div class="card">
+    <div class="img-wrap original">
+      <img src="https://media.printables.com/media/prints/6806/images/36718_fd6e4196-77d3-4b18-a40a-a8aa4060286a/small_clip_display_large.jpg" alt="Original">
+    </div>
+    <div class="label"><h2>Small Clip — Original</h2><p>Simple solid object</p></div>
+  </div>
+  <div class="card">
+    <div class="img-wrap">
+      <img id="img3" src="https://nxlgdzmtatqbdcumnalo.supabase.co/storage/v1/object/public/model-images/6806.png" alt="Studio">
+    </div>
+    <div class="label"><h2>Small Clip — <span id="label3">Blue</span></h2><p>rembg result</p></div>
+  </div>
+  <div class="card"><div class="img-wrap original"></div><div class="label"><h2></h2></div></div>
+
+</div>
+
+<script>
+  const names = { 0:'Red', 25:'Orange', 55:'Yellow', 120:'Green', 175:'Cyan', 215:'Blue', 270:'Purple', 310:'Pink', grey:'Grey', black:'Black' }
+
+  // grayscale normalizes any original color → sepia adds warm tone → hue-rotate to target color
+  function colorFilter(hue) {
+    if (hue === 'grey') return 'grayscale(1) brightness(1.1)'
+    if (hue === 'black') return 'grayscale(1) brightness(0.15)'
+    const rotation = (parseInt(hue) - 30 + 360) % 360
+    return `grayscale(1) sepia(1) saturate(4) hue-rotate(${rotation}deg)`
+  }
+
+  function setColor(el, card) {
+    const hue = el.dataset.hue
+    document.getElementById('img' + card).style.filter = colorFilter(hue)
+    document.getElementById('label' + card).textContent = names[hue] || hue
+    el.closest('.row').querySelectorAll('.swatch').forEach(s => s.classList.remove('active'))
+    el.classList.add('active')
+  }
+
+  // Defaults
+  document.getElementById('img2').style.filter = colorFilter('0')
+  document.getElementById('img3').style.filter = colorFilter('215')
+</script>
+
+</body>
+</html>

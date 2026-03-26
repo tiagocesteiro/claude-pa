@@ -1,0 +1,9 @@
+Here's what the community says about 3D printing marketplaces (note: Reddit blocked, used community data + platform reviews):
+
+Key findings:
+- Demand is real: r/3Dprintmything (15K members) is literally people wanting prints with no payment rails
+- 3DHubs built exactly this model → pivoted to B2B → community exploded with anger → market is unserved
+- #1 buyer pain: pricing opacity + quality uncertainty before ordering
+- Local matching solves the economics — shipping cost is what makes remote platforms uncompetitive
+- No dominant consumer peer-to-peer platform exists (MakeXYZ/Vulkaza have minimal mindshare)
+- Key risk: quality variance kills trust — maker vetting is make-or-break

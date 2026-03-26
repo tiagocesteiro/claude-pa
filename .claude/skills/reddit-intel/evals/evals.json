@@ -1,0 +1,23 @@
+{
+  "skill_name": "reddit-intel",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Search Reddit for what people think about 3D printing marketplaces — I want to know if there's real demand and what the main pain points are. Save a report.",
+      "expected_output": "A structured markdown report saved to disk with sections: Pain Points, Common Opinions, Recurring Questions, Product/Competitor Mentions, Notable Quotes, Active Communities. Inline summary of 3-5 key findings.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "What does Reddit say about frozen smoothie vending machines? I'm thinking of starting one as a business. Are people into the idea, any reviews of existing ones?",
+      "expected_output": "A structured markdown report saved to disk covering community sentiment, existing products mentioned, pain points with current options, any demand signals. Inline quick summary.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Mine Reddit for opinions on n8n vs Zapier — what are the main reasons people switch from one to the other?",
+      "expected_output": "A structured markdown report saved to disk. Should cover: why people switch directions (n8n→Zapier and Zapier→n8n), key pain points with each, notable community quotes, active subreddits. Inline summary of key switching triggers.",
+      "files": []
+    }
+  ]
+}

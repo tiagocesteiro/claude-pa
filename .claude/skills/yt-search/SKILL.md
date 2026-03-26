@@ -42,13 +42,19 @@ python scripts/yt_search.py "your search query" [--limit N] [--months N]
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--limit N` | 20 | Max number of results to return |
+| `--days N` | — | Filter to videos uploaded within the last N days (overrides --months) |
 | `--months N` | 6 | Filter to videos uploaded within the last N months |
+
+`--days` takes precedence over `--months` when both are provided.
 
 ### Examples
 
 ```bash
 # Basic search
 python scripts/yt_search.py "n8n workflow automation"
+
+# Last 10 days, top 10 results
+python scripts/yt_search.py "Claude Code" --days 10 --limit 10
 
 # Last 3 months, top 5 only
 python scripts/yt_search.py "3d printing marketplace" --limit 5 --months 3
@@ -81,7 +87,11 @@ When the user asks to search YouTube, run the script using the Bash tool:
 python "d:/Claude - PA/.claude/skills/yt-search/scripts/yt_search.py" "QUERY" --limit LIMIT --months MONTHS
 ```
 
-Adjust `--limit` and `--months` from user intent (e.g. "recent" → 3 months, "last year" → 12 months, "top 5" → limit 5). When not specified, use defaults (20 results, 6 months).
+Adjust flags from user intent:
+- "last 10 days" / "this week" / "recent" → use `--days N` (e.g. `--days 10`, `--days 7`)
+- "last 3 months" / "last year" → use `--months N`
+- "top 5" / "find 10" → use `--limit N`
+- When not specified, use defaults (20 results, 6 months).
 
 ## Speed note
 
