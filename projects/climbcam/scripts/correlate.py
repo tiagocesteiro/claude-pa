@@ -99,3 +99,111 @@ def normalize_scores(raw_scores: list) -> list:
                  SCORE_W["sharp"]  * sharp_norm)
         result.append(round(score, 4))
     return result
+
+
+# ── HSV appearance ────────────────────────────────────────────────────────────
+
+def compute_hsv_hist(clip_path: Path, n_frames: int = 5) -> np.ndarray | None:
+    """Sample n_frames from clip, return mean HSV 16×16×16 histogram (L1-norm) or None."""
+    cap   = cv2.VideoCapture(str(clip_path))
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if total == 0:
+        cap.release()
+        return None
+    indices = [int(i * total / n_frames) for i in range(n_frames)]
+    hists   = []
+    for fi in indices:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, fi)
+        ret, frame = cap.read()
+        if not ret:
+            continue
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        h   = cv2.calcHist([hsv], [0, 1, 2], None, HSV_BINS, [0, 180, 0, 256, 0, 256])
+        cv2.normalize(h, h, alpha=1, beta=0, norm_type=cv2.NORM_L1)
+        hists.append(h.flatten())
+    cap.release()
+    return np.mean(hists, axis=0).astype(np.float32) if hists else None
+
+
+# ── Correlator ────────────────────────────────────────────────────────────────
+
+def build_person_map(clips1: list, clips2: list,
+                     clips_dir1: Path, clips_dir2: Path,
+                     iou_thresh: float, reid_thresh: float) -> list:
+    """
+    Returns list of person dicts:
+      {person_id, cam1_climber, cam2_climber, confidence, match_type}
+    match_type: 'dual' | 'solo_cam1' | 'solo_cam2'
+    """
+    windows1  = activity_window(clips1)
+    windows2  = activity_window(clips2)
+    climbers1 = list(windows1.keys())
+    climbers2 = list(windows2.keys())
+    n1, n2    = len(climbers1), len(climbers2)
+
+    def first_hist(clips, clips_dir, cid):
+        clip = next((c for c in clips if c["climber_id"] == cid), None)
+        if clip is None:
+            return None
+        return compute_hsv_hist(clips_dir / clip["file_480p"])
+
+    score_matrix = np.zeros((max(n1, 1), max(n2, 1)))
+    for i, c1 in enumerate(climbers1):
+        for j, c2 in enumerate(climbers2):
+            iou = temporal_iou(windows1[c1], windows2[c2])
+            if iou < iou_thresh:
+                continue
+            h1 = first_hist(clips1, clips_dir1, c1)
+            h2 = first_hist(clips2, clips_dir2, c2)
+            if h1 is not None and h2 is not None:
+                dist = cv2.compareHist(h1, h2, cv2.HISTCMP_BHATTACHARYYA)
+                if dist > reid_thresh:
+                    continue
+                score_matrix[i, j] = iou * (1.0 - dist)
+            else:
+                score_matrix[i, j] = iou * 0.5
+
+    row_ind, col_ind = linear_sum_assignment(-score_matrix)
+
+    persons    = []
+    matched1   = set()
+    matched2   = set()
+    person_num = 0
+
+    for i, j in zip(row_ind, col_ind):
+        if i >= n1 or j >= n2 or score_matrix[i, j] == 0:
+            continue
+        person_num += 1
+        persons.append({
+            "person_id":    f"REAL_{person_num:03d}",
+            "cam1_climber": climbers1[i],
+            "cam2_climber": climbers2[j],
+            "confidence":   round(float(score_matrix[i, j]), 3),
+            "match_type":   "dual",
+        })
+        matched1.add(i)
+        matched2.add(j)
+
+    for i, c1 in enumerate(climbers1):
+        if i not in matched1:
+            person_num += 1
+            persons.append({
+                "person_id":    f"REAL_{person_num:03d}",
+                "cam1_climber": c1,
+                "cam2_climber": None,
+                "confidence":   1.0,
+                "match_type":   "solo_cam1",
+            })
+
+    for j, c2 in enumerate(climbers2):
+        if j not in matched2:
+            person_num += 1
+            persons.append({
+                "person_id":    f"REAL_{person_num:03d}",
+                "cam1_climber": None,
+                "cam2_climber": c2,
+                "confidence":   1.0,
+                "match_type":   "solo_cam2",
+            })
+
+    return persons

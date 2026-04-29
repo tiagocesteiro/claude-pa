@@ -78,3 +78,74 @@ def test_normalize_scores_fallback():
     from correlate import normalize_scores
     scores = normalize_scores([None, None])
     assert scores == [0.1, 0.1]
+
+from unittest.mock import patch, MagicMock
+from correlate import compute_hsv_hist, build_person_map
+
+def test_compute_hsv_hist_returns_array(tmp_path):
+    mock_cap = MagicMock()
+    mock_cap.get.return_value = 30
+    mock_frame = np.zeros((480, 854, 3), dtype=np.uint8)
+    mock_cap.read.return_value = (True, mock_frame)
+    with patch("cv2.VideoCapture", return_value=mock_cap):
+        hist = compute_hsv_hist(tmp_path / "fake.mp4", n_frames=3)
+    assert hist is not None
+    assert hist.shape == (16 * 16 * 16,)
+    assert abs(hist.sum() - 1.0) < 1e-5
+
+def test_compute_hsv_hist_empty_video(tmp_path):
+    mock_cap = MagicMock()
+    mock_cap.get.return_value = 0
+    with patch("cv2.VideoCapture", return_value=mock_cap):
+        hist = compute_hsv_hist(tmp_path / "empty.mp4")
+    assert hist is None
+
+def _make_hist(seed: int) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    h = rng.random(16 * 16 * 16).astype(np.float32)
+    h /= h.sum()
+    return h
+
+def test_build_person_map_matched():
+    clips1 = [
+        {"climber_id": "CLIMBER-001", "climb_num": 1, "start_s": 10.0, "end_s": 45.0,
+         "zone": "Wall A", "tid": 1,
+         "file_1080p": "c1.mp4", "file_480p": "c1_480p.mp4"},
+    ]
+    clips2 = [
+        {"climber_id": "CLIMBER-003", "climb_num": 1, "start_s": 12.0, "end_s": 43.0,
+         "zone": "Wall A", "tid": 3,
+         "file_1080p": "c3.mp4", "file_480p": "c3_480p.mp4"},
+    ]
+    identical_hist = _make_hist(42)
+    with patch("correlate.compute_hsv_hist", return_value=identical_hist):
+        persons = build_person_map(clips1, clips2, Path("."), Path("."),
+                                   iou_thresh=0.30, reid_thresh=0.50)
+    assert len(persons) == 1
+    assert persons[0]["match_type"] == "dual"
+    assert persons[0]["cam1_climber"] == "CLIMBER-001"
+    assert persons[0]["cam2_climber"] == "CLIMBER-003"
+
+def test_build_person_map_no_temporal_overlap():
+    clips1 = [{"climber_id": "CLIMBER-001", "climb_num": 1, "start_s": 10.0, "end_s": 20.0,
+               "zone": "Wall A", "tid": 1, "file_1080p": "a.mp4", "file_480p": "a480.mp4"}]
+    clips2 = [{"climber_id": "CLIMBER-002", "climb_num": 1, "start_s": 100.0, "end_s": 110.0,
+               "zone": "Wall A", "tid": 2, "file_1080p": "b.mp4", "file_480p": "b480.mp4"}]
+    identical_hist = _make_hist(42)
+    with patch("correlate.compute_hsv_hist", return_value=identical_hist):
+        persons = build_person_map(clips1, clips2, Path("."), Path("."),
+                                   iou_thresh=0.30, reid_thresh=0.50)
+    assert len(persons) == 2
+    types = {p["match_type"] for p in persons}
+    assert "solo_cam1" in types
+    assert "solo_cam2" in types
+
+def test_build_person_map_solo_cam1():
+    clips1 = [{"climber_id": "CLIMBER-001", "climb_num": 1, "start_s": 10.0, "end_s": 20.0,
+               "zone": "Wall A", "tid": 1, "file_1080p": "a.mp4", "file_480p": "a480.mp4"}]
+    with patch("correlate.compute_hsv_hist", return_value=_make_hist(1)):
+        persons = build_person_map(clips1, [], Path("."), Path("."),
+                                   iou_thresh=0.30, reid_thresh=0.50)
+    assert len(persons) == 1
+    assert persons[0]["match_type"] == "solo_cam1"
+    assert persons[0]["cam2_climber"] is None
