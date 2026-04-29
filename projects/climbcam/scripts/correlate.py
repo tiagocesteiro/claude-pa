@@ -567,3 +567,125 @@ PERSONS.forEach((p, pi) => {{
 </script>
 </body>
 </html>"""
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(description="ClimbCam — cross-camera correlator")
+    parser.add_argument("--cam1",        required=True,
+                        help="Output dir de câmera 1 (contém clips_metadata.json + clips)")
+    parser.add_argument("--cam2",        required=True,
+                        help="Output dir de câmera 2")
+    parser.add_argument("--out",         required=True,
+                        help="Pasta de output multicam")
+    parser.add_argument("--iou-thresh",  type=float, default=0.30)
+    parser.add_argument("--reid-thresh", type=float, default=0.50)
+    parser.add_argument("--no-score",    action="store_true",
+                        help="Salta scoring YOLO; usa clip completo sem zoom")
+    args = parser.parse_args()
+
+    cam1_dir = Path(args.cam1).resolve()
+    cam2_dir = Path(args.cam2).resolve()
+    out_dir  = Path(args.out).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    with open(cam1_dir / "clips_metadata.json") as f:
+        clips1 = json.load(f)
+    with open(cam2_dir / "clips_metadata.json") as f:
+        clips2 = json.load(f)
+
+    n_c1 = len(set(c["climber_id"] for c in clips1))
+    n_c2 = len(set(c["climber_id"] for c in clips2))
+    print(f"Cam1: {len(clips1)} clips ({n_c1} CLIMBERs)")
+    print(f"Cam2: {len(clips2)} clips ({n_c2} CLIMBERs)")
+
+    # Phase 1 — Correlator
+    print("\n[1/3] Correlator (temporal + HSV)...")
+    persons = build_person_map(clips1, clips2, cam1_dir, cam2_dir,
+                               args.iou_thresh, args.reid_thresh)
+    n_dual = sum(1 for p in persons if p["match_type"] == "dual")
+    print(f"  {len(persons)} pessoa(s) → {n_dual} dual-cam, {len(persons)-n_dual} single-cam")
+
+    # Phase 2 — Scorer
+    clip_scores = {}
+    if not args.no_score:
+        print("\n[2/3] Scorer (YOLO)...")
+        model = YOLO(MODEL_PATH)
+        for clip, clip_dir in [(c, cam1_dir) for c in clips1] + [(c, cam2_dir) for c in clips2]:
+            path_480 = clip_dir / clip["file_480p"]
+            key      = str(path_480)
+            if not path_480.exists():
+                print(f"  [skip] {clip['file_480p']} não encontrado")
+                clip_scores[key] = (None, {"x": 0, "y": 0, "w": 1920, "h": 1080})
+                continue
+            cap = cv2.VideoCapture(str(path_480))
+            fw  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            fh  = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            cap.release()
+            raw, crop    = score_clip_and_crop(path_480, model, fw, fh)
+            clip_scores[key] = (raw, crop)
+            print(f"  {clip['file_480p']}: {'scored' if raw else 'no detection'}")
+    else:
+        print("\n[2/3] Scorer saltado (--no-score)")
+        full_crop = {"x": 0, "y": 0, "w": 1920, "h": 1080}
+        for c in clips1:
+            clip_scores[str(cam1_dir / c["file_480p"])] = ({"bbox": 0.5, "center": 0.5, "sharp": 50.0}, full_crop)
+        for c in clips2:
+            clip_scores[str(cam2_dir / c["file_480p"])] = ({"bbox": 0.5, "center": 0.5, "sharp": 50.0}, full_crop)
+
+    events = build_climb_events(persons, clips1, clips2, clip_scores, args.iou_thresh,
+                                clips_dir1=cam1_dir, clips_dir2=cam2_dir)
+    print(f"\n  {len(events)} climb event(s)")
+
+    # Phase 3 — Editor
+    print("\n[3/3] Editor (crop + highlight reels)...")
+    person_reels = defaultdict(list)
+    for event in events:
+        src_dir  = cam1_dir if event["best_clip_dir"] == "cam1" else cam2_dir
+        src_1080 = src_dir / event["best_clip_1080p"]
+        if not src_1080.exists():
+            print(f"  [skip] {event['best_clip_1080p']} não encontrado")
+            continue
+        pid  = event["person_id"]
+        enum = event["event_num"]
+        dst  = out_dir / f"{pid}_climb{enum:02d}_cropped_1080p.mp4"
+        if crop_and_encode(src_1080, dst, event["crop"]):
+            person_reels[pid].append(dst)
+            print(f"  {dst.name}  ✓")
+        else:
+            print(f"  {dst.name}  ✗")
+
+    for person in persons:
+        pid  = person["person_id"]
+        reel = out_dir / f"{pid}_highlight.mp4"
+        ok   = build_highlight_reel(person_reels[pid], reel)
+        print(f"  {reel.name}: {'✓' if ok else '✗'}")
+
+    # Save cross_camera_map.json
+    cross_map = []
+    for person in persons:
+        p_events = [e for e in events if e["person_id"] == person["person_id"]]
+        cross_map.append({**person, "climb_events": p_events})
+    map_path = out_dir / "cross_camera_map.json"
+    with open(map_path, "w", encoding="utf-8") as f:
+        json.dump(cross_map, f, indent=2, ensure_ascii=False)
+    print(f"\nMetadata: {map_path}")
+
+    # Generate viewer
+    html        = build_viewer(persons, events, cam1_dir.parent.name)
+    viewer_path = out_dir / "viewer_multicam.html"
+    viewer_path.write_text(html, encoding="utf-8")
+    print(f"Viewer:   {viewer_path}")
+
+    print(f"\n{'='*52}")
+    print(f"  Pessoas:  {len(persons)}")
+    print(f"  Dual-cam: {n_dual}")
+    print(f"  Eventos:  {len(events)}")
+    print(f"  Output:   {out_dir}")
+    print(f"{'='*52}")
+    webbrowser.open(viewer_path.as_uri())
+
+
+if __name__ == "__main__":
+    main()
