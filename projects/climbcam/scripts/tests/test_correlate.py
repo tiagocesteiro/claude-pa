@@ -149,3 +149,74 @@ def test_build_person_map_solo_cam1():
     assert len(persons) == 1
     assert persons[0]["match_type"] == "solo_cam1"
     assert persons[0]["cam2_climber"] is None
+
+from correlate import score_clip_and_crop, build_climb_events
+
+def _mock_yolo_result(x1, y1, x2, y2):
+    box = MagicMock()
+    box.xyxy.cpu.return_value.numpy.return_value = np.array([[x1, y1, x2, y2]])
+    result = MagicMock()
+    result.boxes = box
+    return [result]
+
+def test_score_clip_and_crop_returns_raw_score_and_crop(tmp_path):
+    mock_cap = MagicMock()
+    mock_cap.get.return_value = 50
+    frame = np.zeros((1080, 1920, 3), dtype=np.uint8)
+    mock_cap.read.return_value = (True, frame)
+    mock_model = MagicMock()
+    mock_model.predict.return_value = _mock_yolo_result(500, 100, 1000, 900)
+    with patch("cv2.VideoCapture", return_value=mock_cap):
+        raw_score, crop = score_clip_and_crop(tmp_path / "clip.mp4", mock_model, 1920, 1080)
+    assert "bbox" in raw_score
+    assert "center" in raw_score
+    assert "sharp" in raw_score
+    assert raw_score["bbox"] > 0
+    assert crop["w"] % 2 == 0
+    assert crop["h"] % 2 == 0
+
+def test_score_clip_and_crop_no_detections(tmp_path):
+    mock_cap = MagicMock()
+    mock_cap.get.return_value = 10
+    mock_cap.read.return_value = (True, np.zeros((1080, 1920, 3), dtype=np.uint8))
+    mock_model = MagicMock()
+    empty_result = MagicMock()
+    empty_result.boxes.xyxy.cpu.return_value.numpy.return_value = np.zeros((0, 4))
+    mock_model.predict.return_value = [empty_result]
+    with patch("cv2.VideoCapture", return_value=mock_cap):
+        raw_score, crop = score_clip_and_crop(tmp_path / "clip.mp4", mock_model, 1920, 1080)
+    assert raw_score is None
+    assert crop == {"x": 0, "y": 0, "w": 1920, "h": 1080}
+
+def test_build_climb_events_matched_picks_best():
+    persons = [{
+        "person_id": "REAL_001",
+        "cam1_climber": "CLIMBER-001",
+        "cam2_climber": "CLIMBER-003",
+        "confidence": 0.85,
+        "match_type": "dual",
+    }]
+    clips1 = [
+        {"climber_id": "CLIMBER-001", "climb_num": 1, "start_s": 10.0, "end_s": 20.0,
+         "zone": "Wall A", "tid": 1,
+         "file_1080p": "C1_c1_1080p.mp4", "file_480p": "C1_c1_480p.mp4"},
+    ]
+    clips2 = [
+        {"climber_id": "CLIMBER-003", "climb_num": 1, "start_s": 11.0, "end_s": 19.0,
+         "zone": "Wall A", "tid": 3,
+         "file_1080p": "C3_c1_1080p.mp4", "file_480p": "C3_c1_480p.mp4"},
+    ]
+    d1, d2 = Path("/cam1"), Path("/cam2")
+    clip_scores = {
+        str(d1 / "C1_c1_480p.mp4"): ({"bbox": 0.3, "center": 0.5, "sharp": 50.0},
+                                      {"x": 0, "y": 0, "w": 1920, "h": 1080}),
+        str(d2 / "C3_c1_480p.mp4"): ({"bbox": 0.6, "center": 0.8, "sharp": 100.0},
+                                      {"x": 100, "y": 50, "w": 800, "h": 900}),
+    }
+    events = build_climb_events(persons, clips1, clips2, clip_scores,
+                                iou_thresh=0.30, clips_dir1=d1, clips_dir2=d2)
+    assert len(events) == 1
+    event = events[0]
+    assert event["person_id"] == "REAL_001"
+    assert event["best_cam"] == "cam2"
+    assert event["crop"] == {"x": 100, "y": 50, "w": 800, "h": 900}

@@ -207,3 +207,168 @@ def build_person_map(clips1: list, clips2: list,
             })
 
     return persons
+
+
+# ── Scorer ────────────────────────────────────────────────────────────────────
+
+def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int) -> tuple:
+    """
+    Runs YOLO on frames of clip_path (480p).
+    Returns (raw_score_dict | None, crop_dict).
+    raw_score_dict keys: bbox, center, sharp (unnormalized).
+    """
+    cap   = cv2.VideoCapture(str(clip_path))
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if total == 0:
+        cap.release()
+        return None, {"x": 0, "y": 0, "w": frame_w, "h": frame_h}
+
+    sample_step   = max(1, total // 30)
+    score_indices = set(int(i * total / 5) for i in range(5))
+    visit_indices = sorted(set(range(0, total, sample_step)) | score_indices)
+
+    bbox_sizes, centerings, sharpnesses, all_bboxes = [], [], [], []
+    frame_area = frame_w * frame_h
+    max_dist   = ((frame_w / 2) ** 2 + (frame_h / 2) ** 2) ** 0.5
+
+    for fi in visit_indices:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, fi)
+        ret, frame = cap.read()
+        if not ret:
+            continue
+        h, w = frame.shape[:2]
+        results = model.predict(frame, imgsz=320, conf=0.3, verbose=False, classes=[0])
+        if results and len(results[0].boxes.xyxy.cpu().numpy()) > 0:
+            boxes = results[0].boxes.xyxy.cpu().numpy()
+            areas = [(b[2] - b[0]) * (b[3] - b[1]) for b in boxes]
+            bx1, by1, bx2, by2 = boxes[int(np.argmax(areas))]
+            all_bboxes.append((int(bx1), int(by1), int(bx2), int(by2)))
+            if fi in score_indices:
+                bbox_sizes.append((bx2 - bx1) * (by2 - by1) / frame_area)
+                cx, cy = (bx1 + bx2) / 2, (by1 + by2) / 2
+                centerings.append(1.0 - ((cx - w/2)**2 + (cy - h/2)**2)**0.5 / max_dist)
+                crop_img = frame[int(by1):int(by2), int(bx1):int(bx2)]
+                if crop_img.size > 0:
+                    gray = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
+                    sharpnesses.append(cv2.Laplacian(gray, cv2.CV_64F).var())
+
+    cap.release()
+
+    if not bbox_sizes:
+        return None, {"x": 0, "y": 0, "w": frame_w, "h": frame_h}
+
+    raw = {
+        "bbox":   float(np.mean(bbox_sizes)),
+        "center": float(np.mean(centerings)),
+        "sharp":  float(np.mean(sharpnesses)) if sharpnesses else 0.0,
+    }
+    crop = compute_crop_rect(all_bboxes, frame_w, frame_h, margin=CROP_MARGIN)
+    return raw, crop
+
+
+def build_climb_events(persons: list, clips1: list, clips2: list,
+                       clip_scores: dict, iou_thresh: float,
+                       clips_dir1: Path = Path("."), clips_dir2: Path = Path(".")) -> list:
+    """
+    clip_scores: {str(full_path_480p): (raw_score | None, crop_dict)}
+    Returns list of climb event dicts with best_cam, best_clip_1080p, crop, scores.
+    """
+    by_climber1 = defaultdict(list)
+    by_climber2 = defaultdict(list)
+    for c in clips1:
+        by_climber1[c["climber_id"]].append(c)
+    for c in clips2:
+        by_climber2[c["climber_id"]].append(c)
+
+    def key1(c): return str(clips_dir1 / c["file_480p"])
+    def key2(c): return str(clips_dir2 / c["file_480p"])
+    all_keys = [key1(c) for c in clips1] + [key2(c) for c in clips2]
+    all_raw_ordered = [clip_scores.get(k, (None, {}))[0] for k in all_keys]
+    final_scores = normalize_scores(all_raw_ordered)
+    score_map = {k: v for k, v in zip(all_keys, final_scores)}
+
+    events = []
+    event_num = 0
+
+    for person in persons:
+        c1id = person["cam1_climber"]
+        c2id = person["cam2_climber"]
+        cam1_clips = sorted(by_climber1.get(c1id, []), key=lambda x: x["start_s"])
+        cam2_clips = sorted(by_climber2.get(c2id, []), key=lambda x: x["start_s"])
+
+        used2 = set()
+        for clip1 in cam1_clips:
+            best_iou, best_clip2 = 0.0, None
+            for idx2, clip2 in enumerate(cam2_clips):
+                if idx2 in used2:
+                    continue
+                iou = temporal_iou((clip1["start_s"], clip1["end_s"]),
+                                   (clip2["start_s"], clip2["end_s"]))
+                if iou > iou_thresh and iou > best_iou:
+                    best_iou, best_clip2 = iou, (idx2, clip2)
+
+            event_num += 1
+            k1   = key1(clip1)
+            s1   = score_map.get(k1, 0.1)
+            raw1, crop1 = clip_scores.get(k1, (None, {"x":0,"y":0,"w":1920,"h":1080}))
+
+            if best_clip2:
+                idx2, clip2 = best_clip2
+                used2.add(idx2)
+                k2   = key2(clip2)
+                s2   = score_map.get(k2, 0.1)
+                raw2, crop2 = clip_scores.get(k2, (None, {"x":0,"y":0,"w":1920,"h":1080}))
+                best_cam  = "cam2" if s2 > s1 else "cam1"
+                best_clip = clip2 if best_cam == "cam2" else clip1
+                best_crop = crop2 if best_cam == "cam2" else crop1
+                events.append({
+                    "event_num":       event_num,
+                    "person_id":       person["person_id"],
+                    "start_s":         min(clip1["start_s"], clip2["start_s"]),
+                    "end_s":           max(clip1["end_s"],   clip2["end_s"]),
+                    "zone":            clip1["zone"],
+                    "cam1_clip":       clip1["file_480p"], "cam1_score": s1,
+                    "cam2_clip":       clip2["file_480p"], "cam2_score": s2,
+                    "best_cam":        best_cam,
+                    "best_clip_1080p": best_clip["file_1080p"],
+                    "best_clip_dir":   "cam1" if best_cam == "cam1" else "cam2",
+                    "crop":            best_crop,
+                })
+            else:
+                events.append({
+                    "event_num":       event_num,
+                    "person_id":       person["person_id"],
+                    "start_s":         clip1["start_s"],
+                    "end_s":           clip1["end_s"],
+                    "zone":            clip1["zone"],
+                    "cam1_clip":       clip1["file_480p"], "cam1_score": s1,
+                    "cam2_clip":       None,               "cam2_score": None,
+                    "best_cam":        "cam1",
+                    "best_clip_1080p": clip1["file_1080p"],
+                    "best_clip_dir":   "cam1",
+                    "crop":            crop1,
+                })
+
+        for idx2, clip2 in enumerate(cam2_clips):
+            if idx2 in used2:
+                continue
+            event_num += 1
+            k2   = key2(clip2)
+            s2   = score_map.get(k2, 0.1)
+            _, crop2 = clip_scores.get(k2, (None, {"x":0,"y":0,"w":1920,"h":1080}))
+            events.append({
+                "event_num":       event_num,
+                "person_id":       person["person_id"],
+                "start_s":         clip2["start_s"],
+                "end_s":           clip2["end_s"],
+                "zone":            clip2["zone"],
+                "cam1_clip":       None, "cam1_score": None,
+                "cam2_clip":       clip2["file_480p"], "cam2_score": s2,
+                "best_cam":        "cam2",
+                "best_clip_1080p": clip2["file_1080p"],
+                "best_clip_dir":   "cam2",
+                "crop":            crop2,
+            })
+
+    events.sort(key=lambda e: e["start_s"])
+    return events
