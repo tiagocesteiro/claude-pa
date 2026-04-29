@@ -220,3 +220,54 @@ def test_build_climb_events_matched_picks_best():
     assert event["person_id"] == "REAL_001"
     assert event["best_cam"] == "cam2"
     assert event["crop"] == {"x": 100, "y": 50, "w": 800, "h": 900}
+
+from correlate import crop_and_encode, build_highlight_reel
+
+def test_crop_and_encode_calls_ffmpeg(tmp_path):
+    src = tmp_path / "input.mp4"
+    src.touch()
+    dst = tmp_path / "output.mp4"
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        result = crop_and_encode(src, dst, {"x": 0, "y": 0, "w": 1280, "h": 720})
+    assert result is True
+    call_args = mock_run.call_args[0][0]
+    assert "ffmpeg" in call_args
+    assert "crop=1280:720:0:0" in " ".join(call_args)
+    assert "-crf" in call_args
+
+def test_crop_and_encode_returns_false_on_failure(tmp_path):
+    src = tmp_path / "input.mp4"
+    src.touch()
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1)
+        result = crop_and_encode(src, tmp_path / "out.mp4",
+                                 {"x": 0, "y": 0, "w": 1920, "h": 1080})
+    assert result is False
+
+def test_build_highlight_reel_single_clip(tmp_path):
+    src = tmp_path / "clip1.mp4"
+    src.touch()
+    dst = tmp_path / "reel.mp4"
+    with patch("correlate.shutil.copy2") as mock_copy:
+        result = build_highlight_reel([src], dst)
+    assert result is True
+    mock_copy.assert_called_once_with(src, dst)
+
+def test_build_highlight_reel_multi_clip(tmp_path):
+    clips = [tmp_path / f"clip{i}.mp4" for i in range(3)]
+    for c in clips:
+        c.touch()
+    dst = tmp_path / "reel.mp4"
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        result = build_highlight_reel(clips, dst)
+    assert result is True
+    call_args = mock_run.call_args[0][0]
+    assert "ffmpeg" in call_args
+    assert "-f" in call_args
+    assert "concat" in call_args
+
+def test_build_highlight_reel_empty(tmp_path):
+    result = build_highlight_reel([], tmp_path / "reel.mp4")
+    assert result is False

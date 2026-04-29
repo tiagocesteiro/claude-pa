@@ -372,3 +372,55 @@ def build_climb_events(persons: list, clips1: list, clips2: list,
 
     events.sort(key=lambda e: e["start_s"])
     return events
+
+
+# ── Editor ────────────────────────────────────────────────────────────────────
+
+def crop_and_encode(src: Path, dst: Path, crop: dict, crf: int = CRF) -> bool:
+    """Apply FFmpeg crop filter and H.264 encode. Returns True on success."""
+    x, y, w, h = crop["x"], crop["y"], crop["w"], crop["h"]
+    cmd = [
+        "ffmpeg", "-y", "-i", str(src),
+        "-vf", f"crop={w}:{h}:{x}:{y}",
+        "-c:v", "libx264", "-crf", str(crf), "-preset", "fast",
+        "-c:a", "copy",
+        str(dst),
+    ]
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode != 0:
+        print(f"  [warn] FFmpeg crop failed: {src.name} → {result.stderr.decode()[:200]}")
+    return result.returncode == 0
+
+
+def build_highlight_reel(cropped_clips: list, output_path: Path) -> bool:
+    """
+    Concatenate cropped clips into a highlight reel.
+    Clips may have different resolutions — scale to 1280x720, letterbox.
+    Returns True on success.
+    """
+    if not cropped_clips:
+        return False
+    if len(cropped_clips) == 1:
+        shutil.copy2(cropped_clips[0], output_path)
+        return True
+
+    list_path = output_path.parent / f"{output_path.stem}_concat.txt"
+    with open(list_path, "w") as f:
+        for clip in cropped_clips:
+            f.write(f"file '{clip.resolve()}'\n")
+
+    scale_filter = ("scale=1280:720:force_original_aspect_ratio=decrease,"
+                    "pad=1280:720:(ow-iw)/2:(oh-ih)/2")
+    cmd = [
+        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+        "-i", str(list_path),
+        "-vf", scale_filter,
+        "-c:v", "libx264", "-crf", str(CRF), "-preset", "fast",
+        "-c:a", "aac",
+        str(output_path),
+    ]
+    result = subprocess.run(cmd, capture_output=True)
+    list_path.unlink(missing_ok=True)
+    if result.returncode != 0:
+        print(f"  [warn] Highlight reel failed: {result.stderr.decode()[:200]}")
+    return result.returncode == 0
