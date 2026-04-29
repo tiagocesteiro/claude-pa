@@ -424,3 +424,146 @@ def build_highlight_reel(cropped_clips: list, output_path: Path) -> bool:
     if result.returncode != 0:
         print(f"  [warn] Highlight reel failed: {result.stderr.decode()[:200]}")
     return result.returncode == 0
+
+
+# ── Viewer ────────────────────────────────────────────────────────────────────
+
+def build_viewer(persons: list, events: list, session_label: str) -> str:
+    """Build viewer_multicam.html as a string. Dark theme, person cards."""
+    n_persons  = len(persons)
+    n_events   = len(events)
+    n_dual     = sum(1 for p in persons if p["match_type"] == "dual")
+    persons_js = json.dumps(persons, indent=2, ensure_ascii=False)
+    events_js  = json.dumps(events,  indent=2, ensure_ascii=False)
+    COLORS     = ["#1d4ed8","#7c3aed","#0f766e","#b45309","#be123c","#15803d","#c2410c"]
+
+    return f"""<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClimbCam — Multi-Camera Viewer</title>
+<style>
+*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#0f0f0f;color:#e0e0e0;font-family:system-ui,-apple-system,sans-serif}}
+header{{background:#161616;border-bottom:1px solid #252525;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}}
+.logo{{font-size:1.1rem;font-weight:700;color:#fff}}.logo span{{color:#3b82f6}}
+.stats{{font-size:.82rem;color:#666;margin-left:auto}}
+.filters{{padding:14px 24px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #1a1a1a;align-items:center}}
+.filters label{{font-size:.78rem;color:#555;margin-right:2px}}
+.filter-btn{{background:#1a1a1a;border:1px solid #2a2a2a;color:#888;padding:5px 13px;border-radius:16px;cursor:pointer;font-size:.78rem;transition:all .15s}}
+.filter-btn:hover{{background:#222;color:#ccc}}.filter-btn.active{{background:#1d4ed8;border-color:#2563eb;color:#fff}}
+.persons{{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:20px;padding:20px 24px 40px}}
+.person-card{{background:#161616;border:1px solid #222;border-radius:12px;overflow:hidden}}
+.person-card.hidden{{display:none}}
+.person-header{{padding:14px 16px;border-bottom:1px solid #222;display:flex;align-items:center;gap:10px}}
+.badge{{padding:3px 10px;border-radius:12px;font-size:.75rem;font-weight:700;color:#fff}}
+.match-badge{{font-size:.7rem;padding:2px 8px;border-radius:8px;border:1px solid}}
+.match-dual{{color:#22c55e;background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3)}}
+.match-solo{{color:#f59e0b;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3)}}
+.climb-count{{font-size:.8rem;color:#555;margin-left:auto}}
+.highlight-wrap{{background:#000}}
+.highlight-wrap video{{width:100%;display:block;max-height:260px;object-fit:contain}}
+.clips-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;padding:10px 12px}}
+.clip-item{{background:#111;border:1px solid #1a1a1a;border-radius:8px;overflow:hidden}}
+.clip-item video{{width:100%;display:block;max-height:130px;object-fit:contain;background:#000}}
+.clip-meta{{padding:6px 8px;font-size:.72rem;color:#555}}
+.clip-meta b{{color:#888}}
+.dl-link{{color:#3b82f6;font-size:.7rem;text-decoration:none}}
+.dl-link:hover{{color:#60a5fa}}
+.reel-actions{{padding:10px 12px}}
+.btn-secondary{{background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:7px 14px;border-radius:7px;font-size:.8rem;text-decoration:none;display:inline-block}}
+.btn-secondary:hover{{background:#222;color:#bbb}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Climb<span>Cam</span>
+    <span style="font-size:.75rem;color:#555;font-weight:400">multi-camera</span>
+  </div>
+  <div class="stats">
+    {session_label} — {n_persons} pessoa(s) — {n_events} subida(s) — {n_dual} dual-cam
+  </div>
+</header>
+<div class="filters">
+  <label>Filtrar:</label>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Todas</button>
+  <button class="filter-btn" data-filter="dual" onclick="setFilter('dual',this)">Dual-cam</button>
+  <button class="filter-btn" data-filter="solo" onclick="setFilter('solo',this)">Single-cam</button>
+</div>
+<div class="persons" id="persons"></div>
+<script>
+const PERSONS = {persons_js};
+const EVENTS  = {events_js};
+const COLORS  = {json.dumps(COLORS)};
+
+function fmtTime(s) {{
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}}
+
+function setFilter(v, btn) {{
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.person-card').forEach(card => {{
+    const mt = card.dataset.matchType;
+    const show = v==='all' || (v==='dual'&&mt==='dual') || (v==='solo'&&mt!=='dual');
+    card.classList.toggle('hidden', !show);
+  }});
+}}
+
+const eventsByPerson = {{}};
+EVENTS.forEach(e => {{
+  if (!eventsByPerson[e.person_id]) eventsByPerson[e.person_id] = [];
+  eventsByPerson[e.person_id].push(e);
+}});
+
+const container = document.getElementById('persons');
+PERSONS.forEach((p, pi) => {{
+  const color    = COLORS[pi % COLORS.length];
+  const evts     = eventsByPerson[p.person_id] || [];
+  const isDual   = p.match_type === 'dual';
+  const highlight = p.person_id.replace(/_/g,'') + '_highlight.mp4';
+
+  const card = document.createElement('div');
+  card.className = 'person-card';
+  card.dataset.matchType = p.match_type;
+
+  const badgeClass = isDual ? 'match-dual' : 'match-solo';
+  const badgeText  = isDual
+    ? `✓ matched ${{Math.round(p.confidence*100)}}%`
+    : `single-cam (${{p.cam1_climber||p.cam2_climber}})`;
+
+  const clipsHtml = evts.map(e => {{
+    const clip480  = e.best_cam==='cam1' ? e.cam1_clip : e.cam2_clip;
+    const clip1080 = e.best_clip_1080p;
+    const camLabel = e.best_cam.toUpperCase();
+    return `<div class="clip-item">
+      <video src="${{clip480||''}}" preload="metadata" onclick="this.paused?this.play():this.pause()"></video>
+      <div class="clip-meta">
+        #${{e.event_num}} · <b>${{fmtTime(e.start_s)}}</b> · ${{(e.end_s-e.start_s).toFixed(1)}}s
+        · <span style="color:#3b82f6">${{camLabel}} ★</span>
+        <br><a class="dl-link" href="${{clip1080||''}}" download>⬇ 1080p</a>
+      </div>
+    </div>`;
+  }}).join('');
+
+  card.innerHTML = `
+    <div class="person-header">
+      <span class="badge" style="background:${{color}}">${{p.person_id}}</span>
+      <span class="match-badge ${{badgeClass}}">${{badgeText}}</span>
+      <span class="climb-count">${{evts.length}} subida(s)</span>
+    </div>
+    <div class="highlight-wrap">
+      <video src="${{highlight}}" preload="metadata" controls style="cursor:pointer"></video>
+    </div>
+    <div class="reel-actions">
+      <a class="btn-secondary" href="${{highlight}}" download>⬇ Highlight reel</a>
+    </div>
+    <div class="clips-grid">${{clipsHtml}}</div>`;
+
+  container.appendChild(card);
+}});
+</script>
+</body>
+</html>"""

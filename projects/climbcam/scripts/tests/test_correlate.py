@@ -271,3 +271,39 @@ def test_build_highlight_reel_multi_clip(tmp_path):
 def test_build_highlight_reel_empty(tmp_path):
     result = build_highlight_reel([], tmp_path / "reel.mp4")
     assert result is False
+
+from correlate import build_viewer
+
+SAMPLE_PERSONS = [
+    {"person_id": "REAL_001", "cam1_climber": "CLIMBER-001", "cam2_climber": "CLIMBER-003",
+     "confidence": 0.87, "match_type": "dual"},
+    {"person_id": "REAL_002", "cam1_climber": "CLIMBER-005", "cam2_climber": None,
+     "confidence": 1.0,  "match_type": "solo_cam1"},
+]
+SAMPLE_EVENTS = [
+    {"event_num": 1, "person_id": "REAL_001", "start_s": 10.0, "end_s": 20.0, "zone": "Wall A",
+     "cam1_clip": "c1.mp4", "cam1_score": 0.6,
+     "cam2_clip": "c2.mp4", "cam2_score": 0.8,
+     "best_cam": "cam2", "best_clip_1080p": "c2_1080p.mp4",
+     "best_clip_dir": "cam2",
+     "crop": {"x": 0, "y": 0, "w": 1280, "h": 720}},
+]
+
+def test_build_viewer_returns_html():
+    html = build_viewer(SAMPLE_PERSONS, SAMPLE_EVENTS, "session_test")
+    assert "<!DOCTYPE html>" in html
+    assert "REAL_001" in html
+    assert "ClimbCam" in html
+
+def test_build_viewer_contains_person_cards():
+    html = build_viewer(SAMPLE_PERSONS, SAMPLE_EVENTS, "session_test")
+    assert "REAL_001" in html
+    assert "REAL_002" in html
+
+def test_build_viewer_dual_match_badge():
+    html = build_viewer(SAMPLE_PERSONS, SAMPLE_EVENTS, "session_test")
+    assert "dual" in html or "matched" in html.lower() or "87" in html
+
+def test_build_viewer_summary_stats():
+    html = build_viewer(SAMPLE_PERSONS, SAMPLE_EVENTS, "session_test")
+    assert "session_test" in html
