@@ -108,6 +108,17 @@ For each 480p clip, sample 5 evenly-spaced frames and run YOLO detection (imgsz=
 
 Fallback: if YOLO finds no person in any sampled frame, score = 0.1 (clip still used if no alternative).
 
+### Crop region computation
+
+During the YOLO scoring pass (all frames sampled, not just 5), also compute the **union bounding box** of all detected person bboxes across the full clip — this is the total region the climber traversed. Add 10% margin on all sides, clamp to frame bounds, and ensure the result is divisible by 2 (FFmpeg requirement).
+
+This crop region is saved per clip in the map:
+```json
+"crop": { "x": 320, "y": 80, "w": 640, "h": 900 }
+```
+
+If no YOLO detections → crop = full frame (no zoom).
+
 ### Per-climb-event best angle
 
 Align climb events across cameras by temporal overlap (IoU > 0.3 on individual clip intervals, not CLIMBER windows). For matched events, the clip with higher score wins. For unmatched events, the single available clip is used.
@@ -123,7 +134,8 @@ Scores are written into `cross_camera_map.json` under each person:
       "cam1_clip": "CLIMBER_003_climb02_480p.mp4", "cam1_score": 0.72,
       "cam2_clip": "CLIMBER_007_climb03_480p.mp4", "cam2_score": 0.61,
       "best_cam": "cam1",
-      "best_clip_1080p": "CLIMBER_003_climb02_1080p.mp4"
+      "best_clip_1080p": "CLIMBER_003_climb02_1080p.mp4",
+      "crop": { "x": 320, "y": 80, "w": 640, "h": 900 }
     }
   ]
 }
@@ -134,7 +146,9 @@ Scores are written into `cross_camera_map.json` under each person:
 ## Phase 3 — Editor
 
 ### Highlight reel
-For each REAL_PERSON, collect `best_clip_1080p` paths ordered by `start_s`. Concatenate via FFmpeg `concat` demuxer (stream copy — no re-encode). Output: `REAL_001_highlight.mp4`.
+For each REAL_PERSON, collect `best_clip_1080p` paths ordered by `start_s`. For each clip, apply the saved `crop` region using FFmpeg `crop` filter, then re-encode to H.264 (CRF 18). All cropped clips are concatenated into `REAL_001_highlight.mp4`.
+
+Note: crop requires re-encode (unlike stream copy), but CRF 18 preserves near-lossless quality. Each individual cropped clip is also saved as `REAL_001_climb01_cropped_1080p.mp4` for use in the viewer.
 
 ### viewer_multicam.html
 Static HTML, no server required. Built from template matching existing viewer style (dark theme).
