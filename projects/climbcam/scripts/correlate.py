@@ -217,11 +217,12 @@ def build_person_map(clips1: list, clips2: list,
 # ── Scorer ────────────────────────────────────────────────────────────────────
 
 def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
-                        segment_s: float = 2.0) -> tuple:
+                        segment_s: float = 3.0) -> tuple:
     """
     Runs YOLO on frames of clip_path (480p).
     Returns (raw_score_dict | None, crop_dict, segments).
     segments: [{t_start, t_end, score, crop}] per segment_s window — used for dynamic switching.
+    Occlusion penalty applied when another person covers >20% of the target climber's bbox.
     """
     cap      = cv2.VideoCapture(str(clip_path))
     total    = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -251,28 +252,46 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
         if results and len(results[0].boxes.xyxy.cpu().numpy()) > 0:
             boxes = results[0].boxes.xyxy.cpu().numpy()
             areas = [(b[2] - b[0]) * (b[3] - b[1]) for b in boxes]
-            bx1, by1, bx2, by2 = boxes[int(np.argmax(areas))]
+            best_idx = int(np.argmax(areas))
+            bx1, by1, bx2, by2 = boxes[best_idx]
             ibbox = (int(bx1), int(by1), int(bx2), int(by2))
             all_bboxes.append(ibbox)
+
+            # Occlusion: check if any other person covers >20% of the target bbox
+            occlusion = 0.0
+            target_area = max(1.0, (bx2 - bx1) * (by2 - by1))
+            for k, ob in enumerate(boxes):
+                if k == best_idx:
+                    continue
+                ox1, oy1, ox2, oy2 = ob
+                ix1 = max(bx1, ox1); iy1 = max(by1, oy1)
+                ix2 = min(bx2, ox2); iy2 = min(by2, oy2)
+                if ix2 > ix1 and iy2 > iy1:
+                    inter = (ix2 - ix1) * (iy2 - iy1)
+                    occlusion = max(occlusion, inter / target_area)
 
             # Segment index based on frame time
             seg_idx = int((fi / fps_clip) / segment_s)
             if seg_idx not in seg_data:
-                seg_data[seg_idx] = {"bboxes": [], "bbox_sizes": [], "centerings": [], "sharpnesses": []}
+                seg_data[seg_idx] = {"bboxes": [], "bbox_sizes": [], "centerings": [],
+                                     "sharpnesses": [], "occlusions": []}
             seg_data[seg_idx]["bboxes"].append(ibbox)
+            seg_data[seg_idx]["occlusions"].append(occlusion)
 
             if fi in score_indices:
                 bs = (bx2 - bx1) * (by2 - by1) / frame_area
                 cx, cy = (bx1 + bx2) / 2, (by1 + by2) / 2
                 ce = 1.0 - ((cx - w/2)**2 + (cy - h/2)**2)**0.5 / max_dist
-                bbox_sizes.append(bs)
-                centerings.append(ce)
-                seg_data[seg_idx]["bbox_sizes"].append(bs)
-                seg_data[seg_idx]["centerings"].append(ce)
+                # Apply occlusion penalty immediately
+                occ_factor = max(0.0, 1.0 - occlusion)
+                bbox_sizes.append(bs * occ_factor)
+                centerings.append(ce * occ_factor)
+                seg_data[seg_idx]["bbox_sizes"].append(bs * occ_factor)
+                seg_data[seg_idx]["centerings"].append(ce * occ_factor)
                 crop_img = frame[int(by1):int(by2), int(bx1):int(bx2)]
                 if crop_img.size > 0:
                     gray = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
-                    sh = cv2.Laplacian(gray, cv2.CV_64F).var()
+                    sh = cv2.Laplacian(gray, cv2.CV_64F).var() * occ_factor
                     sharpnesses.append(sh)
                     seg_data[seg_idx]["sharpnesses"].append(sh)
 
