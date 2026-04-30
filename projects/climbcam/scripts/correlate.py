@@ -27,7 +27,9 @@ from ultralytics import YOLO
 SCRIPT_DIR = Path(__file__).parent
 MODEL_PATH  = str(SCRIPT_DIR.parent / "yolov8n-pose.pt")
 HSV_BINS    = [16, 16, 16]
-CROP_MARGIN = 0.10
+CROP_MARGIN       = 0.10   # margem à volta do bbox (para crop de ReID)
+CROP_WIDTH_FRAC   = 0.55   # largura do crop como fracção da frame (seguir escalador horizontalmente)
+# Vertical: frame completa — não cortar a rota
 CRF         = 18
 SCORE_W     = {"bbox": 0.5, "center": 0.3, "sharp": 0.2}
 
@@ -305,7 +307,7 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
         "center": float(np.mean(centerings)),
         "sharp":  float(np.mean(sharpnesses)) if sharpnesses else 0.0,
     }
-    crop = compute_crop_rect(all_bboxes, frame_w, frame_h, margin=CROP_MARGIN)
+    crop = compute_climb_crop(all_bboxes, frame_w, frame_h)
 
     # Build per-segment list
     segments = []
@@ -318,11 +320,29 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
             SCORE_W["center"] * float(np.mean(sd["centerings"]))   if sd["centerings"]  else 0.0 +
             SCORE_W["sharp"]  * float(np.mean(sd["sharpnesses"])) if sd["sharpnesses"] else 0.0
         )
-        seg_crop = compute_crop_rect(sd["bboxes"], frame_w, frame_h, margin=CROP_MARGIN)
+        seg_crop = compute_climb_crop(sd["bboxes"], frame_w, frame_h)
         segments.append({"t_start": t_start, "t_end": t_end,
                          "score": round(seg_score, 4), "crop": seg_crop})
 
     return raw, crop, segments
+
+
+def compute_climb_crop(bboxes: list, frame_w: int, frame_h: int,
+                       width_frac: float = CROP_WIDTH_FRAC) -> dict:
+    """
+    Crop para escalada: segue o escalador horizontalmente, altura completa.
+    - Centro horizontal = média dos centros dos bboxes
+    - Largura = width_frac × frame_w  (evita zoom excessivo)
+    - Altura = frame completa (mostra sempre a rota inteira)
+    """
+    if not bboxes:
+        return {"x": 0, "y": 0, "w": frame_w, "h": frame_h}
+    # Centro horizontal médio do escalador ao longo do clip
+    cxs = [(b[0] + b[2]) / 2 for b in bboxes]
+    cx  = int(np.mean(cxs))
+    cw  = int(frame_w * width_frac) & ~1
+    x   = max(0, min(cx - cw // 2, frame_w - cw)) & ~1
+    return {"x": x, "y": 0, "w": cw, "h": frame_h}
 
 
 def _scale_crop_to_1080p(crop: dict, fw_480: int = 854, fh_480: int = 480) -> dict:
