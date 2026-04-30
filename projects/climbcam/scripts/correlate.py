@@ -250,7 +250,7 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
         if not ret:
             continue
         h, w = frame.shape[:2]
-        results = model.predict(frame, imgsz=320, conf=0.3, verbose=False, classes=[0])
+        results = model.predict(frame, imgsz=640, conf=0.25, verbose=False, classes=[0])
         if results and len(results[0].boxes.xyxy.cpu().numpy()) > 0:
             boxes = results[0].boxes.xyxy.cpu().numpy()
             areas = [(b[2] - b[0]) * (b[3] - b[1]) for b in boxes]
@@ -880,7 +880,8 @@ def main():
                 print(f"  [skip] {event['best_clip_1080p']} não encontrado")
                 continue
             print(f"  {dst.name}  [single cam: {event['best_cam']}]")
-            ok = crop_and_encode(src_1080, dst, event["crop"])
+            crop_1080 = _scale_crop_to_1080p(event["crop"])
+            ok = crop_and_encode(src_1080, dst, crop_1080)
 
         if ok:
             person_reels[pid].append(dst)
