@@ -307,7 +307,7 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
         "center": float(np.mean(centerings)),
         "sharp":  float(np.mean(sharpnesses)) if sharpnesses else 0.0,
     }
-    crop = compute_climb_crop(all_bboxes, frame_w, frame_h)
+    crop = compute_crop_rect(all_bboxes, frame_w, frame_h, margin=CROP_MARGIN)
 
     # Build per-segment list
     segments = []
@@ -320,7 +320,7 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
             SCORE_W["center"] * float(np.mean(sd["centerings"]))   if sd["centerings"]  else 0.0 +
             SCORE_W["sharp"]  * float(np.mean(sd["sharpnesses"])) if sd["sharpnesses"] else 0.0
         )
-        seg_crop = compute_climb_crop(sd["bboxes"], frame_w, frame_h)
+        seg_crop = compute_crop_rect(sd["bboxes"], frame_w, frame_h, margin=CROP_MARGIN)
         segments.append({"t_start": t_start, "t_end": t_end,
                          "score": round(seg_score, 4), "crop": seg_crop})
 
@@ -831,7 +831,11 @@ def main():
             clip_scores[key]   = (raw, crop)
             clip_segments[key] = segs
             n_segs = len(segs)
-            print(f"  {clip['file_480p']}: {'scored' if raw else 'no detection'} ({n_segs} segmentos)")
+            if raw:
+                print(f"  {clip['file_480p']}: crop=({crop['x']},{crop['y']},{crop['w']}x{crop['h']}) "
+                      f"[{n_segs} seg]")
+            else:
+                print(f"  {clip['file_480p']}: no detection")
     else:
         print("\n[2/3] Scorer saltado (--no-score) — dynamic switching desactivado")
         full_crop = {"x": 0, "y": 0, "w": 1920, "h": 1080}
