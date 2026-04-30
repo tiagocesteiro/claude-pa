@@ -167,13 +167,14 @@ def test_score_clip_and_crop_returns_raw_score_and_crop(tmp_path):
     mock_model = MagicMock()
     mock_model.predict.return_value = _mock_yolo_result(500, 100, 1000, 900)
     with patch("cv2.VideoCapture", return_value=mock_cap):
-        raw_score, crop = score_clip_and_crop(tmp_path / "clip.mp4", mock_model, 1920, 1080)
+        raw_score, crop, segs = score_clip_and_crop(tmp_path / "clip.mp4", mock_model, 1920, 1080)
     assert "bbox" in raw_score
     assert "center" in raw_score
     assert "sharp" in raw_score
     assert raw_score["bbox"] > 0
     assert crop["w"] % 2 == 0
     assert crop["h"] % 2 == 0
+    assert isinstance(segs, list)
 
 def test_score_clip_and_crop_no_detections(tmp_path):
     mock_cap = MagicMock()
@@ -184,9 +185,10 @@ def test_score_clip_and_crop_no_detections(tmp_path):
     empty_result.boxes.xyxy.cpu.return_value.numpy.return_value = np.zeros((0, 4))
     mock_model.predict.return_value = [empty_result]
     with patch("cv2.VideoCapture", return_value=mock_cap):
-        raw_score, crop = score_clip_and_crop(tmp_path / "clip.mp4", mock_model, 1920, 1080)
+        raw_score, crop, segs = score_clip_and_crop(tmp_path / "clip.mp4", mock_model, 1920, 1080)
     assert raw_score is None
     assert crop == {"x": 0, "y": 0, "w": 1920, "h": 1080}
+    assert segs == []
 
 def test_build_climb_events_matched_picks_best():
     persons = [{
