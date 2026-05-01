@@ -326,14 +326,14 @@ def score_clip_and_crop(clip_path: Path, model, frame_w: int, frame_h: int,
 
 
 
-def _scale_crop_to_1080p(crop: dict, fw_480: int = 854, fh_480: int = 480) -> dict:
-    """Scale crop coords from 480p clip space to 1080p space."""
-    sx = 1920 / fw_480
-    sy = 1080 / fh_480
+def _scale_crop(crop: dict, src_w: int, src_h: int, dst_w: int, dst_h: int) -> dict:
+    """Scale crop from (src_w × src_h) space to (dst_w × dst_h) space."""
+    sx = dst_w / src_w
+    sy = dst_h / src_h
     x  = int(crop["x"] * sx) & ~1
     y  = int(crop["y"] * sy) & ~1
-    w  = min(int(crop["w"] * sx) & ~1, 1920 - x)
-    h  = min(int(crop["h"] * sy) & ~1, 1080 - y)
+    w  = min(int(crop["w"] * sx) & ~1, dst_w - x)
+    h  = min(int(crop["h"] * sy) & ~1, dst_h - y)
     return {"x": max(0, x), "y": max(0, y), "w": max(2, w), "h": max(2, h)}
 
 
@@ -393,33 +393,59 @@ def build_edit_plan(segs1: list, segs2: list,
 def assemble_dynamic_edit(plan: list, clip1_1080p: Path, clip2_1080p: Path,
                            output_path: Path, tmp_dir: Path) -> bool:
     """
-    Cut segments from 1080p clips per edit plan and concatenate.
-    Crop coords are in 480p space → scaled to 1080p.
-    Returns True on success.
+    Cut segments from clips per edit plan and concatenate.
+    -ss is placed AFTER -i for frame-accurate sync (no keyframe drift).
+    Crop coords are in 480p space → scaled to actual clip dimensions.
+    Output: 1440×1080 (4:3).
     """
     if not plan:
         return False
 
     tmp_dir.mkdir(parents=True, exist_ok=True)
+    OUT_W, OUT_H = 1440, 1080
+
+    def clip_dims(path):
+        if not path or not path.exists():
+            return OUT_W, OUT_H
+        cap = cv2.VideoCapture(str(path))
+        w   = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h   = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cap.release()
+        return (w, h) if w > 0 else (OUT_W, OUT_H)
+
+    dims = {
+        "cam1": clip_dims(clip1_1080p),
+        "cam2": clip_dims(clip2_1080p),
+    }
+    # 480p previews are 640×480 (4:3) for new clips, 854×480 for old
+    def preview_dims(path):
+        if not path or not path.exists():
+            return 640, 480
+        cap = cv2.VideoCapture(str(path))
+        cap.release()
+        return 640, 480  # correlate.py scorer always uses these dims
+
     segment_files = []
-    OUT_W, OUT_H  = 1280, 720
     scale_filter  = (f"scale={OUT_W}:{OUT_H}:force_original_aspect_ratio=decrease,"
                      f"pad={OUT_W}:{OUT_H}:(ow-iw)/2:(oh-ih)/2")
 
     for i, seg in enumerate(plan):
-        src   = clip1_1080p if seg["cam"] == "cam1" else clip2_1080p
+        src = clip1_1080p if seg["cam"] == "cam1" else clip2_1080p
         if not src or not src.exists():
             continue
-        crop1080 = _scale_crop_to_1080p(seg["crop_480p"])
-        x, y, w, h = crop1080["x"], crop1080["y"], crop1080["w"], crop1080["h"]
+        dst_w, dst_h = dims[seg["cam"]]
+        pw,    ph    = preview_dims(src)
+        crop = _scale_crop(seg["crop_480p"], pw, ph, dst_w, dst_h)
+        x, y, w, h  = crop["x"], crop["y"], crop["w"], crop["h"]
         dur  = max(0.1, seg["t_end"] - seg["t_start"])
         dst  = tmp_dir / f"seg_{i:03d}.mp4"
         vf   = f"crop={w}:{h}:{x}:{y},{scale_filter}"
-        cmd  = [
+        # -ss AFTER -i → frame-accurate, no keyframe drift between cameras
+        cmd = [
             "ffmpeg", "-y",
-            "-ss", f"{seg['t_start']:.3f}",
             "-i", str(src),
-            "-t", f"{dur:.3f}",
+            "-ss", f"{seg['t_start']:.3f}",
+            "-t",  f"{dur:.3f}",
             "-vf", vf,
             "-c:v", "libx264", "-crf", str(CRF), "-preset", "fast",
             "-c:a", "aac",
@@ -429,7 +455,7 @@ def assemble_dynamic_edit(plan: list, clip1_1080p: Path, clip2_1080p: Path,
         if r.returncode == 0:
             segment_files.append(dst)
         else:
-            print(f"  [warn] segmento {i} falhou: {r.stderr.decode()[:100]}")
+            print(f"  [warn] seg {i}: {r.stderr.decode()[:120]}")
 
     if not segment_files:
         return False
@@ -596,8 +622,8 @@ def build_highlight_reel(cropped_clips: list, output_path: Path) -> bool:
         for clip in cropped_clips:
             f.write(f"file '{clip.resolve()}'\n")
 
-    scale_filter = ("scale=1280:720:force_original_aspect_ratio=decrease,"
-                    "pad=1280:720:(ow-iw)/2:(oh-ih)/2")
+    scale_filter = ("scale=1440:1080:force_original_aspect_ratio=decrease,"
+                    "pad=1440:1080:(ow-iw)/2:(oh-ih)/2")
     cmd = [
         "ffmpeg", "-y", "-f", "concat", "-safe", "0",
         "-i", str(list_path),
@@ -861,7 +887,12 @@ def main():
                 print(f"  [skip] {event['best_clip_1080p']} não encontrado")
                 continue
             print(f"  {dst.name}  [single cam: {event['best_cam']}]")
-            crop_1080 = _scale_crop_to_1080p(event["crop"])
+            # Scale crop from 480p preview space to actual 1080p clip dimensions
+            cap_tmp = cv2.VideoCapture(str(src_1080))
+            dst_w   = int(cap_tmp.get(cv2.CAP_PROP_FRAME_WIDTH))  or 1440
+            dst_h   = int(cap_tmp.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 1080
+            cap_tmp.release()
+            crop_1080 = _scale_crop(event["crop"], 640, 480, dst_w, dst_h)
             ok = crop_and_encode(src_1080, dst, crop_1080)
 
         if ok:

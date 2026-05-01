@@ -545,7 +545,7 @@ for c in candidates:
     f1080    = output_dir / f"{base}_1080p.mp4"
     f480     = output_dir / f"{base}_480p.mp4"
 
-    # Crop da subida: union de todos os bboxes do tid durante este climb + 20% margem
+    # Crop da subida: union de bboxes + 20% margem + forçar 4:3
     climb_bboxes = [
         (bx1, by1, bx2, by2)
         for fi, bx1, by1, bx2, by2 in track_bboxes.get(tid, [])
@@ -556,21 +556,41 @@ for c in candidates:
         ymin = min(b[1] for b in climb_bboxes)
         xmax = max(b[2] for b in climb_bboxes)
         ymax = max(b[3] for b in climb_bboxes)
-        dx   = int((xmax - xmin) * 0.20)
-        dy   = int((ymax - ymin) * 0.20)
-        cx1  = max(0, xmin - dx) & ~1
-        cy1  = max(0, ymin - dy) & ~1
-        cx2  = min(W, xmax + dx)
-        cy2  = min(H, ymax + dy)
-        cw   = (cx2 - cx1) & ~1
-        ch   = (cy2 - cy1) & ~1
-        vf   = (f"crop={cw}:{ch}:{cx1}:{cy1},"
-                f"scale=1920:1080:force_original_aspect_ratio=decrease,"
-                f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2")
-        print(f"  crop: ({cx1},{cy1}) {cw}×{ch}px ({len(climb_bboxes)} bboxes)")
+        # 20% margem
+        dx  = int((xmax - xmin) * 0.20)
+        dy  = int((ymax - ymin) * 0.20)
+        x1  = max(0, xmin - dx)
+        y1  = max(0, ymin - dy)
+        x2  = min(W, xmax + dx)
+        y2  = min(H, ymax + dy)
+        # Forçar 4:3 expandindo o lado mais estreito
+        bw, bh = x2 - x1, y2 - y1
+        if bh > 0 and bw / bh < 4 / 3:  # muito alto → alargar
+            tw   = int(bh * 4 / 3) & ~1
+            ex   = (tw - bw) // 2
+            x1   = max(0, x1 - ex)
+            x2   = min(W, x1 + tw)
+            if x2 - x1 < tw:
+                x1 = max(0, x2 - tw)
+        else:                              # muito largo → aumentar altura
+            th   = int(bw * 3 / 4) & ~1
+            ey   = (th - bh) // 2
+            y1   = max(0, y1 - ey)
+            y2   = min(H, y1 + th)
+            if y2 - y1 < th:
+                y1 = max(0, y2 - th)
+        cx1 = int(x1) & ~1
+        cy1 = int(y1) & ~1
+        cw  = (int(x2) - cx1) & ~1
+        ch  = (int(y2) - cy1) & ~1
+        vf  = f"crop={cw}:{ch}:{cx1}:{cy1},scale=1440:1080"
+        print(f"  crop 4:3: ({cx1},{cy1}) {cw}×{ch}px → 1440×1080 ({len(climb_bboxes)} bboxes)")
     else:
-        vf = "scale=1920:1080"
-        print(f"  crop: sem bboxes — frame completo")
+        # Sem bboxes: recortar centro 4:3 da frame completa
+        cw  = int(H * 4 / 3) & ~1
+        cx1 = ((W - cw) // 2) & ~1
+        vf  = f"crop={cw}:{H}:{cx1}:0,scale=1440:1080"
+        print(f"  crop 4:3: sem bboxes → centro {cw}×{H}px")
 
     # 1080p — extrai do 4K (video_path) com crop da subida
     cmd_1080 = [
@@ -590,11 +610,11 @@ for c in candidates:
         print(f"  ERRO FFmpeg: {r.stderr.decode()[:300]}")
         continue
 
-    # 480p preview — gerado a partir do clip 1080p (mais rápido que re-seek)
+    # 480p preview 4:3 — gerado a partir do clip 1080p
     cmd_480 = [
         "ffmpeg", "-y",
         "-i", str(f1080),
-        "-vf", "scale=854:480",
+        "-vf", "scale=640:480",
         "-c:v", "libx264", "-preset", "fast", "-crf", "28",
         "-c:a", "aac",
         "-movflags", "+faststart",
