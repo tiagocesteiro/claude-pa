@@ -129,10 +129,11 @@ def _try_transcript_api(video_id: str) -> str | None:
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
     except ImportError:
+        print("  [transcript] youtube-transcript-api not installed")
         return None
 
-    # Try newer instance API first, fall back to legacy static API.
     candidates = [("en", "en-US", "en-GB"), ("pt", "pt-BR", "pt-PT")]
+    last_err = None
     for lang_group in candidates:
         try:
             try:
@@ -143,8 +144,10 @@ def _try_transcript_api(video_id: str) -> str | None:
             except AttributeError:
                 t = YouTubeTranscriptApi.get_transcript(video_id, languages=list(lang_group))
                 return " ".join(item["text"] for item in t)
-        except Exception:
+        except Exception as e:
+            last_err = e
             continue
+    print(f"  [transcript] transcript-api failed: {last_err}")
     return None
 
 
@@ -168,12 +171,16 @@ def _try_ytdlp(video_id: str) -> str | None:
         f"https://www.youtube.com/watch?v={video_id}",
     ]
     try:
-        subprocess.run(cmd, capture_output=True, timeout=120, check=False)
+        r = subprocess.run(cmd, capture_output=True, timeout=120, check=False)
+        if r.returncode != 0:
+            print(f"  [transcript] yt-dlp exit {r.returncode}: {(r.stderr or b'')[:200]}")
     except subprocess.TimeoutExpired:
+        print("  [transcript] yt-dlp timed out")
         return None
 
     for vtt in tmp.glob(f"{video_id}.*.vtt"):
         return _vtt_to_text(vtt.read_text(encoding="utf-8", errors="replace"))
+    print("  [transcript] yt-dlp: no .vtt file produced")
     return None
 
 
@@ -255,14 +262,32 @@ def _find_claude_cli() -> str:
     sys.exit("ERROR: `claude` CLI not found.")
 
 
-def call_claude(channel: dict, video: dict, transcript: str) -> str:
+def call_claude(channel: dict, video: dict, transcript: str | None) -> str:
     claude_bin = _find_claude_cli()
     name = channel.get("name", "Unknown")
     bias = channel.get("bias_watch") or "n/a"
 
-    # Truncate very long transcripts (>50k chars ≈ 12k tokens) — Andrei's vids are usually 15-30k chars.
-    if len(transcript) > 60000:
-        transcript = transcript[:60000] + "\n\n[...truncated...]"
+    if transcript:
+        # Truncate very long transcripts (~12k tokens max).
+        if len(transcript) > 60000:
+            transcript = transcript[:60000] + "\n\n[...truncated...]"
+        transcript_block = f"TRANSCRIPT:\n\n{transcript}\n\n---\n\n"
+        # With transcript, 1 WebSearch call is enough for spot fact-checking.
+        allowed_tools = "WebSearch"
+        timeout_s = 240
+        search_note = "Gera a análise ATLAS seguindo a estrutura definida. Cita números/teses específicas do vídeo."
+    else:
+        # No transcript — let Claude search for the video's key claims.
+        transcript_block = (
+            f"Nota: Transcript indisponível. Usa WebSearch para encontrar os claims "
+            f"principais do vídeo '{video['title']}' de {name} (publicado {video.get('published','')}).\n\n---\n\n"
+        )
+        allowed_tools = "WebSearch,WebFetch"
+        timeout_s = 300
+        search_note = (
+            "Transcript indisponível. Usa WebSearch (2-3 chamadas) para encontrar os claims do vídeo "
+            "e gera a análise ATLAS com base no que encontrares."
+        )
 
     user_msg = f"""Creator: {name}
 Bias to watch: {bias}
@@ -272,22 +297,15 @@ Published: {video.get('published', 'unknown')}
 
 ---
 
-TRANSCRIPT:
+{transcript_block}{search_note}"""
 
-{transcript}
-
----
-
-Gera a análise ATLAS seguindo a estrutura definida. Cita números/teses específicas do vídeo."""
-
-    print(f"  → Calling Claude headless ({claude_bin})...", file=sys.stderr)
-    # Pass prompt via stdin (transcripts blow past Windows' 8191-char cmd limit).
+    print(f"  → Claude headless (transcript={'yes' if transcript else 'no'}, tools={allowed_tools}, timeout={timeout_s}s)")
     cmd = [
         claude_bin,
         "-p",
-        "--system-prompt", SYSTEM_PROMPT,  # full replace; avoids coding-agent default
+        "--system-prompt", SYSTEM_PROMPT,
         "--output-format", "text",
-        "--allowedTools", "WebSearch,WebFetch",
+        "--allowedTools", allowed_tools,
         "--dangerously-skip-permissions",
     ]
     try:
@@ -296,15 +314,17 @@ Gera a análise ATLAS seguindo a estrutura definida. Cita números/teses especí
             input=user_msg,
             capture_output=True,
             text=True,
-            timeout=480,  # 8 min — WebSearch + 30k-char transcripts can be slow
+            timeout=timeout_s,
             encoding="utf-8",
             errors="replace",
         )
     except subprocess.TimeoutExpired:
-        return "ERROR: Claude timed out after 8 minutes."
+        return f"ERROR: Claude timed out after {timeout_s}s."
 
     if result.returncode != 0:
-        return f"ERROR: Claude exited {result.returncode}\n{(result.stderr or '')[-500:]}"
+        stderr_tail = (result.stderr or "")[-600:]
+        print(f"  [claude] exit {result.returncode}, stderr: {stderr_tail}")
+        return f"ERROR: Claude exited {result.returncode}"
 
     return _clean_output((result.stdout or "").strip())
 
@@ -374,7 +394,7 @@ def chunk_for_discord(text: str, limit: int = DISCORD_LIMIT) -> list[str]:
 
 def post_to_discord(webhook: str, content: str) -> None:
     chunks = chunk_for_discord(content)
-    print(f"  → Posting {len(chunks)} Discord message(s)...", file=sys.stderr)
+    print(f"  → Posting {len(chunks)} Discord message(s)...")
     for i, chunk in enumerate(chunks):
         payload = json.dumps({"content": chunk}).encode("utf-8")
         req = Request(
@@ -400,18 +420,18 @@ def post_to_discord(webhook: str, content: str) -> None:
 
 def process_video(channel: dict, video: dict, args) -> bool:
     """Return True if Discord post succeeded (or in dry-run); False on failure."""
-    print(f"\n[NEW] {channel['name']} → {video['title']}", file=sys.stderr)
-    print(f"       {video['link']}", file=sys.stderr)
+    print(f"\n[NEW] {channel['name']} → {video['title']}")
+    print(f"       {video['link']}")
 
     transcript = fetch_transcript(video["id"])
-    if not transcript:
-        print("  WARN: transcript unavailable; skipping (will retry next run)", file=sys.stderr)
-        return False
-    print(f"  ✓ Transcript: {len(transcript)} chars", file=sys.stderr)
+    if transcript:
+        print(f"  ✓ Transcript: {len(transcript)} chars")
+    else:
+        print("  ! Transcript unavailable — proceeding with WebSearch-only analysis")
 
     analysis = call_claude(channel, video, transcript)
     if analysis.startswith("ERROR"):
-        print(f"  ✗ {analysis}", file=sys.stderr)
+        print(f"  ✗ {analysis}")
         return False
 
     if args.dry_run:
@@ -452,7 +472,7 @@ def main():
     for ch in channels:
         ch_id = ch["id"]
         ch_name = ch.get("name", ch_id)
-        print(f"[poll] {ch_name} ({ch_id})", file=sys.stderr)
+        print(f"[poll] {ch_name} ({ch_id})")
 
         videos = fetch_channel_feed(ch_id)
         if not videos:
@@ -473,9 +493,9 @@ def main():
 
     if new_count > 0 and not args.dry_run:
         save_state(state)
-        print(f"\n[done] {new_count} new video(s) processed; state updated.", file=sys.stderr)
+        print(f"\n[done] {new_count} new video(s) processed; state updated.")
     else:
-        print(f"\n[done] no new videos.", file=sys.stderr)
+        print(f"\n[done] no new videos.")
 
 
 if __name__ == "__main__":
