@@ -1,0 +1,37 @@
+# ATLAS portfolio file
+# Edit this file with your real holdings. Used by the `portfolio` skill.
+#
+# Required fields per position: ticker, qty, avg_cost
+# Optional: currency (default USD), sector (override), country (override), notes
+#
+# Tickers support Finnhub format:
+#   - US:          AAPL, MSFT, NVDA, VOO, QQQ
+#   - LSE UCITS:   CSPX.L, IWDA.L, VWCE.DE
+#   - XETRA:       SAP.DE, ALV.DE
+#   - Tokyo:       7203.T
+#
+# Examples below are commented out — replace with your actual positions then uncomment.
+
+positions: []
+
+# Example layout (delete the line above and uncomment below to use):
+#
+# positions:
+#   - ticker: VOO
+#     qty: 10
+#     avg_cost: 380.50
+#     currency: USD
+#     notes: "Core US holding"
+#
+#   - ticker: CSPX.L
+#     qty: 5
+#     avg_cost: 450.00
+#     currency: USD
+#     sector: "Broad Index ETF"
+#     country: "Ireland"
+#
+#   - ticker: NVDA
+#     qty: 8
+#     avg_cost: 420.00
+#     currency: USD
+#     notes: "AI infrastructure thesis"

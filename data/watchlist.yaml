@@ -1,0 +1,37 @@
+# ATLAS daily watchlist — tickers monitored every morning at 8am Lisbon.
+# Edit as your themes evolve. Used by scripts/atlas_briefing.py.
+#
+# Categories help ATLAS group analysis. Keep ~20-25 tickers max for clean Discord output.
+
+categories:
+  indices_us:
+    label: "US Indices"
+    tickers: [SPY, QQQ, IWM]
+
+  indices_global:
+    label: "Global Indices"
+    tickers: [VGK, MCHI, EWJ, INDA]   # Europe, China, Japan, India
+
+  big_tech:
+    label: "Big Tech / AI"
+    tickers: [NVDA, MSFT, GOOGL, META, AMZN, AAPL]
+
+  semis:
+    label: "Semis"
+    tickers: [TSM, ASML, AMD]
+
+  defense:
+    label: "Defense / NATO"
+    tickers: [ITA, LMT, RHM.DE]
+
+  energy_commodities:
+    label: "Energy & Commodities"
+    tickers: [XLE, GLD, URA]
+
+  safe_haven_rates:
+    label: "Safe haven & Rates"
+    tickers: [TLT, HYG]
+
+  themes:
+    label: "Themes"
+    tickers: [TSLA, BABA]   # EV / China consumer
