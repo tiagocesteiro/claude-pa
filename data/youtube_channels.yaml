@@ -1,0 +1,14 @@
+# Channels monitored by scripts/atlas_youtube.py
+# Cron polls each channel's RSS feed; when a new video appears, ATLAS analyses + posts to Discord.
+#
+# To add a channel:
+#   1. Open the channel page on YouTube
+#   2. View source / right-click → channel ID is in the URL or page metadata
+#      Or use https://commentpicker.com/youtube-channel-id.php
+#   3. Add a new entry below.
+
+channels:
+  - id: UCGy7SkBjcIAgTiwkXEtPnYg
+    name: "Andrei Jikh"
+    focus: "Stocks, options, crypto, macro — US retail finance"
+    bias_watch: "Promotes own course (Backstage Investing); often bullish risk assets; crypto/SPY/QQQ heavy"

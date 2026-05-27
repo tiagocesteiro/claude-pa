@@ -229,9 +229,10 @@ Gera o briefing matinal seguindo a estrutura definida. Usa WebSearch para notíc
 
     # Headless invocation. --allowedTools whitelists only WebSearch/WebFetch (no file writes).
     # --dangerously-skip-permissions auto-approves those tools (required in non-interactive).
+    # Prompt via stdin to avoid Windows' 8191-char command line limit.
     cmd = [
         claude_bin,
-        "-p", user_msg,
+        "-p",
         "--append-system-prompt", BRIEFING_SYSTEM_PROMPT,
         "--output-format", "text",
         "--allowedTools", "WebSearch,WebFetch",
@@ -241,6 +242,7 @@ Gera o briefing matinal seguindo a estrutura definida. Usa WebSearch para notíc
     try:
         result = subprocess.run(
             cmd,
+            input=user_msg,
             capture_output=True,
             text=True,
             timeout=240,
