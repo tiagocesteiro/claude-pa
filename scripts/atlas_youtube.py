@@ -87,7 +87,9 @@ def save_state(state: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def fetch_channel_feed(channel_id: str) -> list[dict]:
-    """Return list of recent video dicts: {id, title, published, link}."""
+    """Return list of recent long-form video dicts: {id, title, published, link}.
+    Shorts are excluded — their RSS link contains '/shorts/' instead of '/watch?v='.
+    """
     url = f"{RSS_BASE}?channel_id={channel_id}"
     req = Request(url, headers={"User-Agent": "atlas-youtube/1.0"})
     try:
@@ -104,6 +106,7 @@ def fetch_channel_feed(channel_id: str) -> list[dict]:
         return []
 
     videos = []
+    shorts_skipped = 0
     for entry in root.findall(f"{ATOM_NS}entry"):
         vid_el = entry.find(f"{YT_NS}videoId")
         title_el = entry.find(f"{ATOM_NS}title")
@@ -111,12 +114,19 @@ def fetch_channel_feed(channel_id: str) -> list[dict]:
         link_el = entry.find(f"{ATOM_NS}link")
         if vid_el is None or title_el is None:
             continue
+        link = link_el.attrib.get("href") if link_el is not None else f"https://www.youtube.com/watch?v={vid_el.text}"
+        # YouTube Shorts always use /shorts/ URL in the RSS feed — skip them.
+        if "/shorts/" in link:
+            shorts_skipped += 1
+            continue
         videos.append({
             "id": vid_el.text,
             "title": title_el.text,
             "published": pub_el.text if pub_el is not None else "",
-            "link": link_el.attrib.get("href") if link_el is not None else f"https://www.youtube.com/watch?v={vid_el.text}",
+            "link": link,
         })
+    if shorts_skipped:
+        print(f"  [rss] skipped {shorts_skipped} Short(s)")
     return videos
 
 
