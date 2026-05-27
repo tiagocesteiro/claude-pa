@@ -1,13 +1,13 @@
 name: ATLAS Daily Briefing
 
-# Runs at 8am Lisbon year-round (handles DST):
-#   - 07:00 UTC → 8am WEST (summer, Mar–Oct)
-#   - 08:00 UTC → 8am WET  (winter, Oct–Mar)
+# Runs at 6am Lisbon year-round (handles DST):
+#   - 05:00 UTC → 6am WEST (summer, Mar–Oct)
+#   - 06:00 UTC → 6am WET  (winter, Oct–Mar)
 # The script gates on Europe/Lisbon hour so only one fires per day.
 on:
   schedule:
-    - cron: "0 7 * * *"   # 8am Lisbon summer
-    - cron: "0 8 * * *"   # 8am Lisbon winter
+    - cron: "0 5 * * *"   # 6am Lisbon summer
+    - cron: "0 6 * * *"   # 6am Lisbon winter
   workflow_dispatch:       # manual trigger from GitHub UI
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml "edgartools[ai]"
 
-      - name: Gate on Lisbon 8am (DST-aware)
+      - name: Gate on Lisbon 6am (DST-aware)
         id: gate
         run: |
           python - <<'PY'
@@ -45,7 +45,7 @@ jobs:
           from datetime import datetime
           from zoneinfo import ZoneInfo
           lisbon = datetime.now(ZoneInfo("Europe/Lisbon"))
-          should_run = lisbon.hour == 8
+          should_run = lisbon.hour == 6
           print(f"Lisbon time: {lisbon.isoformat()}")
           print(f"Should run: {should_run}")
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
