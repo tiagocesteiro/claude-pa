@@ -1,17 +1,19 @@
 name: ATLAS Daily Briefing
 
-# Fires 3x per day to tolerate GitHub Actions cron delays (typically 30-60 min).
+# Fires 4x per day to tolerate GitHub Actions cron delays (typically 30-60 min).
 # Gate + date-dedup ensure exactly ONE briefing per calendar day (Lisbon time).
 #
 #   05:00 UTC = 06:00 WEST (summer)  ← primary target
 #   06:00 UTC = 07:00 WEST (fallback if primary is delayed)
 #   07:00 UTC = 08:00 WEST (last resort) / 06:00 WET (winter primary)
+#   08:00 UTC = 09:00 WEST (test / emergency fallback)
 
 on:
   schedule:
     - cron: "0 5 * * *"
     - cron: "0 6 * * *"
     - cron: "0 7 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:       # manual trigger always runs regardless of gate
 
 permissions:
@@ -60,7 +62,7 @@ jobs:
           print(f"Lisbon time: {lisbon.isoformat()}")
 
           # Accept 05:00-08:59 Lisbon — wide window to absorb GHA scheduling delays
-          in_window = 5 <= lisbon.hour <= 8
+          in_window = 5 <= lisbon.hour <= 9
           print(f"In morning window (05-08h): {in_window}")
 
           # Skip if already ran today (prevents double-run when multiple crons fire)
