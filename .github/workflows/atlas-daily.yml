@@ -3,17 +3,18 @@ name: ATLAS Daily Briefing
 # Fires 4x per day to tolerate GitHub Actions cron delays (typically 30-60 min).
 # Gate + date-dedup ensure exactly ONE briefing per calendar day (Lisbon time).
 #
-#   05:00 UTC = 06:00 WEST (summer)  ← primary target
-#   06:00 UTC = 07:00 WEST (fallback if primary is delayed)
-#   07:00 UTC = 08:00 WEST (last resort) / 06:00 WET (winter primary)
-#   08:00 UTC = 09:00 WEST (test / emergency fallback)
+# Using minute :30 (not :00) — GitHub drops jobs at top-of-hour due to high load.
+#   05:30 UTC = 06:30 WEST (summer)  ← primary target
+#   06:30 UTC = 07:30 WEST (fallback)
+#   07:30 UTC = 08:30 WEST (last resort) / 06:30 WET (winter primary)
+#   08:30 UTC = 09:30 WEST (test / emergency fallback)
 
 on:
   schedule:
-    - cron: "0 5 * * *"
-    - cron: "0 6 * * *"
-    - cron: "0 7 * * *"
-    - cron: "0 8 * * *"
+    - cron: "30 5 * * *"
+    - cron: "30 6 * * *"
+    - cron: "30 7 * * *"
+    - cron: "30 8 * * *"
   workflow_dispatch:       # manual trigger always runs regardless of gate
 
 permissions:
