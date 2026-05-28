@@ -446,7 +446,7 @@ def maybe_run_briefing(dry_run: bool) -> None:
     from zoneinfo import ZoneInfo
 
     lisbon = datetime.now(ZoneInfo("Europe/Lisbon"))
-    if not (6 <= lisbon.hour <= 10):
+    if not (5 <= lisbon.hour <= 12):
         return
 
     today = lisbon.date().isoformat()
