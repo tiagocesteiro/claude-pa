@@ -51,6 +51,7 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHANNELS_YAML = REPO_ROOT / "data" / "youtube_channels.yaml"
 STATE_JSON = REPO_ROOT / "data" / "youtube_state.json"
+BRIEFING_STATE_JSON = REPO_ROOT / "data" / "briefing_state.json"
 
 RSS_BASE = "https://www.youtube.com/feeds/videos.xml"
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
@@ -433,6 +434,53 @@ def post_to_discord(webhook: str, content: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Daily briefing piggyback
+# ---------------------------------------------------------------------------
+
+def maybe_run_briefing(dry_run: bool) -> None:
+    """Run atlas_briefing.py if it hasn't run today and it's morning in Lisbon (06-10h).
+
+    This piggybacks on the YouTube monitor's working :30/h cron so we don't depend
+    on GitHub's unreliable daily cron scheduler.
+    """
+    from zoneinfo import ZoneInfo
+
+    lisbon = datetime.now(ZoneInfo("Europe/Lisbon"))
+    if not (6 <= lisbon.hour <= 10):
+        return
+
+    today = lisbon.date().isoformat()
+
+    if BRIEFING_STATE_JSON.exists():
+        try:
+            state = json.loads(BRIEFING_STATE_JSON.read_text())
+            if state.get("last_run_date") == today:
+                print(f"[briefing] Already ran today ({today}), skipping.")
+                return
+        except Exception:
+            pass
+
+    print(f"[briefing] Morning window detected ({lisbon.strftime('%H:%M')} Lisboa) — running daily briefing...")
+
+    # Write state immediately to prevent a concurrent run from double-posting.
+    BRIEFING_STATE_JSON.write_text(json.dumps({"last_run_date": today}, indent=2))
+
+    briefing_script = REPO_ROOT / "scripts" / "atlas_briefing.py"
+    cmd = [sys.executable, str(briefing_script)]
+    if dry_run:
+        cmd.append("--dry-run")
+
+    try:
+        result = subprocess.run(cmd, timeout=360, check=False)
+        if result.returncode != 0:
+            print(f"[briefing] exited {result.returncode} — see output above")
+        else:
+            print("[briefing] Done.")
+    except subprocess.TimeoutExpired:
+        print("[briefing] Timed out after 6 minutes.")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -471,6 +519,8 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print analysis instead of posting; do not update state")
     parser.add_argument("--force", type=str, help="Force-process this video ID (debug)")
     args = parser.parse_args()
+
+    maybe_run_briefing(args.dry_run)
 
     channels = load_channels()
     state = load_state()

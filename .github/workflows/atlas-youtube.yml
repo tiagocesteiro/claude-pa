@@ -1,21 +1,20 @@
 name: ATLAS YouTube Monitor
 
-# Polls YouTube channels in data/youtube_channels.yaml every hour.
-# When a new video is detected: fetch transcript → ATLAS analysis → Discord.
-# State (last-seen video IDs) is persisted in data/youtube_state.json, committed back to repo.
+# Polls YouTube channels every 30 min. Also runs the daily briefing (06-10h Lisboa)
+# since GitHub's daily cron scheduler is unreliable — piggybacking on this working cron.
 
 on:
   schedule:
-    - cron: "30 * * * *"   # hourly at :30
+    - cron: "30 * * * *"   # every hour at :30
   workflow_dispatch:        # manual trigger
 
 permissions:
-  contents: write           # required to commit youtube_state.json back
+  contents: write           # required to commit state files back
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25     # briefing (~6min) + youtube analysis (~8min) = up to 14min
 
     steps:
       - name: Checkout
@@ -41,20 +40,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml youtube-transcript-api yt-dlp
 
-      - name: Run YouTube monitor
+      - name: Run YouTube monitor (+ morning briefing if applicable)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          SEC_IDENTITY: ${{ secrets.SEC_IDENTITY }}
         run: python scripts/atlas_youtube.py
 
       - name: Commit state if changed
         run: |
-          if git diff --quiet data/youtube_state.json; then
+          git config user.name "atlas-bot"
+          git config user.email "atlas-bot@users.noreply.github.com"
+          git add data/youtube_state.json data/briefing_state.json
+          if git diff --cached --quiet; then
             echo "No state change."
           else
-            git config user.name "atlas-bot"
-            git config user.email "atlas-bot@users.noreply.github.com"
-            git add data/youtube_state.json
-            git commit -m "chore(atlas-youtube): update seen video IDs"
+            git commit -m "chore(atlas): update state"
             git push
           fi
