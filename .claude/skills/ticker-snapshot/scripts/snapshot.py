@@ -71,10 +71,6 @@ def company_news(ticker: str, days: int = 7) -> list:
     return res if isinstance(res, list) else []
 
 
-def news_sentiment(ticker: str) -> dict:
-    return _get("/news-sentiment", {"symbol": ticker})
-
-
 def _fmt_money(n):
     if n is None or n == 0:
         return "N/A"
@@ -99,9 +95,9 @@ def snapshot(ticker: str) -> str:
     ticker = ticker.upper()
     q = quote(ticker)
     p = profile(ticker)
-    m = metrics(ticker).get("metric", {}) if not metrics(ticker).get("_error") else {}
+    m_raw = metrics(ticker)                                    # single call (was called 2-3x)
+    m = m_raw.get("metric", {}) if not m_raw.get("_error") else {}
     ec = earnings_calendar(ticker)
-    sent = news_sentiment(ticker)
     news = company_news(ticker, days=7)
 
     if q.get("_error") or not q.get("c"):
@@ -118,9 +114,6 @@ def snapshot(ticker: str) -> str:
     if er_list:
         next_er = er_list[0].get("date", "N/A")
 
-    bullish = sent.get("sentiment", {}).get("bullishPercent")
-    bearish = sent.get("sentiment", {}).get("bearishPercent")
-
     lines = [
         f"# ATLAS Snapshot: {ticker} — {p.get('name', 'Unknown')}",
         f"_{p.get('finnhubIndustry', 'N/A')} · {p.get('exchange', 'N/A')} · {p.get('country', 'N/A')}_",
@@ -136,7 +129,7 @@ def snapshot(ticker: str) -> str:
         f"- **P/E (TTM):** {_fmt_num(m.get('peTTM'))}",
         f"- **P/B:** {_fmt_num(m.get('pbAnnual'))}",
         f"- **P/S (TTM):** {_fmt_num(m.get('psTTM'))}",
-        f"- **EV/EBITDA:** {_fmt_num(m.get('currentEv/freeCashFlowTTM'))}",
+        f"- **EV/FCF (TTM):** {_fmt_num(m.get('currentEv/freeCashFlowTTM'))}",
         f"- **Dividend yield:** {_fmt_num(m.get('dividendYieldIndicatedAnnual'))}%",
         f"- **ROE:** {_fmt_num(m.get('roeTTM'))}%",
         f"- **Net margin:** {_fmt_num(m.get('netProfitMarginTTM'))}%",
@@ -146,9 +139,6 @@ def snapshot(ticker: str) -> str:
         f"- **Next earnings:** {next_er}",
         f"- **News last 7d:** {len(news)} articles",
     ]
-
-    if bullish is not None:
-        lines.append(f"- **Sentiment (Finnhub):** {bullish:.0%} bullish / {bearish:.0%} bearish")
 
     if news[:3]:
         lines.append("")

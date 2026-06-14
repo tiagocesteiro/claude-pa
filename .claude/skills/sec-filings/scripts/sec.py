@@ -3,9 +3,9 @@
 sec-filings — SEC EDGAR access via edgartools (no API key needed).
 
 Usage:
-    python edgar.py latest TICKER [--n 5]      # last N filings (any form)
-    python edgar.py insider TICKER [--days 90] # insider trades (Form 4)
-    python edgar.py metrics TICKER             # key financials from latest 10-Q/10-K
+    python sec.py latest TICKER [--n 5]      # last N filings (any form)
+    python sec.py insider TICKER [--days 90] # insider trades (Form 4) with buy/sell + $ value
+    python sec.py metrics TICKER             # key financials from latest 10-Q/10-K
 
 Setup:
     pip install "edgartools[ai]"
@@ -86,31 +86,74 @@ def insider(ticker: str, days: int = 90) -> str:
     except Exception as e:
         return f"ERROR fetching Form 4: {e}"
 
-    rows = []
+    # Parse each Form 4 for actual transactions (buy/sell, shares, $ value).
+    trades = []          # (date, insider, position, side, shares, value)
+    buy_value = 0.0
+    sell_value = 0.0
+    parsed = 0
     for f in form4:
+        fd = getattr(f, "filing_date", None)
+        if fd is None:
+            continue
+        fd_date = fd if hasattr(fd, "year") else datetime.fromisoformat(str(fd)).date()
+        if fd_date < cutoff:
+            continue
+        # Stop after a reasonable number of network fetches to keep this responsive.
+        if parsed >= 25:
+            break
         try:
-            fd = getattr(f, "filing_date", None)
-            if fd is None:
-                continue
-            fd_date = fd if hasattr(fd, "year") else datetime.fromisoformat(str(fd)).date()
-            if fd_date < cutoff:
-                continue
-            rows.append((fd_date, getattr(f, "accession_number", "")))
+            summ = f.obj().get_ownership_summary()
+            insider_name = getattr(summ, "insider_name", "?")
+            position = getattr(summ, "position", "") or ""
+            for t in getattr(summ, "transactions", []) or []:
+                side = getattr(t, "transaction_type", "") or ""
+                shares = getattr(t, "shares", 0) or 0
+                value = getattr(t, "value", 0) or 0
+                if "purchase" in side.lower() or getattr(t, "code", "") == "P":
+                    buy_value += value
+                    label = "BUY"
+                elif "sale" in side.lower() or getattr(t, "code", "") == "S":
+                    sell_value += value
+                    label = "SELL"
+                else:
+                    label = side or "?"
+                trades.append((fd_date, insider_name, position, label, shares, value))
+            parsed += 1
         except Exception:
             continue
 
-    if not rows:
-        out.append(f"No Form 4 filings in the last {days} days.")
+    if not trades:
+        out.append(f"No parseable insider transactions in the last {days} days.")
         return "\n".join(out)
 
-    out.append(f"**{len(rows)} insider filings (Form 4) in the last {days} days.**")
+    # Aggregate signal first — this is what actually matters.
+    net = buy_value - sell_value
+    if buy_value == 0 and sell_value > 0:
+        signal = "🔴 Net SELLING (no open-market buys)"
+    elif net > 0:
+        signal = "🟢 Net BUYING"
+    elif net < 0:
+        signal = "🟠 Net selling"
+    else:
+        signal = "⚪ Balanced"
+    out.append(f"**Signal:** {signal}")
+    out.append(f"- Buys: {_fmt_money(buy_value)} · Sells: {_fmt_money(sell_value)} · Net: {_fmt_money(net)}")
+
+    # Table shows only material open-market BUY/SELL with a $ value (skip gift/exercise/tax noise).
+    material = [t for t in trades if t[3] in ("BUY", "SELL") and t[5] > 0]
+    if material:
+        out.append("")
+        out.append("| Date | Insider | Role | Side | Shares | Value |")
+        out.append("|---|---|---|---|---:|---:|")
+        for fd, name, pos, side, shares, value in material[:20]:
+            out.append(f"| {fd} | {name} | {pos} | {side} | {shares:,.0f} | {_fmt_money(value)} |")
+
+    other = len(trades) - len(material)
+    if other > 0:
+        out.append("")
+        out.append(f"_+{other} non-market transactions (option exercises, gifts, tax withholding) omitted._")
     out.append("")
-    out.append("| Date | Accession |")
-    out.append("|---|---|")
-    for fd, acc in rows[:20]:
-        out.append(f"| {fd} | {acc} |")
-    out.append("")
-    out.append(f"_Raw counts only. For trade direction (buy/sell) and $ amounts, open the filings on SEC EDGAR._")
+    out.append("_Open-market buys are a stronger signal than sells (sells often = tax/diversification). Form 4 via SEC EDGAR._")
     return "\n".join(out)
 
 
