@@ -35,6 +35,35 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_PORTFOLIO = REPO_ROOT / "data" / "portfolio.yaml"
 FINNHUB = "https://finnhub.io/api/v1"
+FRANKFURTER = "https://api.frankfurter.app"
+
+# FX rate cache: (from_ccy, to_ccy) -> rate
+_fx_cache: dict[tuple[str, str], float] = {}
+
+
+def fx_rate(from_ccy: str, to_ccy: str) -> float | None:
+    """Convert 1 unit of from_ccy to to_ccy via the ECB (frankfurter.app, free, no key).
+
+    Returns None if the rate can't be fetched (caller should flag, not silently sum).
+    """
+    from_ccy = (from_ccy or "USD").upper()
+    to_ccy = (to_ccy or "USD").upper()
+    if from_ccy == to_ccy:
+        return 1.0
+    if (from_ccy, to_ccy) in _fx_cache:
+        return _fx_cache[(from_ccy, to_ccy)]
+    url = f"{FRANKFURTER}/latest?{urlencode({'base': from_ccy, 'symbols': to_ccy})}"
+    req = Request(url, headers={"User-Agent": "atlas-portfolio/1.0"})
+    try:
+        with urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        rate = data.get("rates", {}).get(to_ccy)
+        if rate is not None:
+            _fx_cache[(from_ccy, to_ccy)] = float(rate)
+            return float(rate)
+    except (HTTPError, URLError, json.JSONDecodeError, ValueError):
+        pass
+    return None
 
 
 def _quote(ticker: str) -> dict:
@@ -63,7 +92,8 @@ def _profile(ticker: str) -> dict:
         return {}
 
 
-def load_portfolio(path: Path) -> list[dict]:
+def load_portfolio(path: Path) -> tuple[list[dict], str]:
+    """Return (positions, base_currency). base_currency defaults to EUR."""
     if not path.exists():
         sys.exit(f"ERROR: portfolio file not found at {path}\nCreate it from the template.")
     with open(path, "r", encoding="utf-8") as f:
@@ -71,7 +101,8 @@ def load_portfolio(path: Path) -> list[dict]:
     positions = data.get("positions", [])
     if not positions:
         sys.exit("ERROR: no positions in portfolio.yaml")
-    return positions
+    base_currency = (data.get("base_currency") or "EUR").upper()
+    return positions, base_currency
 
 
 def _fmt_money(n, currency="USD"):
@@ -86,25 +117,33 @@ def _fmt_money(n, currency="USD"):
 
 
 def report(portfolio_path: Path, fetch_prices: bool = True) -> str:
-    positions = load_portfolio(portfolio_path)
-    out = ["# Portfolio Report", f"_Generated {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_", ""]
+    positions, base = load_portfolio(portfolio_path)
+    out = ["# Portfolio Report", f"_Generated {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · base currency: {base}_", ""]
 
     rows = []
     sector_alloc: dict[str, float] = {}
     country_alloc: dict[str, float] = {}
-    total_value = 0.0
-    total_cost = 0.0
+    total_value = 0.0          # all in base currency
+    total_cost = 0.0           # all in base currency
+    fx_failures: set[str] = set()
+    no_price: list[str] = []   # tickers excluded from totals (no live price)
 
     for i, pos in enumerate(positions):
         ticker = pos.get("ticker")
         qty = float(pos.get("qty", 0))
         avg_cost = float(pos.get("avg_cost", 0))
-        currency = pos.get("currency", "USD")
+        currency = (pos.get("currency") or "USD").upper()
         sector_override = pos.get("sector")
         country_override = pos.get("country")
 
-        cost_basis = qty * avg_cost
-        total_cost += cost_basis
+        # FX rate from this position's currency to the portfolio base currency.
+        rate = fx_rate(currency, base) if fetch_prices else (1.0 if currency == base else None)
+        if rate is None:
+            fx_failures.add(currency)
+            rate = 1.0  # fall back to 1:1 so we still show a number, but flag it
+
+        cost_basis = qty * avg_cost                 # native currency
+        cost_basis_base = cost_basis * rate         # base currency
 
         current_price = None
         pnl = None
@@ -118,18 +157,24 @@ def report(portfolio_path: Path, fetch_prices: bool = True) -> str:
             q = _quote(ticker)
             if not q.get("_error") and q.get("c"):
                 current_price = q["c"]
-                value = qty * current_price
-                pnl = value - cost_basis
+                value_native = qty * current_price
+                pnl = value_native - cost_basis            # native currency
                 pnl_pct = (pnl / cost_basis * 100) if cost_basis else 0
-                total_value += value
+                total_value += value_native * rate         # base currency
+                total_cost += cost_basis_base              # only count cost where we have a price (keeps P&L coherent)
+            else:
+                no_price.append(ticker)
+        else:
+            total_cost += cost_basis_base
             if not sector_override or not country_override:
                 p = _profile(ticker)
                 sector = sector_override or p.get("finnhubIndustry", "?")
                 country = country_override or p.get("country", "?")
 
         if current_price is not None:
-            sector_alloc[sector] = sector_alloc.get(sector, 0) + (qty * current_price)
-            country_alloc[country] = country_alloc.get(country, 0) + (qty * current_price)
+            value_base = qty * current_price * rate
+            sector_alloc[sector] = sector_alloc.get(sector, 0) + value_base
+            country_alloc[country] = country_alloc.get(country, 0) + value_base
 
         rows.append({
             "ticker": ticker,
@@ -166,26 +211,34 @@ def report(portfolio_path: Path, fetch_prices: bool = True) -> str:
         total_pnl = total_value - total_cost
         total_pnl_pct = total_pnl / total_cost * 100 if total_cost else 0
         out.append("")
-        out.append("## Totals (USD-equivalent, FX not normalized)")
-        out.append(f"- **Total value:** {_fmt_money(total_value)}")
-        out.append(f"- **Total cost basis:** {_fmt_money(total_cost)}")
-        out.append(f"- **Total P&L:** {_fmt_money(total_pnl)} ({total_pnl_pct:+.2f}%)")
+        out.append(f"## Totals (converted to {base} via ECB rates)")
+        out.append(f"- **Total value:** {_fmt_money(total_value, base)}")
+        out.append(f"- **Total cost basis:** {_fmt_money(total_cost, base)}")
+        out.append(f"- **Total P&L:** {_fmt_money(total_pnl, base)} ({total_pnl_pct:+.2f}%)")
 
     if sector_alloc:
         out.append("")
-        out.append("## Sector allocation")
+        out.append(f"## Sector allocation (% of {base} value)")
         total = sum(sector_alloc.values())
         for sec, val in sorted(sector_alloc.items(), key=lambda x: -x[1]):
             pct = val / total * 100 if total else 0
-            out.append(f"- {sec}: {pct:.1f}% ({_fmt_money(val)})")
+            out.append(f"- {sec}: {pct:.1f}% ({_fmt_money(val, base)})")
 
     if country_alloc:
         out.append("")
-        out.append("## Country allocation")
+        out.append(f"## Country allocation (% of {base} value)")
         total = sum(country_alloc.values())
         for c, val in sorted(country_alloc.items(), key=lambda x: -x[1]):
             pct = val / total * 100 if total else 0
-            out.append(f"- {c}: {pct:.1f}% ({_fmt_money(val)})")
+            out.append(f"- {c}: {pct:.1f}% ({_fmt_money(val, base)})")
+
+    if no_price:
+        out.append("")
+        out.append(f"_⚠️ No live price for: {', '.join(no_price)} — excluded from totals & allocation (Finnhub free tier may not cover this listing)._")
+
+    if fx_failures:
+        out.append("")
+        out.append(f"_⚠️ FX conversion failed for: {', '.join(sorted(fx_failures))} — those positions counted 1:1 into {base} (totals may be off). Check currency codes._")
 
     if not fetch_prices:
         out.append("")

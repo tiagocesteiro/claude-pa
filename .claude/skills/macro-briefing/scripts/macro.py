@@ -39,11 +39,21 @@ def _http(url: str) -> dict | list | None:
         return {"_error": str(e)}
 
 
-def fred_latest(series_id: str) -> tuple[float | None, str | None]:
+def fred_latest(series_id: str, units: str | None = None) -> tuple[float | None, str | None]:
+    """Latest observation for a FRED series.
+
+    units: optional FRED transformation applied server-side. Useful values:
+      - "pc1" → percent change from a year ago (YoY %)
+      - "pch" → percent change from previous period
+      - "chg" → change from previous period (absolute)
+      Default (None) returns the raw level.
+    """
     key = os.environ.get("FRED_API_KEY")
     if not key:
         return None, "FRED_API_KEY not set"
     params = {"series_id": series_id, "api_key": key, "file_type": "json", "sort_order": "desc", "limit": 1}
+    if units:
+        params["units"] = units
     url = f"{FRED_BASE}/series/observations?{urlencode(params)}"
     res = _http(url)
     if isinstance(res, dict) and not res.get("_error"):
@@ -61,17 +71,19 @@ def _fmt(v, suffix=""):
 
 
 def us_macro() -> str:
+    # (series_id, suffix, units) — units=None returns the raw level.
+    # pc1 = percent change YoY; chg = absolute change vs previous month.
     series = {
-        "Fed Funds Rate (effective)": ("DFF", "%"),
-        "10Y Treasury yield": ("DGS10", "%"),
-        "2Y Treasury yield": ("DGS2", "%"),
-        "CPI YoY (headline)": ("CPIAUCSL", " idx"),
-        "Core CPI YoY": ("CPILFESL", " idx"),
-        "Unemployment rate": ("UNRATE", "%"),
-        "Nonfarm payrolls (k)": ("PAYEMS", "k"),
-        "Real GDP growth (QoQ ann.)": ("A191RL1Q225SBEA", "%"),
-        "Initial jobless claims": ("ICSA", ""),
-        "M2 money supply": ("M2SL", "B"),
+        "Fed Funds Rate (effective)": ("DFF", "%", None),
+        "10Y Treasury yield": ("DGS10", "%", None),
+        "2Y Treasury yield": ("DGS2", "%", None),
+        "CPI YoY (headline)": ("CPIAUCSL", "%", "pc1"),
+        "Core CPI YoY": ("CPILFESL", "%", "pc1"),
+        "Unemployment rate": ("UNRATE", "%", None),
+        "Nonfarm payrolls (monthly chg, k)": ("PAYEMS", "k", "chg"),
+        "Real GDP growth (QoQ ann.)": ("A191RL1Q225SBEA", "%", None),
+        "Initial jobless claims": ("ICSA", "", None),
+        "M2 money supply": ("M2SL", "B", None),
     }
 
     out = ["# US Macro Briefing", f"_Source: FRED · fetched {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}_", ""]
@@ -79,8 +91,8 @@ def us_macro() -> str:
     out.append("|---|---|---|")
 
     values = {}
-    for label, (sid, suf) in series.items():
-        v, d = fred_latest(sid)
+    for label, (sid, suf, units) in series.items():
+        v, d = fred_latest(sid, units)
         values[label] = v
         out.append(f"| {label} | {_fmt(v, suf)} | {d or 'N/A'} |")
 
