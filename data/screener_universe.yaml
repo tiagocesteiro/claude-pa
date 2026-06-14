@@ -1,0 +1,118 @@
+# ATLAS Stock Screener — Universe
+#
+# Finnhub free tier covers US-listed tickers (incl. ADRs of foreign companies).
+# Native EU listings (RHM.DE etc.) return empty — so we use ADRs to get
+# European/Indian/LatAm exposure through tickers that actually return data.
+#
+# Two buckets, reflecting Tiago's HYBRID brief (70% complement / 30% reinforce):
+#   complement — sectors/geographies he does NOT already hold (full weight)
+#   reinforce  — his favourite themes, but players he doesn't own (handicapped)
+#
+# Already held (EXCLUDED from universe — no point recommending what he owns):
+#   NVDA, MSTR (Strategy), COIN, META, MSFT, AMZN, SOUN (SoundHound), BE (Bloom)
+#
+# Edit freely. Add a ticker under the right bucket+theme. Keep it US-listed/ADR.
+
+complement:
+  defense_aero:
+    - LMT      # Lockheed Martin
+    - RTX      # RTX (Raytheon)
+    - GD       # General Dynamics
+    - NOC      # Northrop Grumman
+    - LHX      # L3Harris
+    - HII      # Huntington Ingalls
+    - PLTR     # Palantir
+    - AXON     # Axon
+    - BAESY    # BAE Systems (UK ADR)
+    - EADSY    # Airbus (EU ADR)
+    - RYCEY    # Rolls-Royce (UK ADR)
+
+  biotech_pharma:
+    - LLY      # Eli Lilly (GLP-1)
+    - NVO      # Novo Nordisk (GLP-1 ADR)
+    - VKTX     # Viking Therapeutics
+    - AMGN     # Amgen
+    - REGN     # Regeneron
+    - VRTX     # Vertex
+    - ISRG     # Intuitive Surgical
+    - MRK      # Merck
+
+  grid_energy:
+    - GEV      # GE Vernova (grid/power)
+    - VRT      # Vertiv (data-center power/cooling)
+    - ETN      # Eaton
+    - PWR      # Quanta Services
+    - NEE      # NextEra
+    - CEG      # Constellation Energy
+    - VST      # Vistra
+    - NRG      # NRG Energy
+
+  financials_payments:
+    - JPM      # JPMorgan
+    - V        # Visa
+    - MA       # Mastercard
+    - GS       # Goldman Sachs
+    - BLK      # BlackRock
+    - BRK.B    # Berkshire Hathaway
+    - NU       # Nubank (LatAm fintech)
+    - SOFI     # SoFi
+
+  india:
+    - INFY     # Infosys
+    - IBN      # ICICI Bank
+    - HDB      # HDFC Bank
+    - WIT      # Wipro
+
+  latam_europe_other:
+    - MELI     # MercadoLibre (LatAm)
+    - VALE     # Vale (Brazil materials)
+    - SAP      # SAP (EU software ADR)
+    - ASML     # ASML (counts as semis too, but EU diversification)
+
+  materials_minerals:
+    - ALB      # Albemarle (lithium)
+    - MP       # MP Materials (rare earths)
+    - FCX      # Freeport-McMoRan (copper)
+    - SCCO     # Southern Copper
+
+  industrials_quality:
+    - CAT      # Caterpillar
+    - DE       # Deere
+    - HON      # Honeywell
+    - PH       # Parker Hannifin
+    - ETR      # Entergy
+
+reinforce:
+  ai_semis:
+    - AMD      # Advanced Micro Devices
+    - AVGO     # Broadcom
+    - TSM      # TSMC (ADR)
+    - MU       # Micron
+    - ARM      # Arm Holdings
+    - MRVL     # Marvell
+    - SMCI     # Super Micro
+    - ANET     # Arista Networks
+    - DELL     # Dell
+
+  nuclear_uranium:
+    - CCJ      # Cameco
+    - OKLO     # Oklo (SMR)
+    - SMR      # NuScale
+    - LEU      # Centrus Energy
+    - NNE      # Nano Nuclear
+
+  space:
+    - RKLB     # Rocket Lab
+    - ASTS     # AST SpaceMobile
+    - LUNR     # Intuitive Machines
+
+  crypto_infra:
+    - HOOD     # Robinhood
+    - MARA     # Marathon Digital
+    - RIOT     # Riot Platforms
+    - CLSK     # CleanSpark
+
+  robotics:
+    - ROK      # Rockwell Automation
+    - TER      # Teradyne
+    - ABB      # ABB (ADR)

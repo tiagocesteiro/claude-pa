@@ -1,0 +1,29 @@
+# ATLAS Stock Screener — Scoring profile
+#
+# Calibrated for Tiago: aggressive, growth/thematic investor already heavy in
+# AI/semis/crypto/China. Hybrid brief = diversify first, but still surface the
+# best players in his favourite themes.
+#
+# Each factor is scored cross-sectionally (percentile rank within the scanned
+# universe, 0-100), then combined with the weights below. Tune freely.
+
+weights:
+  momentum: 0.30      # 26-week price return — aggressive investors ride trends
+  growth: 0.28        # revenue + EPS growth YoY — the core of a thematic book
+  quality: 0.22       # ROE, net margin, low debt — avoids junk
+  value: 0.08         # P/E sanity check — deliberately low (he is not a value investor)
+  insider: 0.12       # net insider buying — only computed for finalists
+
+# Bucket multipliers implement the 70/30 hybrid:
+#   complement names keep full score; reinforce names are handicapped so the
+#   ranking naturally tilts toward diversification.
+bucket_multiplier:
+  complement: 1.00
+  reinforce: 0.85
+
+# How many finalists get the full ATLAS treatment (snapshot + insider check).
+finalists: 8
+
+# Momentum guardrail: cap reward for names already up huge (avoid chasing blowoffs).
+# A 26-week return above this still scores well but stops gaining extra credit.
+momentum_cap_pct: 120

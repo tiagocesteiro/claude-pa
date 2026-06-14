@@ -93,6 +93,24 @@ python ".claude/skills/portfolio/scripts/portfolio.py"
 # 3. Macro context via macro-briefing if the question is rebalancing/risk
 ```
 
+### For investment LEADS / ideas / "what should I look at":
+
+```bash
+# 1. Multi-factor screen of a curated universe → ranked leads
+python ".claude/skills/stock-screener/scripts/screener.py"          # full (~2-3 min)
+python ".claude/skills/stock-screener/scripts/screener.py" --no-insider  # faster
+
+# 2. THEN run a full ATLAS analysis on the top 2-3 names that fit the thesis
+#    (ticker-snapshot + sec-filings + macro context + bull/bear)
+```
+
+The screener is calibrated to Tiago's profile (aggressive growth/thematic,
+already heavy in AI/semis/crypto/China). It splits the universe into *complement*
+(sectors he lacks — defense, biotech, grid, financials, India, LatAm) and
+*reinforce* (his themes, names he doesn't own). It returns LEADS, not buy calls —
+always follow up with a real analysis and flag concentration risk if a lead
+doubles down on a trade he's already heavy in.
+
 **After fetching data:** Integrate real numbers into the analysis. Flag any data that couldn't be verified with a ⚠️ symbol. Never invent — if a skill returns N/A or errors, say so explicitly.
 
 ### Skill failure fallbacks
