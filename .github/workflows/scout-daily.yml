@@ -1,0 +1,103 @@
+name: SCOUT Daily
+
+# Fires twice each morning to tolerate GitHub Actions cron delays (typically 30-60 min).
+# Gate + date dedup ensure exactly ONE briefing per calendar day (Lisbon time).
+#
+# Using minute :30 (not :00) — GitHub drops jobs at top-of-hour due to high load.
+#   07:30 UTC = 08:30 WEST (summer) / 07:30 WET (winter)  ← primary (lands after ATLAS)
+#   08:30 UTC = 09:30 WEST (summer) / 08:30 WET (winter)  ← fallback
+
+on:
+  schedule:
+    - cron: "30 7 * * *"
+    - cron: "30 8 * * *"
+  workflow_dispatch:       # manual trigger always runs regardless of gate
+
+permissions:
+  contents: write          # needed to commit scout_state.json
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node (for Claude Code CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Gate — morning window + daily dedup
+        id: gate
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          lisbon = datetime.now(ZoneInfo("Europe/Lisbon"))
+          today = lisbon.date().isoformat()
+          print(f"Lisbon time: {lisbon.isoformat()}")
+
+          # Accept 07:00-10:59 Lisbon — wide window to absorb GHA scheduling delays
+          in_window = 7 <= lisbon.hour <= 10
+          print(f"In morning window (07-10h): {in_window}")
+
+          # Skip if already ran today (prevents double-run when both crons fire)
+          state_path = Path("data/scout_state.json")
+          already_ran = False
+          if state_path.exists():
+              state = json.loads(state_path.read_text())
+              already_ran = state.get("last_run_date") == today
+          print(f"Already ran today ({today}): {already_ran}")
+
+          should_run = in_window and not already_ran
+          print(f"Should run: {should_run}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"should_run={'true' if should_run else 'false'}\n")
+          PY
+
+      - name: Run SCOUT briefing
+        if: steps.gate.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          SCOUT_DISCORD_WEBHOOK_URL: ${{ secrets.SCOUT_DISCORD_WEBHOOK_URL }}
+        run: python scripts/scout_briefing.py
+
+      - name: Mark today as done
+        if: steps.gate.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+          today = datetime.now(ZoneInfo("Europe/Lisbon")).date().isoformat()
+          Path("data/scout_state.json").write_text(json.dumps({"last_run_date": today}, indent=2))
+          print(f"Marked {today} as done.")
+          PY
+          git config user.name "scout-bot"
+          git config user.email "scout-bot@users.noreply.github.com"
+          git add data/scout_state.json
+          git diff --cached --quiet || git commit -m "chore(scout-briefing): ran $(date -u +%Y-%m-%d)"
+          git push

@@ -1,0 +1,35 @@
+# SCOUT weekly radar — configura o que o briefing semanal de oportunidades varre.
+# Usado por scripts/scout_briefing.py. Edita e faz push — o próximo briefing apanha as mudanças.
+#
+# O script escolhe 2-3 temas por semana (rotação pelo nº da semana ISO) para variar os ângulos.
+
+profile:
+  location: "Lisboa / Portugal / EU"
+  max_startup_cost_eur: 2000
+  hours_per_week: 10
+  edge: "freelancer de automação n8n / AI, dev"
+  keep_day_job: true
+
+themes:
+  - label: "AI / automação para PMEs"
+  - label: "Serviços locais (Lisboa / Portugal)"
+  - label: "Produtos digitais / info-products"
+  - label: "E-commerce / micro-marcas"
+  - label: "Creator economy / ferramentas para criadores"
+  - label: "Saúde, fitness & bem-estar"
+  - label: "Produtividade / ferramentas para freelancers"
+  - label: "Sustentabilidade / economia circular"
+
+sources:
+  reddit:
+    - r/Entrepreneur
+    - r/smallbusiness
+    - r/SideProject
+    - r/juststart
+    - r/portugal
+  web:
+    - indiehackers.com
+    - producthunt.com
+    - trends.google.com
+    - explodingtopics.com
+    - starterstory.com

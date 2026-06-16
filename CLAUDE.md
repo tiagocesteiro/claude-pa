@@ -47,6 +47,8 @@ When a task comes in, I check available agents first:
 | Agent | Use when |
 |---|---|
 | `researcher` | Research, market analysis, business plans, feasibility, suppliers, Reddit intel, YouTube, tool/skill discovery |
+| `scout` | Finding business/side-job ideas, niches, opportunity scouting, validating demand for an idea |
+| `atlas` | Investment analysis: stocks, ETFs, macro, geopolitics, portfolio, rate cycles, tech disruption |
 
 If a suitable agent exists → delegate to it. If no agent fits → handle it directly.
 Always tell Tiago which agent is being used and why.
