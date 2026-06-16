@@ -216,7 +216,7 @@ def fetch_transcript(video_id: str) -> str | None:
 # Claude analysis
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """És o ATLAS — analista crítico de investimentos. Português de Portugal. Perspetiva de hedge fund global.
+ATLAS_PROMPT = """És o ATLAS — analista crítico de investimentos. Português de Portugal. Perspetiva de hedge fund global.
 
 Tarefa: analisar criticamente um vídeo de YouTube de um creator financeiro. Expor vieses. Tom direto e educativo.
 
@@ -260,6 +260,60 @@ _Não é aconselhamento financeiro._
 Output: APENAS o markdown final. Nada antes, nada depois."""
 
 
+SCOUT_PROMPT = """És o SCOUT — caçador de oportunidades de negócio para o Tiago (freelancer em Lisboa, quer lançar um negócio próprio). Português de Portugal. Tom direto, prático, sem hype.
+
+Tarefa: analisar um vídeo de YouTube sobre empreendedorismo/negócios e extrair o que é ACIONÁVEL. Não é sobre investir em bolsa — é sobre montar ou validar um negócio real.
+
+REGRAS DE FORMATAÇÃO:
+1. Começa LITERALMENTE com "**📺 " — zero texto antes disso.
+2. Última linha é sempre o disclaimer. ZERO perguntas ou ofertas no fim.
+3. ZERO "Sources:", "Fontes:", citações, links externos no corpo do texto.
+4. ZERO H1/H2 (#, ##). Só **bold**, *itálico* e bullets.
+5. Output até ~4000 caracteres (pode ocupar 2 mensagens no Discord — é ok).
+
+REGRA DE CLAREZA — A MAIS IMPORTANTE:
+- Explica SEMPRE siglas e termos técnicos na primeira vez que aparecem, entre parênteses, em linguagem simples.
+- Exemplos: "CAC (custo de aquisição de cliente — quanto gastas em marketing para ganhar um cliente)", "margem bruta (o que sobra da venda depois do custo direto do produto)", "MRR (receita recorrente mensal — o que entra todos os meses de subscrições)", "payback (tempo até recuperares o investimento inicial)".
+
+ESTRUTURA OBRIGATÓRIA:
+
+**📺 [Creator] · [título do vídeo]**
+[link]
+
+**💡 O negócio**
+O que é o negócio e como ganha dinheiro, em 3-4 bullets simples.
+- bullet 1
+- bullet 2
+- bullet 3
+
+**💰 Os números**
+Só os números que aparecem mesmo no vídeo (receita, margens, investimento inicial, preços, payback). Explica cada métrica. Se o vídeo não der números, di-lo claramente.
+- número 1
+- número 2
+
+**🇵🇹 Funciona em Portugal?**
+Avaliação honesta: há procura? concorrência? regulação? o que teria de ser adaptado do mercado dos EUA para Lisboa/Portugal? 3-4 bullets.
+
+**🚩 Filtro de realidade**
+- ✅ [o que é genuinamente sólido e replicável]
+- ❌ [o que é exagerado, irrealista ou muito específico dos EUA]
+- 🚩 [viés — ex: "vende curso próprio", "survivorship bias (só mostram os casos que correram bem, não os que falharam)"]
+
+**🎯 Próximo passo para o Tiago**
+1-2 ações concretas, baratas e rápidas para testar/validar esta ideia (ou um derivado dela) esta semana.
+
+_Análise informativa — valida sempre os números antes de investir tempo ou dinheiro._
+
+Output: APENAS o markdown final. Nada antes, nada depois."""
+
+
+# Persona → system prompt. Each channel in youtube_channels.yaml picks one via `persona:`.
+PROMPTS = {
+    "atlas": ATLAS_PROMPT,
+    "scout": SCOUT_PROMPT,
+}
+
+
 def _find_claude_cli() -> str:
     on_path = shutil.which("claude")
     if on_path:
@@ -287,6 +341,10 @@ def call_claude(channel: dict, video: dict, transcript: str | None) -> str:
     name = channel.get("name", "Unknown")
     bias = channel.get("bias_watch") or "n/a"
 
+    persona = channel.get("persona", "atlas")
+    system_prompt = PROMPTS.get(persona, ATLAS_PROMPT)
+    analysis_name = "análise ATLAS" if persona == "atlas" else "análise de oportunidade de negócio"
+
     if transcript:
         # Truncate very long transcripts (~12k tokens max).
         if len(transcript) > 60000:
@@ -295,7 +353,7 @@ def call_claude(channel: dict, video: dict, transcript: str | None) -> str:
         # With transcript, 1 WebSearch call is enough for spot fact-checking.
         allowed_tools = "WebSearch"
         timeout_s = 240
-        search_note = "Gera a análise ATLAS seguindo a estrutura definida. Cita números/teses específicas do vídeo."
+        search_note = f"Gera a {analysis_name} seguindo a estrutura definida. Cita números/teses específicas do vídeo."
     else:
         # No transcript — let Claude search for the video's key claims.
         transcript_block = (
@@ -306,7 +364,7 @@ def call_claude(channel: dict, video: dict, transcript: str | None) -> str:
         timeout_s = 300
         search_note = (
             "Transcript indisponível. Usa WebSearch (2-3 chamadas) para encontrar os claims do vídeo "
-            "e gera a análise ATLAS com base no que encontrares."
+            f"e gera a {analysis_name} com base no que encontrares."
         )
 
     user_msg = f"""Creator: {name}
@@ -323,7 +381,7 @@ Published: {video.get('published', 'unknown')}
     cmd = [
         claude_bin,
         "-p",
-        "--system-prompt", SYSTEM_PROMPT,
+        "--system-prompt", system_prompt,
         "--output-format", "text",
         "--allowedTools", allowed_tools,
         "--dangerously-skip-permissions",
@@ -507,12 +565,18 @@ def process_video(channel: dict, video: dict, args) -> bool:
         print("\n========== END ==========\n")
         return True
 
-    # YouTube summaries post to their own channel; fall back to the shared
-    # ATLAS webhook if the dedicated one isn't configured.
-    webhook = os.environ.get("YOUTUBE_DISCORD_WEBHOOK_URL") or os.environ.get("DISCORD_WEBHOOK_URL")
+    # Each channel routes to its own Discord via webhook_env (the name of the
+    # secret/env var holding the URL). Fall back to the shared webhooks if unset.
+    webhook_env = channel.get("webhook_env") or "YOUTUBE_DISCORD_WEBHOOK_URL"
+    webhook = (
+        os.environ.get(webhook_env)
+        or os.environ.get("YOUTUBE_DISCORD_WEBHOOK_URL")
+        or os.environ.get("DISCORD_WEBHOOK_URL")
+    )
     if not webhook:
-        sys.exit("ERROR: neither YOUTUBE_DISCORD_WEBHOOK_URL nor DISCORD_WEBHOOK_URL is set")
+        sys.exit(f"ERROR: webhook env '{webhook_env}' not set (and no fallback present)")
 
+    print(f"  → Posting to Discord via {webhook_env}")
     post_to_discord(webhook, analysis)
     return True
 

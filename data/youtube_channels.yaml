@@ -1,14 +1,35 @@
 # Channels monitored by scripts/atlas_youtube.py
-# Cron polls each channel's RSS feed; when a new video appears, ATLAS analyses + posts to Discord.
+# Cron polls each channel's RSS feed; when a new video appears it is analysed + posted to Discord.
+#
+# Per-channel fields:
+#   id          — YouTube channel ID (the UC... string, NOT the @handle)
+#   name        — display name
+#   persona     — which analysis prompt to use:
+#                   "atlas" → critical investment analysis (trades, tickers, hedge-fund lens)
+#                   "scout" → business-opportunity analysis (model, numbers, PT fit, action)
+#   webhook_env — name of the env var / GitHub secret holding the Discord webhook URL.
+#                   "DISCORD_WEBHOOK_URL"         → finance channel (shared with daily briefing)
+#                   "YOUTUBE_DISCORD_WEBHOOK_URL" → business-ideas channel
+#   focus       — what the channel covers
+#   bias_watch  — biases to flag in the analysis
 #
 # To add a channel:
 #   1. Open the channel page on YouTube
-#   2. View source / right-click → channel ID is in the URL or page metadata
-#      Or use https://commentpicker.com/youtube-channel-id.php
-#   3. Add a new entry below.
+#   2. Find the channel ID (in page source as "externalId":"UC..." or use
+#      https://commentpicker.com/youtube-channel-id.php)
+#   3. Add a new entry below with persona + webhook_env.
 
 channels:
   - id: UCGy7SkBjcIAgTiwkXEtPnYg
     name: "Andrei Jikh"
+    persona: atlas
+    webhook_env: DISCORD_WEBHOOK_URL
     focus: "Stocks, options, crypto, macro — US retail finance"
     bias_watch: "Promotes own course (Backstage Investing); often bullish risk assets; crypto/SPY/QQQ heavy"
+
+  - id: UChFahjDeMBV67DSXiF5pwBA
+    name: "UpFlip"
+    persona: scout
+    webhook_env: YOUTUBE_DISCORD_WEBHOOK_URL
+    focus: "How to start and grow real businesses — founder interviews, revenue/margin breakdowns, niche business models"
+    bias_watch: "Promotes own courses / UpFlip Academy; survivorship bias (only successful businesses featured); US-centric numbers and regulation"
