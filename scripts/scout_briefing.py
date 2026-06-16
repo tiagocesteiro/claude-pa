@@ -45,6 +45,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PPLX_SCRIPT = REPO_ROOT / ".claude" / "skills" / "reddit-intel" / "scripts" / "perplexity_search.py"
+HISTORY_PATH = REPO_ROOT / "data" / "scout_history.json"
+HISTORY_INJECT = 150   # how many recent past ideas to feed the model as "do not repeat"
+HISTORY_CAP = 400      # max entries kept on disk
 
 try:
     import yaml
@@ -63,7 +66,7 @@ def load_radar(path: Path) -> dict:
         return yaml.safe_load(f) or {}
 
 
-def pick_themes(radar: dict, n: int = 2) -> list[str]:
+def pick_themes(radar: dict, n: int = 3) -> list[str]:
     """Rotate through the theme list using the day-of-year so each day differs."""
     themes = [t.get("label", "") for t in radar.get("themes", []) if t.get("label")]
     if not themes:
@@ -82,6 +85,57 @@ def format_profile(radar: dict) -> str:
         f"- Capital de arranque máx: ~€{p.get('max_startup_cost_eur', 2000)}\n"
         f"- Tempo: ~{p.get('hours_per_week', 10)}h/semana (side job, não larga o trabalho atual)\n"
         f"- Edge: {p.get('edge', 'automação n8n / AI, dev')}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Idea history (anti-repetition across days)
+# ---------------------------------------------------------------------------
+
+def load_history() -> list[dict]:
+    """Past ideas already proposed: [{date, name}, ...]. Empty list if none/unreadable."""
+    if not HISTORY_PATH.exists():
+        return []
+    try:
+        data = json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+        return data.get("ideas", []) if isinstance(data, dict) else []
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def format_exclusions(history: list[dict]) -> str:
+    """Recent past idea names as a bullet list to feed the model as a do-not-repeat set."""
+    names = [h.get("name", "").strip() for h in history if h.get("name")]
+    names = names[-HISTORY_INJECT:]
+    if not names:
+        return "(nenhuma ainda — primeira edição)"
+    return "\n".join(f"- {n}" for n in names)
+
+
+def extract_lead_names(briefing: str) -> list[str]:
+    """Pull lead names from the synthesized markdown. Robust to formatting drift:
+    matches 'LEAD 1 — Nome', '## Lead 1 — **Nome** — tagline', etc. (case-insensitive)."""
+    names = []
+    for m in re.finditer(r"(?im)lead\s*\d+\s*[—\-–:]\s*(.+)$", briefing):
+        seg = m.group(1).strip()
+        bold = re.search(r"\*\*(.+?)\*\*", seg)
+        name = bold.group(1) if bold else re.split(r"\*\*|\s[—\-–]\s", seg)[0]
+        name = re.sub(r"[*_`#⭐🥇🥈🥉]", "", name)
+        name = re.split(r"score\s*[:=]", name, flags=re.I)[0]
+        name = name.strip(" :-—–")
+        if name:
+            names.append(name)
+    return names
+
+
+def save_history(history: list[dict], new_names: list[str]) -> None:
+    today = datetime.now(timezone.utc).date().isoformat()
+    for n in new_names:
+        history.append({"date": today, "name": n})
+    history = history[-HISTORY_CAP:]
+    HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    HISTORY_PATH.write_text(
+        json.dumps({"ideas": history}, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
 
@@ -147,7 +201,7 @@ def collect_signals(themes: list[str]) -> str:
 
 SCOUT_SYSTEM_PROMPT = """Tu és o SCOUT — caçador de oportunidades de negócio do Tiago, freelancer em Lisboa.
 
-MODO: Briefing DIÁRIO de oportunidades (de manhã) entregue no Discord. O objetivo é dar ao Tiago 3-5 ideias de negócio que possa começar como SIDE JOB, baseadas em DOR REAL e procura verificável — nunca ideias inventadas.
+MODO: Briefing DIÁRIO de oportunidades (de manhã) entregue no Discord. O objetivo é dar ao Tiago EXATAMENTE 3 ideias de negócio que possa começar como SIDE JOB, baseadas em DOR REAL e procura verificável — nunca ideias inventadas.
 
 INPUT: recebes SINAIS já recolhidos (via Perplexity) — resumos de dor real, tração e exemplos, COM fontes/URLs. NÃO uses ferramentas. NÃO inventes. Sintetiza APENAS a partir destes sinais e cita as fontes dadas. Se um sinal vier marcado como falhado, ignora-o.
 
@@ -159,7 +213,7 @@ FORMATO (markdown para Discord — SEM H1/H2 #/##, usa **bold** e bullets):
 
 **🔭 SCOUT Daily** — leads de hoje
 
-Para cada lead (3-5, ranqueados por score):
+Para cada lead (EXATAMENTE 3, ranqueados por score):
 **LEAD N — [nome curto]** ⭐ X.X/5
 • O quê: [oferta em 1 frase]
 • A dor: "[citação/observação real dos sinais]" — [fonte]
@@ -171,6 +225,8 @@ Para cada lead (3-5, ranqueados por score):
 
 REGRAS:
 - Português de Portugal, casual e direto. Sem paredes de texto — o Tiago anda depressa.
+- EXATAMENTE 3 leads. Nem mais, nem menos.
+- NUNCA repitas ideias já propostas (recebes uma lista "IDEIAS JÁ PROPOSTAS"). Se um sinal só sugere algo já dado, ataca um segmento/ângulo claramente diferente ou descarta. As 3 ideias têm de ser novas e distintas entre si.
 - Output até ~4000 caracteres (pode ocupar 2 mensagens no Discord).
 - Dor antes de ideia. Concorrência valida o mercado; o gap é a oportunidade.
 - Quando dois leads empatam, favorece o que alavanca o edge (n8n/AI/dev).
@@ -212,7 +268,7 @@ def _find_claude_cli() -> str:
     )
 
 
-def call_claude(signals_str: str, profile_str: str, themes: list[str]) -> str:
+def call_claude(signals_str: str, profile_str: str, themes: list[str], exclusions_str: str) -> str:
     """Invoke `claude -p` headless for synthesis only (no tools). Subscription auth, no API cost."""
     claude_bin = _find_claude_cli()
     print(f"[2/3] Synthesizing with Claude Code headless: {claude_bin}", file=sys.stderr)
@@ -226,10 +282,13 @@ PERFIL DO TIAGO (para filtrar viabilidade e fit):
 TEMAS DE HOJE:
 {themes_block}
 
+IDEIAS JÁ PROPOSTAS ANTES (NÃO repitas nenhuma destas — traz 3 ideias novas e distintas):
+{exclusions_str}
+
 SINAIS RECOLHIDOS (dor real + tração, com fontes — sintetiza só a partir destes):
 {signals_str}
 
-Gera o briefing SCOUT seguindo a estrutura definida. 3-5 leads ranqueados por score, citando as fontes dos sinais."""
+Gera o briefing SCOUT seguindo a estrutura definida. EXATAMENTE 3 leads NOVOS (nenhum repetido da lista acima), ranqueados por score, citando as fontes dos sinais."""
 
     # Synthesis only. Disable all MCP servers so CLI startup is fast (loading local MCP
     # servers can add minutes; CI has none but this keeps both paths quick). No --allowedTools
@@ -337,7 +396,8 @@ def main():
     radar = load_radar(Path(args.radar))
     themes = pick_themes(radar)
     profile_str = format_profile(radar)
-    print(f"Themes today: {', '.join(themes)}", file=sys.stderr)
+    history = load_history()
+    print(f"Themes today: {', '.join(themes)} | {len(history)} past ideas to avoid", file=sys.stderr)
 
     signals_str = collect_signals(themes)
 
@@ -347,7 +407,7 @@ def main():
             f"## Perfil\n{profile_str}\n\n{signals_str}"
         )
     else:
-        briefing = call_claude(signals_str, profile_str, themes)
+        briefing = call_claude(signals_str, profile_str, themes, format_exclusions(history))
 
     header = f"**🔭 SCOUT Daily** · {datetime.now(timezone.utc).strftime('%A, %d %b %Y')}\n\n"
     full = header + briefing
@@ -363,7 +423,11 @@ def main():
         sys.exit("ERROR: SCOUT_DISCORD_WEBHOOK_URL not set (use --dry-run to skip posting)")
 
     post_to_discord(webhook, full)
-    print("Done.", file=sys.stderr)
+
+    # Log the ideas we just delivered so future days don't repeat them.
+    new_names = extract_lead_names(briefing)
+    save_history(history, new_names)
+    print(f"Done. Logged {len(new_names)} new idea(s) to history.", file=sys.stderr)
 
 
 if __name__ == "__main__":
