@@ -14,7 +14,8 @@ Pipeline:
   5. Persist updated state back to data/youtube_state.json (workflow commits it back to repo)
 
 Env vars:
-  DISCORD_WEBHOOK_URL        — where to post
+  YOUTUBE_DISCORD_WEBHOOK_URL — where to post video summaries (preferred)
+  DISCORD_WEBHOOK_URL         — fallback if the YouTube-specific webhook isn't set
   CLAUDE_CODE_OAUTH_TOKEN    — required in CI only (locally, `claude` is already authed)
 
 Usage:
@@ -506,9 +507,11 @@ def process_video(channel: dict, video: dict, args) -> bool:
         print("\n========== END ==========\n")
         return True
 
-    webhook = os.environ.get("DISCORD_WEBHOOK_URL")
+    # YouTube summaries post to their own channel; fall back to the shared
+    # ATLAS webhook if the dedicated one isn't configured.
+    webhook = os.environ.get("YOUTUBE_DISCORD_WEBHOOK_URL") or os.environ.get("DISCORD_WEBHOOK_URL")
     if not webhook:
-        sys.exit("ERROR: DISCORD_WEBHOOK_URL not set")
+        sys.exit("ERROR: neither YOUTUBE_DISCORD_WEBHOOK_URL nor DISCORD_WEBHOOK_URL is set")
 
     post_to_discord(webhook, analysis)
     return True
