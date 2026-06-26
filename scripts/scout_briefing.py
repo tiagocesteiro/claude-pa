@@ -169,7 +169,7 @@ def collect_signals(themes: list[str]) -> str:
         sys.exit("ERROR: PERPLEXITY_API_KEY not set (needed to collect signals). Use --dry-run after setting it.")
 
     blocks = []
-    total = len(themes) * 2
+    total = len(themes) * 3
     i = 0
     for theme in themes:
         queries = [
@@ -178,6 +178,9 @@ def collect_signals(themes: list[str]) -> str:
             f"{theme}: emerging low-capital side business and micro-SaaS opportunities with real, "
             f"proven demand and paying customers in 2026 — cite indie hackers / product hunt / "
             f"starter story examples and typical pricing",
+            f"{theme}: real proven small businesses with ACTUAL revenue and startup-cost numbers — "
+            f"from UpFlip, Starter Story, My First Million case studies — how much they make per month, "
+            f"how much it cost to start, the business model, and which parts are automatable (n8n/AI)",
         ]
         block = [f"## Sinais — {theme}"]
         for q in queries:
@@ -187,7 +190,10 @@ def collect_signals(themes: list[str]) -> str:
             if res.get("error"):
                 block.append(f"\n⚠️ (sinal falhou: {res['error']})")
                 continue
-            block.append(f"\n{res.get('text', '').strip()}")
+            text = res.get("text", "").strip()
+            if len(text) > 1200:                       # keep the synthesis prompt lean & fast
+                text = text[:1200].rsplit(" ", 1)[0] + " …"
+            block.append(f"\n{text}")
             cites = res.get("citations") or []
             if cites:
                 block.append("Fontes: " + " · ".join(cites[:6]))
@@ -203,7 +209,9 @@ SCOUT_SYSTEM_PROMPT = """Tu és o SCOUT — caçador de oportunidades de negóci
 
 MODO: Briefing DIÁRIO de oportunidades (de manhã) entregue no Discord. O objetivo é dar ao Tiago EXATAMENTE 3 ideias de negócio que possa começar como SIDE JOB, baseadas em DOR REAL e procura verificável — nunca ideias inventadas.
 
-INPUT: recebes SINAIS já recolhidos (via Perplexity) — resumos de dor real, tração e exemplos, COM fontes/URLs. NÃO uses ferramentas. NÃO inventes. Sintetiza APENAS a partir destes sinais e cita as fontes dadas. Se um sinal vier marcado como falhado, ignora-o.
+INPUT: recebes SINAIS já recolhidos (via Perplexity) — resumos de dor real, tração e CASOS PROVADOS com números reais (receita/mês e custo de arranque de negócios tipo UpFlip / Starter Story), COM fontes/URLs. NÃO uses ferramentas. NÃO inventes. Sintetiza APENAS a partir destes sinais e cita as fontes dadas. Se um sinal vier marcado como falhado, ignora-o.
+
+USA OS CASOS PROVADOS COMO BENCHMARK: sempre que os sinais derem números reais de um negócio parecido, ancora o lead nisso (ex: "negócio semelhante faz ~€X/mês, arrancou com ~€Y — fonte"). Prefere ideias que (a) tenham um caso real a faturar e (b) tenham uma camada clara automatizável com n8n/AI (o edge do Tiago).
 
 COMO PENSAS: indie hacker (caça nichos onde já há dinheiro a circular) + analista cético (valida antes de entusiasmar) + operador pragmático (pergunta sempre "qual é o primeiro euro e quando entra?").
 
@@ -309,14 +317,14 @@ Gera o briefing SCOUT seguindo a estrutura definida. EXATAMENTE 3 leads NOVOS (n
             input=user_msg,
             capture_output=True,
             text=True,
-            timeout=240,
+            timeout=360,
             encoding="utf-8",
             errors="replace",
         )
     except FileNotFoundError:
         sys.exit("ERROR: `claude` CLI not found. Install Claude Code: https://docs.claude.com/en/docs/claude-code")
     except subprocess.TimeoutExpired:
-        sys.exit("ERROR: claude -p timed out after 4 minutes")
+        sys.exit("ERROR: claude -p timed out after 6 minutes")
 
     if result.returncode != 0:
         stderr_tail = (result.stderr or "")[-800:]

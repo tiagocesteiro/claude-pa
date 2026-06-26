@@ -19,6 +19,15 @@ themes:
   - label: "Saúde, fitness & bem-estar"
   - label: "Produtividade / ferramentas para freelancers"
   - label: "Sustentabilidade / economia circular"
+  # Adicionados a partir da análise ao canal UpFlip (negócios reais a faturar + camada automatizável)
+  - label: "Automação de serviços locais (n8n/AI: ginásios, limpezas, vending, manutenção)"
+  - label: "Marcas de produto low-cap (POD, handmade, food) com ops automatizadas"
+
+# Fontes de 'casos provados com números reais' (receita/mês + custo de arranque)
+case_sources:
+  - upflip.com
+  - starterstory.com
+  - "My First Million (podcast)"
 
 sources:
   reddit:

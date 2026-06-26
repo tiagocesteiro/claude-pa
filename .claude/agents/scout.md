@@ -93,6 +93,21 @@ WebSearch: "[NICHO] google trends OR exploding topics"
 WebSearch: "[produto/serviço real] price OR preço"   # validar que há quem cobre por isto
 ```
 
+### Casos provados com números reais — UpFlip / Starter Story / My First Million
+
+A fonte mais forte: negócios reais a faturar, com receita/mês e custo de arranque ditos. Usa Perplexity/WebSearch para os puxar e ancora os teus leads neles ("negócio parecido faz ~€X/mês, arrancou com ~€Y").
+
+```bash
+python ".claude/skills/reddit-intel/scripts/perplexity_search.py" "[NICHO] real proven business UpFlip OR starter story revenue startup cost model 2025 2026"
+```
+
+```
+WebSearch: "[NICHO] upflip how much revenue"
+WebSearch: "[NICHO] starter story revenue startup cost"
+```
+
+Para dissecar um episódio específico do UpFlip a fundo, usa a skill `video-lens` na URL do vídeo (transcrição → modelo, custos, fatores de sucesso). Prefere os casos de **arranque baixo** (mais replicáveis como side job) e marca a **camada automatizável com n8n/AI** (o edge do Tiago).
+
 ### Tração de conteúdo (interesse + monetização) — yt-search
 
 ```bash
