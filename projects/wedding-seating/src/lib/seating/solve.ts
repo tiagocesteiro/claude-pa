@@ -15,12 +15,16 @@ function collectWarnings(assignment: Assignment, input: SeatingInput): Warning[]
   const warnings: Warning[] = [];
 
   const placed = Object.keys(assignment).length;
-  if (input.guests.length > totalRemainingCapacity(input)) {
+  const unseated = input.guests.length - placed;
+  if (unseated > 0) {
+    const remaining = totalRemainingCapacity(input);
+    const reason =
+      input.guests.length > remaining
+        ? `only ${remaining} free place(s) for ${input.guests.length} guests`
+        : `remaining guest(s) could not be seated without violating a constraint`;
     warnings.push({
       kind: "insufficient-capacity",
-      message: `Not enough seats: ${input.guests.length} guests but ${totalRemainingCapacity(
-        input
-      )} free places. ${input.guests.length - placed} guest(s) unseated.`,
+      message: `${unseated} guest(s) unseated: ${reason}.`,
     });
   }
 

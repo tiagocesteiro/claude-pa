@@ -52,6 +52,21 @@ it("warns when a together pair cannot share a table", () => {
   expect(result.warnings.some((w) => w.kind === "together-split")).toBe(true);
 });
 
+it("warns when a guest is unseated due to a constraint despite raw capacity", () => {
+  const input: SeatingInput = {
+    guests: [
+      { id: "g1", name: "A", groupId: null },
+      { id: "g2", name: "B", groupId: null },
+    ],
+    tables: [{ id: "t1", capacity: 2, fixed: false, fixedGuestIds: [] }],
+    constraints: [{ type: "separate", a: "g1", b: "g2" }],
+  };
+  const result = solveSeating(input);
+  // raw capacity (2) >= guests (2), but g1 and g2 cannot share the only table
+  expect(Object.keys(result.assignment).length).toBe(1);
+  expect(result.warnings.some((w) => w.kind === "insufficient-capacity")).toBe(true);
+});
+
 it("respects fixed tables without moving pre-seated guests", () => {
   const input: SeatingInput = {
     guests: [{ id: "g1", name: "A", groupId: null }],
