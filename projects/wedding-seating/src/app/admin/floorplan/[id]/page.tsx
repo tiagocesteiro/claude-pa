@@ -15,6 +15,10 @@ const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanva
   ssr: false,
 });
 
+// Max on-screen bounds for the editor stage. The actual stage is fit inside
+// this box preserving the uploaded image's aspect ratio (see FloorPlanCanvas'
+// displayScale). Persisted table x/y and calibration scale are always in the
+// image's natural pixel space, independent of these bounds.
 const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 640;
 
@@ -189,8 +193,8 @@ export default function FloorPlanEditorPage() {
               selectedId={state.selectedId}
               mode={mode}
               calibrationPoints={calibrationPoints}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
+              maxWidth={CANVAS_WIDTH}
+              maxHeight={CANVAS_HEIGHT}
               onAddTable={addTable}
               onMoveTable={moveTable}
               onSelect={select}

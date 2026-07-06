@@ -38,9 +38,12 @@ export interface FloorPlanCanvasProps {
   tables: EditorTable[];
   selectedId: string | null;
   mode: CanvasMode;
+  /** Reference calibration points, in image-natural pixel space. */
   calibrationPoints?: Point[];
-  width: number;
-  height: number;
+  /** Max on-screen bounds for the stage; actual stage size is fit within these preserving image aspect ratio. */
+  maxWidth: number;
+  maxHeight: number;
+  /** All positions handed to these callbacks are in image-natural pixel space. */
   onAddTable: (at: Point) => void;
   onMoveTable: (id: string, to: Point) => void;
   onSelect: (id: string | null) => void;
@@ -53,8 +56,8 @@ export default function FloorPlanCanvas({
   selectedId,
   mode,
   calibrationPoints = [],
-  width,
-  height,
+  maxWidth,
+  maxHeight,
   onAddTable,
   onMoveTable,
   onSelect,
@@ -63,16 +66,31 @@ export default function FloorPlanCanvas({
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
 
+  // displayScale maps image-natural pixels -> on-screen (display) pixels.
+  // Persisted quantities (table x/y, calibration points) live in natural space;
+  // only rendering multiplies by displayScale. Falls back to a 1:1, max-bounds
+  // box before an image has loaded.
+  const naturalWidth = image?.naturalWidth || maxWidth;
+  const naturalHeight = image?.naturalHeight || maxHeight;
+  const displayScale = image ? Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight) : 1;
+  const stageWidth = image ? naturalWidth * displayScale : maxWidth;
+  const stageHeight = image ? naturalHeight * displayScale : maxHeight;
+
+  function toNatural(p: Point): Point {
+    return { x: p.x / displayScale, y: p.y / displayScale };
+  }
+
   function handleStageClick(e: KonvaEventObject<MouseEvent>) {
     if (e.target !== e.target.getStage()) return;
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
+    const naturalPos = toNatural(pos);
     if (mode === "add-table") {
-      onAddTable(pos);
+      onAddTable(naturalPos);
       return;
     }
     if (mode === "calibrate") {
-      onCalibrateClick?.(pos);
+      onCalibrateClick?.(naturalPos);
       return;
     }
     onSelect(null);
@@ -83,22 +101,27 @@ export default function FloorPlanCanvas({
   return (
     <Stage
       ref={stageRef}
-      width={width}
-      height={height}
+      width={stageWidth}
+      height={stageHeight}
       onClick={handleStageClick}
       style={{ border: "1px solid #ccc", cursor }}
     >
       <Layer>
-        {image && <KonvaImage image={image} width={width} height={height} listening={false} />}
+        {image && (
+          <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
+        )}
       </Layer>
       <Layer>
         {tables.map((t) => (
           <TableShape
             key={t.id}
             table={t}
+            displayScale={displayScale}
             isSelected={t.id === selectedId}
             onSelect={() => onSelect(t.id)}
-            onDragEnd={(e) => onMoveTable(t.id, { x: e.target.x(), y: e.target.y() })}
+            onDragEnd={(e) =>
+              onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }))
+            }
           />
         ))}
       </Layer>
@@ -106,10 +129,10 @@ export default function FloorPlanCanvas({
         {calibrationPoints.length === 2 && (
           <Line
             points={[
-              calibrationPoints[0].x,
-              calibrationPoints[0].y,
-              calibrationPoints[1].x,
-              calibrationPoints[1].y,
+              calibrationPoints[0].x * displayScale,
+              calibrationPoints[0].y * displayScale,
+              calibrationPoints[1].x * displayScale,
+              calibrationPoints[1].y * displayScale,
             ]}
             stroke="#059669"
             strokeWidth={2}
@@ -117,7 +140,7 @@ export default function FloorPlanCanvas({
           />
         )}
         {calibrationPoints.map((p, i) => (
-          <Circle key={i} x={p.x} y={p.y} radius={5} fill="#059669" />
+          <Circle key={i} x={p.x * displayScale} y={p.y * displayScale} radius={5} fill="#059669" />
         ))}
       </Layer>
     </Stage>
@@ -126,11 +149,13 @@ export default function FloorPlanCanvas({
 
 function TableShape({
   table,
+  displayScale,
   isSelected,
   onSelect,
   onDragEnd,
 }: {
   table: EditorTable;
+  displayScale: number;
   isSelected: boolean;
   onSelect: () => void;
   onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
@@ -139,13 +164,21 @@ function TableShape({
   const strokeWidth = isSelected ? 3 : 1.5;
   const fill = "#fef3c7";
 
+  // table.x/y are stored in image-natural pixels; scale up only for display.
+  const displayX = table.x * displayScale;
+  const displayY = table.y * displayScale;
+  const radius = ROUND_RADIUS * displayScale;
+  const rectWidth = RECT_WIDTH * displayScale;
+  const rectHeight = RECT_HEIGHT * displayScale;
+  const labelWidth = 60 * displayScale;
+
   return (
     <>
       {table.shape === "round" ? (
         <Circle
-          x={table.x}
-          y={table.y}
-          radius={ROUND_RADIUS}
+          x={displayX}
+          y={displayY}
+          radius={radius}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
@@ -156,12 +189,12 @@ function TableShape({
         />
       ) : (
         <Rect
-          x={table.x}
-          y={table.y}
-          offsetX={RECT_WIDTH / 2}
-          offsetY={RECT_HEIGHT / 2}
-          width={RECT_WIDTH}
-          height={RECT_HEIGHT}
+          x={displayX}
+          y={displayY}
+          offsetX={rectWidth / 2}
+          offsetY={rectHeight / 2}
+          width={rectWidth}
+          height={rectHeight}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
@@ -172,9 +205,9 @@ function TableShape({
         />
       )}
       <Text
-        x={table.x - 30}
-        y={table.y - 8}
-        width={60}
+        x={displayX - labelWidth / 2}
+        y={displayY - 8}
+        width={labelWidth}
         align="center"
         text={String(table.capacity)}
         fontSize={16}
