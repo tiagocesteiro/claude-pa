@@ -9,3 +9,4 @@ logs/
 .playwright-cli/
 **/__pycache__/
 *.pyc
+.superpowers/
