@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Venue {
+  id        String     @id @default(cuid())
+  name      String
+  location  String?
+  photos    String?    // JSON array of file paths
+  floorPlans FloorPlan[]
+  createdAt DateTime   @default(now())
+}
+
+model FloorPlan {
+  id        String   @id @default(cuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  image     String   // local file path
+  scale     Float    // pixels per metre
+  width     Float    // metres
+  depth     Float    // metres
+  tables    Table[]
+  weddings  Wedding[]
+  createdAt DateTime @default(now())
+}
+
+model Table {
+  id          String   @id @default(cuid())
+  floorPlanId String
+  floorPlan   FloorPlan @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+  shape       String   // "round" | "rect"
+  capacity    Int
+  x           Float
+  y           Float
+  fixed       Boolean  @default(false)
+}
+
+model Wedding {
+  id            String    @id @default(cuid())
+  couple        String
+  date          DateTime?
+  floorPlanId   String?
+  floorPlan     FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  guests        Guest[]
+  groups        Group[]
+  constraints   Constraint[]
+  createdAt     DateTime  @default(now())
+}
+
+model Group {
+  id        String  @id @default(cuid())
+  weddingId String
+  wedding   Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?
+  guests    Guest[]
+}
+
+model Guest {
+  id             String  @id @default(cuid())
+  weddingId      String
+  wedding        Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name           String
+  groupId        String?
+  group          Group?  @relation(fields: [groupId], references: [id])
+  assignedTableId String?
+}
+
+model Constraint {
+  id         String  @id @default(cuid())
+  weddingId  String
+  wedding    Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  type       String  // "together" | "separate"
+  guestAId   String
+  guestBId   String
+}
