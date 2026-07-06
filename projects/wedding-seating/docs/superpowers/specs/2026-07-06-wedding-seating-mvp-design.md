@@ -18,9 +18,10 @@ são fracas em dois eixos: **não têm automação real** (é drag-and-drop manu
 disposição das mesas **automaticamente** a partir de grupos e restrições, sobre
 **plantas reais e calibradas** das quintas parceiras.
 
-**Modelo de negócio:** B2B2C, mas quem paga são os **noivos** (pagamento único
-por casamento). As quintas entram como parceiras (planta digitalizada como
-diferenciador) mas não são a fonte de receita no MVP.
+**Modelo de negócio (visão):** B2B2C, mas quem paga são os **noivos** (pagamento
+único por casamento). As quintas entram como parceiras (planta digitalizada como
+diferenciador) mas não são a fonte de receita. **No MVP a monetização está
+desligada** — a ferramenta corre localmente para construir e validar primeiro.
 
 ## 2. Scope
 
@@ -40,9 +41,15 @@ diferenciador) mas não são a fonte de receita no MVP.
   - **Mesas/lugares fixos** — mesa dos noivos, pais, etc. (o motor não lhes mexe).
 - Edição manual pós-geração (drag-and-drop) com **re-validação em tempo real**
   das restrições.
-- Pagamento pelos noivos via Stripe (pagamento único, ex: €39/casamento).
+- **Exportação do plano final em PDF** (para imprimir e/ou partilhar com a quinta):
+  vista da planta com mesas numeradas + lista de convidados por mesa.
 
 ### Out of scope (por agora)
+- **Deployment online (Vercel) e pagamentos (Stripe).** O MVP corre **localmente**
+  na máquina do Tiago para construir e demonstrar. A monetização (pagamento único
+  pelos noivos, ex: €39) entra na fase online, depois de validado.
+- **Autenticação / multi-utilizador.** Sendo local e single-user no arranque, não
+  há auth no MVP.
 - Reviews, outros fornecedores, orçamentos, marketplace completo.
 - Self-service de plantas pelas próprias quintas (no MVP as plantas são criadas
   por Tiago/equipa).
@@ -51,18 +58,26 @@ diferenciador) mas não são a fonte de receita no MVP.
 
 ## 3. Architecture
 
+**Local-first no MVP.** A app corre na máquina do Tiago (`next dev`), sem cloud,
+sem deployment. As escolhas mantêm um caminho de migração limpo para online.
+
 **Stack:**
-- **Frontend/Backend:** Next.js (React) em Vercel — SSR/edge para performance e
-  SEO do directório público de quintas. Reutiliza skills e infra já existentes.
-- **Base de dados:** Postgres via Supabase (projecto novo, isolado do projecto
-  de clientes). Auth via Supabase Auth.
-- **Storage de imagens:** Supabase Storage (fotos/plantas das quintas).
+- **Frontend/Backend:** Next.js (React), a correr **localmente** (`next dev`).
+  Sem Vercel no MVP; o mesmo código faz deploy para Vercel mais tarde sem
+  reescrita.
+- **Base de dados:** **SQLite** (ficheiro local), acedido via uma camada de dados
+  fina (ex: Prisma ou `better-sqlite3`) escolhida para que a migração futura para
+  Postgres seja trivial. Zero cloud, zero contas.
+- **Storage de imagens:** **filesystem local** (pasta do projecto) para as fotos/
+  plantas das quintas.
 - **Editor de planta/mesas:** canvas interactivo em React (`react-konva` ou
   `fabric.js`). Reutilizado tanto no editor admin como na vista final dos noivos.
 - **Motor de disposição:** lógica TypeScript a correr server-side (Next.js API
-  route / função serverless). É optimização combinatória, **não IA** — sem
-  infraestrutura extra.
-- **Pagamentos:** Stripe Checkout (pagamento único por casamento).
+  route). É optimização combinatória, **não IA** — sem infraestrutura extra.
+- **Exportação PDF:** geração no browser (ex: render do canvas + `jspdf`) ou
+  server-side — a decidir no plano.
+- **Auth e pagamentos:** **fora do MVP** — entram na fase online (Supabase Auth +
+  Stripe).
 
 ## 4. Data Model
 
@@ -131,38 +146,48 @@ bloquear — o utilizador manda).
   marcar mesas fixas.
 - No MVP este editor é usado por Tiago/equipa; os noivos consomem o resultado.
 
-## 8. Payment
+## 8. Export
 
-- Stripe Checkout, pagamento único por casamento (ex: €39).
-- O acesso à geração/exportação do plano fica atrás do pagamento; a "fatia
-  vertical" inicial pode ser demonstrada sem pagamento durante o desenvolvimento.
+- **Exportação em PDF** do plano final: página com a vista da planta (mesas
+  numeradas nas suas posições) + lista de convidados agrupada por mesa.
+- Objectivo: imprimir e/ou enviar à quinta. Formato de saída limpo, A4/A3.
 
-## 9. Build Order
+## 9. Payment (fase online, fora do MVP)
 
-Frente de risco técnico primeiro:
+- Stripe Checkout, pagamento único por casamento (ex: €39) — só quando a
+  ferramenta for para online. No MVP local não há pagamento.
 
-1. **Fundação** — Next.js + Supabase (auth, schema, storage). *Baixa.*
-2. **Editor de planta (admin)** — upload + calibração + mesas. *Média.* (paralelo a 1)
-3. **Motor de disposição** — solver isolado, testável sem UI. *Alta.* (risco maior — provar cedo)
+## 10. Build Order
+
+Local-first, frente de risco técnico primeiro:
+
+1. **Fundação** — Next.js local + SQLite (schema, camada de dados) + storage no
+   filesystem. *Baixa.*
+2. **Editor de planta (admin)** — upload + calibração de escala + mesas. *Média.*
+   (paralelo a 1)
+3. **Motor de disposição** — solver isolado, testável sem UI. *Alta.* (risco
+   maior — provar cedo)
 4. **Import + grupos** — Excel + tabela/arrastar. *Média.*
-5. **Vista do plano + edição manual** — render na planta, drag-and-drop, re-validação. *Média.*
-6. **Pagamento** — Stripe checkout. *Baixa.*
+5. **Vista do plano + edição manual** — render na planta, drag-and-drop,
+   re-validação. *Média.*
+6. **Exportação PDF** — vista da planta + lista por mesa. *Baixa/Média.*
 
-**Fatia vertical mínima demonstrável (validar cedo, sem pagamento):**
-1 quinta com planta real → importar Excel → gerar disposição → ver na planta.
+**Fatia vertical mínima demonstrável (validar cedo):**
+1 quinta com planta real → importar Excel → gerar disposição → ver na planta →
+exportar PDF.
 
-## 10. Pre-requisites (não-código)
+## 11. Pre-requisites (não-código)
 
-- 3-5 quintas parceiras dispostas a ceder planta/fotos + medidas.
-- Decisão final de preço (recomendado: pagamento único €39).
+- 3-5 quintas parceiras dispostas a ceder planta/fotos + medidas (as primeiras
+  plantas reais).
 - Template Excel de convidados finalizado.
-- Conta Stripe + projecto Supabase novo (isolado do projecto de clientes).
+- (Fase online, mais tarde) decisão final de preço e conta Stripe.
 
-## 11. Open Questions
+## 12. Open Questions
 
-- Preço exacto e se há período gratuito/trial.
 - Formato exacto do template Excel (colunas, como codificar restrições numa
   célula de forma amigável).
 - `react-konva` vs `fabric.js` para o canvas — decidir no plano de implementação.
-- Exportação do plano final (PDF para imprimir / partilhar com a quinta?) — provável
-  fast-follow, confirmar se entra no MVP.
+- Prisma vs `better-sqlite3` para a camada de dados — decidir no plano.
+- Geração de PDF no browser (`jspdf`) vs server-side — decidir no plano.
+- (Fase online) preço exacto e se há período gratuito/trial.
