@@ -15,7 +15,7 @@ function norm(s: string): string {
 
 export async function parseGuestWorkbook(data: ArrayBuffer | Buffer): Promise<GuestRow[]> {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(data as Buffer);
+  await wb.xlsx.load(data as unknown as Parameters<typeof wb.xlsx.load>[0]);
   const ws = wb.worksheets[0];
   if (!ws) return [];
 

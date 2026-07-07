@@ -7,7 +7,7 @@ async function makeWorkbook(rows: (string | undefined)[][], headers: string[]): 
   const ws = wb.addWorksheet("Convidados");
   ws.addRow(headers);
   for (const r of rows) ws.addRow(r);
-  return (await wb.xlsx.writeBuffer()) as Buffer;
+  return (await wb.xlsx.writeBuffer()) as unknown as Buffer;
 }
 
 it("parses name + group columns (accent/case-insensitive headers)", async () => {
