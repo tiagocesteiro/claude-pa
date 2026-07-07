@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useGuestBoard } from "@/components/guests/useGuestBoard";
 import ImportPanel from "@/components/guests/ImportPanel";
 import GroupBoard from "@/components/guests/GroupBoard";
+import ConstraintsPanel from "@/components/guests/ConstraintsPanel";
 
 interface WeddingRecord {
   id: string;
@@ -40,15 +41,19 @@ export default function WeddingWorkspacePage() {
       {loading ? (
         <p>Loading guests...</p>
       ) : (
-        <GroupBoard
-          guests={guests}
-          groups={groups}
-          error={error}
-          assign={assign}
-          addGroup={addGroup}
-          renameGroup={renameGroup}
-          removeGroup={removeGroup}
-        />
+        <>
+          <GroupBoard
+            guests={guests}
+            groups={groups}
+            error={error}
+            assign={assign}
+            addGroup={addGroup}
+            renameGroup={renameGroup}
+            removeGroup={removeGroup}
+          />
+
+          <ConstraintsPanel weddingId={weddingId} guests={guests} />
+        </>
       )}
     </main>
   );
