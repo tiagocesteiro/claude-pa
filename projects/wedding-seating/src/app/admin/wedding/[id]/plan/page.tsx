@@ -83,6 +83,9 @@ export default function PlanPage() {
     warnings,
     generate,
     assign,
+    toggleGuestLock,
+    toggleTableFixed,
+    swap,
     violations,
   } = usePlan(weddingId, floorPlanId);
 
@@ -106,9 +109,10 @@ export default function PlanPage() {
         x: t.x,
         y: t.y,
         label: tableLabels.get(t.id),
+        fixed: t.fixed,
         guests: guests
           .filter((g) => g.assignedTableId === t.id)
-          .map((g) => ({ id: g.id, name: g.name })),
+          .map((g) => ({ id: g.id, name: g.name, locked: g.locked })),
       })),
     [tables, guests, tableLabels]
   );
@@ -176,6 +180,9 @@ export default function PlanPage() {
             maxWidth={CANVAS_WIDTH}
             maxHeight={CANVAS_HEIGHT}
             onAssign={assign}
+            onToggleGuestLock={toggleGuestLock}
+            onToggleTableFixed={toggleTableFixed}
+            onSwap={swap}
           />
 
           <div style={{ minWidth: 260, flex: "0 0 260px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -210,8 +217,10 @@ export default function PlanPage() {
             </div>
 
             <UnassignedTray
-              guests={unassigned.map((g) => ({ id: g.id, name: g.name }))}
+              guests={unassigned.map((g) => ({ id: g.id, name: g.name, locked: g.locked }))}
               onDrop={(guestId) => assign(guestId, null)}
+              onToggleGuestLock={toggleGuestLock}
+              onSwap={swap}
             />
           </div>
         </div>

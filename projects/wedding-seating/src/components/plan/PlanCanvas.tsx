@@ -30,6 +30,7 @@ function useImageElement(src: string | undefined): HTMLImageElement | undefined 
 export interface PlanTableGuest {
   id: string;
   name: string;
+  locked: boolean;
 }
 
 /** A table plus the derived, render-ready info the canvas needs — no db/engine types leak in here. */
@@ -43,6 +44,7 @@ export interface PlanTableView {
   guests: PlanTableGuest[];
   /** Stable human label ("Mesa 1"). Falls back to a short id if omitted. */
   label?: string;
+  fixed: boolean;
 }
 
 export interface PlanCanvasProps {
@@ -54,6 +56,12 @@ export interface PlanCanvasProps {
   maxHeight: number;
   /** Called when a guest card (dragged from another table or the unassigned tray) is dropped onto a table. */
   onAssign: (guestId: string, tableId: string) => void;
+  /** Called when a guest chip's lock button is toggled. */
+  onToggleGuestLock: (guestId: string, locked: boolean) => void;
+  /** Called when a table's fix button is toggled. */
+  onToggleTableFixed: (tableId: string, fixed: boolean) => void;
+  /** Called when guest A is dropped directly onto guest B's chip — exchanges their tables. */
+  onSwap: (guestAId: string, guestBId: string) => void;
 }
 
 interface TableGeom {
@@ -71,6 +79,9 @@ export default function PlanCanvas({
   maxWidth,
   maxHeight,
   onAssign,
+  onToggleGuestLock,
+  onToggleTableFixed,
+  onSwap,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
 
@@ -134,6 +145,29 @@ export default function PlanCanvas({
               pointerEvents: "auto",
             }}
           >
+            <button
+              type="button"
+              data-testid={`fix-table-${g.table.id}`}
+              onClick={() => onToggleTableFixed(g.table.id, !g.table.fixed)}
+              title={g.table.fixed ? "Desbloquear mesa" : "Fixar mesa (ignorada pelo Generate)"}
+              style={{
+                position: "absolute",
+                top: -10,
+                left: -10,
+                width: 22,
+                height: 22,
+                borderRadius: "50%",
+                border: g.table.fixed ? "1px solid #b45309" : "1px solid #cbd5e1",
+                background: g.table.fixed ? "#fffbeb" : "#fff",
+                cursor: "pointer",
+                fontSize: 12,
+                lineHeight: 1,
+                padding: 0,
+                boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+              }}
+            >
+              {g.table.fixed ? "🔒" : "🔓"}
+            </button>
             <div
               style={{
                 position: "absolute",
@@ -150,13 +184,27 @@ export default function PlanCanvas({
                 <span
                   key={guest.id}
                   draggable
+                  data-testid={`guest-chip-${guest.id}`}
                   onDragStart={(e) => e.dataTransfer.setData("guestId", guest.id)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const draggedId = e.dataTransfer.getData("guestId");
+                    if (draggedId && draggedId !== guest.id) onSwap(draggedId, guest.id);
+                  }}
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
                     fontSize: 13,
                     fontWeight: 500,
                     lineHeight: 1.3,
-                    background: "#fff",
-                    border: "1px solid #cbd5e1",
+                    background: guest.locked ? "#fffbeb" : "#fff",
+                    border: guest.locked ? "2px solid #b45309" : "1px solid #cbd5e1",
                     borderRadius: 6,
                     padding: "3px 8px",
                     cursor: "grab",
@@ -165,6 +213,25 @@ export default function PlanCanvas({
                   }}
                 >
                   {guest.name}
+                  <button
+                    type="button"
+                    data-testid={`lock-guest-${guest.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleGuestLock(guest.id, !guest.locked);
+                    }}
+                    title={guest.locked ? "Desbloquear convidado" : "Bloquear convidado (ignorado pelo Generate)"}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      padding: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {guest.locked ? "🔒" : "🔓"}
+                  </button>
                 </span>
               ))}
             </div>
@@ -177,9 +244,10 @@ export default function PlanCanvas({
 
 function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boolean }) {
   const { table, displayX, displayY, width, height } = geom;
-  const stroke = overCapacity ? "#dc2626" : "#111827";
-  const strokeWidth = overCapacity ? 3 : 1.5;
+  const stroke = overCapacity ? "#dc2626" : table.fixed ? "#b45309" : "#111827";
+  const strokeWidth = overCapacity ? 3 : table.fixed ? 2.5 : 1.5;
   const fill = overCapacity ? "#fee2e2" : "#fef3c7";
+  const dash = !overCapacity && table.fixed ? [6, 3] : undefined;
   const labelWidth = 150;
 
   const tableLabel = table.label ?? `#${table.id.slice(0, 6)}`;
@@ -195,6 +263,7 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
+          dash={dash}
         />
       ) : (
         <Rect
@@ -207,6 +276,7 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
+          dash={dash}
         />
       )}
       <Text
@@ -214,7 +284,7 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
         y={displayY - 16}
         width={labelWidth}
         align="center"
-        text={tableLabel}
+        text={table.fixed ? `🔒 ${tableLabel}` : tableLabel}
         fontSize={13}
         fill="#374151"
       />

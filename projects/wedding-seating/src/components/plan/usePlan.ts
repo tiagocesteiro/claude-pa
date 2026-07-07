@@ -156,6 +156,107 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     [weddingId]
   );
 
+  // Optimistic local update + persist via PATCH. Reverts and surfaces an error if the
+  // PATCH fails. Locked guests are excluded from Generate by the engine (Task 3).
+  const toggleGuestLock = useCallback(
+    async (guestId: string, locked: boolean) => {
+      let previous = false;
+      setGuests((prev) =>
+        prev.map((g) => {
+          if (g.id !== guestId) return g;
+          previous = g.locked;
+          return { ...g, locked };
+        })
+      );
+      try {
+        const res = await fetch(`/api/guests/${guestId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ locked }),
+        });
+        if (!res.ok) throw new Error("lock toggle failed");
+      } catch {
+        setGuests((prev) => prev.map((g) => (g.id === guestId ? { ...g, locked: previous } : g)));
+        setError("Não foi possível guardar o bloqueio do convidado.");
+      }
+    },
+    []
+  );
+
+  // Same optimistic pattern as toggleGuestLock, for tables. Fixed tables are excluded
+  // from Generate's re-seating pass (Task 3).
+  const toggleTableFixed = useCallback(
+    async (tableId: string, fixed: boolean) => {
+      let previous = false;
+      setTables((prev) =>
+        prev.map((t) => {
+          if (t.id !== tableId) return t;
+          previous = t.fixed;
+          return { ...t, fixed };
+        })
+      );
+      try {
+        const res = await fetch(`/api/tables/${tableId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fixed }),
+        });
+        if (!res.ok) throw new Error("fixed toggle failed");
+      } catch {
+        setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, fixed: previous } : t)));
+        setError("Não foi possível guardar a mesa fixa.");
+      }
+    },
+    []
+  );
+
+  // Exchanges guestA's and guestB's assignedTableId in one optimistic update + single
+  // PUT (both entries), so a partial failure can't leave the pair half-swapped server-side.
+  // Reads current table ids from `guests` state synchronously (not from inside the
+  // setGuests updater) — React doesn't guarantee that updater runs before the code
+  // below it, so capturing the swap values there and using them for the PUT body
+  // outside the updater sent stale/null values.
+  const swap = useCallback(
+    async (guestAId: string, guestBId: string) => {
+      if (guestAId === guestBId) return;
+      const a = guests.find((g) => g.id === guestAId);
+      const b = guests.find((g) => g.id === guestBId);
+      if (!a || !b) return;
+      const prevA = a.assignedTableId;
+      const prevB = b.assignedTableId;
+      setGuests((prev) =>
+        prev.map((g) => {
+          if (g.id === guestAId) return { ...g, assignedTableId: prevB };
+          if (g.id === guestBId) return { ...g, assignedTableId: prevA };
+          return g;
+        })
+      );
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/assignment`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assignments: [
+              { guestId: guestAId, tableId: prevB },
+              { guestId: guestBId, tableId: prevA },
+            ],
+          }),
+        });
+        if (!res.ok) throw new Error("swap failed");
+      } catch {
+        setGuests((prev) =>
+          prev.map((g) => {
+            if (g.id === guestAId) return { ...g, assignedTableId: prevA };
+            if (g.id === guestBId) return { ...g, assignedTableId: prevB };
+            return g;
+          })
+        );
+        setError("Não foi possível trocar os convidados de mesa.");
+      }
+    },
+    [weddingId, guests]
+  );
+
   const violations: PlanViolations = useMemo(
     () => planViolations(guests, tables, constraints),
     [guests, tables, constraints]
@@ -174,6 +275,9 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     refresh,
     generate,
     assign,
+    toggleGuestLock,
+    toggleTableFixed,
+    swap,
     violations,
   };
 }
