@@ -1,5 +1,14 @@
 import { NextResponse } from "next/server";
 import { createFloorPlan } from "@/lib/db/floorplans";
+import { prisma } from "@/lib/db/client";
+
+export async function GET() {
+  const plans = await prisma.floorPlan.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { venue: { select: { name: true } } },
+  });
+  return NextResponse.json(plans);
+}
 
 export async function POST(req: Request) {
   const b = await req.json();
