@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { createWedding } from "./weddings";
 import { createGroup } from "./groups";
-import { listGuests, assignGuestGroup } from "./guests";
+import { listGuests, assignGuestGroup, createGuest, setGuestLocked } from "./guests";
 import { prisma } from "./client";
 
 it("lists guests and reassigns a guest's group", async () => {
@@ -17,6 +17,15 @@ it("lists guests and reassigns a guest's group", async () => {
 
   const all = await listGuests(w.id);
   expect(all.some((x) => x.id === guest.id)).toBe(true);
+});
+
+it("creates a guest manually and toggles its lock", async () => {
+  const w = await createWedding({ couple: "Manual Add" });
+  const g = await createGuest({ weddingId: w.id, name: "Zé Manual" });
+  expect(g.name).toBe("Zé Manual");
+  expect(g.locked).toBe(false);
+  const locked = await setGuestLocked(g.id, true);
+  expect(locked.locked).toBe(true);
 });
 
 afterAll(async () => { await prisma.$disconnect(); });

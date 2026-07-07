@@ -8,3 +8,13 @@ export function listGuests(weddingId: string): Promise<Guest[]> {
 export function assignGuestGroup(guestId: string, groupId: string | null): Promise<Guest> {
   return prisma.guest.update({ where: { id: guestId }, data: { groupId } });
 }
+
+export function createGuest(input: { weddingId: string; name: string; groupId?: string | null }): Promise<Guest> {
+  return prisma.guest.create({
+    data: { weddingId: input.weddingId, name: input.name, groupId: input.groupId ?? null },
+  });
+}
+
+export function setGuestLocked(guestId: string, locked: boolean): Promise<Guest> {
+  return prisma.guest.update({ where: { id: guestId }, data: { locked } });
+}
