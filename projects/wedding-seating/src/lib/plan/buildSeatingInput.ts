@@ -5,6 +5,7 @@ export interface GuestRowInput {
   name: string;
   groupId: string | null;
   assignedTableId: string | null;
+  locked: boolean;
 }
 export interface TableRowInput {
   id: string;
@@ -26,7 +27,7 @@ export function buildSeatingInput(
 
   const fixedByTable = new Map<string, string[]>();
   for (const g of guests) {
-    if (g.assignedTableId && fixedTableIds.has(g.assignedTableId)) {
+    if (g.assignedTableId && (fixedTableIds.has(g.assignedTableId) || g.locked)) {
       const list = fixedByTable.get(g.assignedTableId) ?? [];
       list.push(g.id);
       fixedByTable.set(g.assignedTableId, list);
@@ -41,7 +42,7 @@ export function buildSeatingInput(
   }));
 
   const engineGuests = guests
-    .filter((g) => !(g.assignedTableId && fixedTableIds.has(g.assignedTableId)))
+    .filter((g) => !(g.assignedTableId && (fixedTableIds.has(g.assignedTableId) || g.locked)))
     .map((g) => ({ id: g.id, name: g.name, groupId: g.groupId }));
 
   const engineConstraints = constraints.map((c) => ({

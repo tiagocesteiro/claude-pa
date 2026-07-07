@@ -10,6 +10,7 @@ export interface PlanGuest {
   name: string;
   groupId: string | null;
   assignedTableId: string | null;
+  locked: boolean;
 }
 
 export interface PlanTable {

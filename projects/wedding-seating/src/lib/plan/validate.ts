@@ -24,13 +24,14 @@ export function planViolations(
   constraints: ConstraintRowInput[]
 ): PlanViolations {
   const input = buildSeatingInput(guests, tables, constraints);
-  // Build the assignment map from MOVABLE guests only. Guests seated at a fixed table are
-  // already counted via `fixedGuestIds` on the engine table (see buildSeatingInput), so
-  // including them here too would double-count them against capacity.
+  // Build the assignment map from MOVABLE guests only. Guests seated at a fixed table (or
+  // LOCKED to their current table) are already counted via `fixedGuestIds` on the engine
+  // table (see buildSeatingInput), so including them here too would double-count them
+  // against capacity.
   const fixedTableIds = new Set(tables.filter((t) => t.fixed).map((t) => t.id));
   const assignment: Assignment = {};
   for (const g of guests) {
-    if (g.assignedTableId && !fixedTableIds.has(g.assignedTableId)) {
+    if (g.assignedTableId && !(fixedTableIds.has(g.assignedTableId) || g.locked)) {
       assignment[g.id] = g.assignedTableId;
     }
   }
