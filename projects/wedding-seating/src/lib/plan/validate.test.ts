@@ -24,3 +24,13 @@ it("detects over-capacity and separated-together violations", () => {
   expect(v.overCapacity).toContain("t1");
   expect(v.separated.length).toBe(1);
 });
+
+it("does not double-count guests seated at a FIXED table (no false over-capacity)", () => {
+  const tables = [{ id: "head", capacity: 2, fixed: true }];
+  const guests = [
+    { id: "bride", name: "Noiva", groupId: null, assignedTableId: "head" },
+    { id: "groom", name: "Noivo", groupId: null, assignedTableId: "head" },
+  ];
+  const v = planViolations(guests, tables, []);
+  expect(v.overCapacity).toEqual([]); // 2 fixed occupants == capacity 2, not over
+});
