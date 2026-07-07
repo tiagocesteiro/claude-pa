@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGuestBoard } from "@/components/guests/useGuestBoard";
 import ImportPanel from "@/components/guests/ImportPanel";
+import AddGuestForm from "@/components/guests/AddGuestForm";
 import GroupBoard from "@/components/guests/GroupBoard";
 import ConstraintsPanel from "@/components/guests/ConstraintsPanel";
 
@@ -19,7 +20,7 @@ export default function WeddingWorkspacePage() {
   const weddingId = params.id;
 
   const [wedding, setWedding] = useState<WeddingRecord | null>(null);
-  const { guests, groups, loading, error, refresh, assign, addGroup, renameGroup, removeGroup } =
+  const { guests, groups, loading, error, refresh, assign, addGuest, addGroup, renameGroup, removeGroup } =
     useGuestBoard(weddingId);
 
   useEffect(() => {
@@ -42,6 +43,8 @@ export default function WeddingWorkspacePage() {
       </p>
 
       <ImportPanel weddingId={weddingId} onImported={refresh} />
+
+      <AddGuestForm groups={groups} addGuest={addGuest} />
 
       {loading ? (
         <p>Loading guests...</p>

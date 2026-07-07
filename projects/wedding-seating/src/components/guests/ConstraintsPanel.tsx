@@ -46,8 +46,7 @@ export default function ConstraintsPanel({
     return guests.find((g) => g.id === id)?.name ?? "?";
   }
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
+  async function submitConstraint(constraintType: "together" | "separate") {
     if (!guestAId || !guestBId || guestAId === guestBId) return;
     setError(null);
     setSaving(true);
@@ -55,7 +54,7 @@ export default function ConstraintsPanel({
       const res = await fetch(`/api/weddings/${weddingId}/constraints`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, guestAId, guestBId }),
+        body: JSON.stringify({ type: constraintType, guestAId, guestBId }),
       });
       if (!res.ok) setError("Não foi possível criar a restrição.");
     } catch {
@@ -64,6 +63,16 @@ export default function ConstraintsPanel({
       setSaving(false);
     }
     await refresh();
+  }
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    await submitConstraint(type);
+  }
+
+  async function handleCouple() {
+    setType("together");
+    await submitConstraint("together");
   }
 
   async function handleDelete(id: string) {
@@ -111,6 +120,15 @@ export default function ConstraintsPanel({
 
         <button type="submit" disabled={saving || sameGuest || !guestAId || !guestBId}>
           {saving ? "A adicionar..." : "Add"}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCouple}
+          disabled={saving || sameGuest || !guestAId || !guestBId}
+          title="Marca os dois convidados selecionados como casal (têm de ficar juntos)"
+        >
+          {saving ? "A adicionar..." : "São casal"}
         </button>
       </form>
 

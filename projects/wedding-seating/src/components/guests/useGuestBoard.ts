@@ -57,6 +57,24 @@ export function useGuestBoard(weddingId: string) {
     [refresh]
   );
 
+  const addGuest = useCallback(
+    async (name: string, groupId?: string | null) => {
+      setError(null);
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/guests`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, groupId: groupId ?? null }),
+        });
+        if (!res.ok) setError("Não foi possível adicionar o convidado.");
+      } catch {
+        setError("Não foi possível adicionar o convidado.");
+      }
+      await refresh();
+    },
+    [weddingId, refresh]
+  );
+
   const addGroup = useCallback(
     async (name: string) => {
       setError(null);
@@ -125,6 +143,7 @@ export function useGuestBoard(weddingId: string) {
     error,
     refresh,
     assign,
+    addGuest,
     addGroup,
     renameGroup,
     removeGroup,
