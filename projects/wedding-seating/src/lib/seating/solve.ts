@@ -2,7 +2,7 @@ import type { Assignment, SeatingInput, SeatingResult, Warning } from "./types";
 import { placeGreedy } from "./place";
 import { refine } from "./refine";
 import { scoreAssignment } from "./score";
-import { separationViolations } from "./constraints";
+import { separationViolations, tableOfGuest } from "./constraints";
 
 function totalRemainingCapacity(input: SeatingInput): number {
   return input.tables.reduce(
@@ -38,11 +38,9 @@ function collectWarnings(assignment: Assignment, input: SeatingInput): Warning[]
 
   for (const c of input.constraints) {
     if (c.type !== "together") continue;
-    if (
-      assignment[c.a] === undefined ||
-      assignment[c.b] === undefined ||
-      assignment[c.a] !== assignment[c.b]
-    ) {
+    const ta = tableOfGuest(c.a, assignment, input.tables);
+    const tb = tableOfGuest(c.b, assignment, input.tables);
+    if (ta === undefined || tb === undefined || ta !== tb) {
       warnings.push({
         kind: "together-split",
         message: `Wanted ${c.a} and ${c.b} together, but they are apart.`,

@@ -100,3 +100,27 @@ it("group-split warning carries the groupId; together-split carries guestIds", (
   const ts = res.warnings.find((w) => w.kind === "together-split");
   expect(ts?.guestIds?.sort()).toEqual(["g1", "g2"]);
 });
+
+it("does NOT warn together-split when both guests are fixed occupants of the SAME table", () => {
+  const input: SeatingInput = {
+    guests: [], // both are fixed occupants, not movable
+    tables: [{ id: "head", capacity: 4, fixed: true, fixedGuestIds: ["a", "b"] }],
+    constraints: [{ type: "together", a: "a", b: "b" }],
+  };
+  const res = solveSeating(input);
+  expect(res.warnings.some((w) => w.kind === "together-split")).toBe(false);
+});
+
+it("DOES warn together-split when fixed occupants are at DIFFERENT tables", () => {
+  const input: SeatingInput = {
+    guests: [],
+    tables: [
+      { id: "t1", capacity: 4, fixed: true, fixedGuestIds: ["a"] },
+      { id: "t2", capacity: 4, fixed: true, fixedGuestIds: ["b"] },
+    ],
+    constraints: [{ type: "together", a: "a", b: "b" }],
+  };
+  const res = solveSeating(input);
+  const ts = res.warnings.find((w) => w.kind === "together-split");
+  expect(ts?.guestIds?.sort()).toEqual(["a", "b"]);
+});
