@@ -48,3 +48,15 @@ it("returns [] when there is no name column", async () => {
   const buf = await makeWorkbook([["x", "y"]], ["foo", "bar"]);
   expect(await parseGuestWorkbook(buf)).toEqual([]);
 });
+
+it("uses cell display text for hyperlink/rich-text cells (not [object Object])", async () => {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Convidados");
+  ws.addRow(["Nome", "Grupo"]);
+  const row = ws.addRow([]);
+  row.getCell(1).value = { text: "Ana", hyperlink: "mailto:ana@x.com" };
+  const buf = (await wb.xlsx.writeBuffer()) as unknown as Buffer;
+
+  const rows = await parseGuestWorkbook(buf);
+  expect(rows).toEqual([{ name: "Ana" }]);
+});

@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
 import { parseGuestWorkbook } from "@/lib/import/parseGuests";
 import { importGuests } from "@/lib/import/importGuests";
+import { getWedding } from "@/lib/db/weddings";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  const wedding = await getWedding(id);
+  if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
+
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "file required" }, { status: 400 });
-  const rows = await parseGuestWorkbook(await file.arrayBuffer());
+  if (file.size > MAX_FILE_SIZE) return NextResponse.json({ error: "file too large" }, { status: 400 });
+
+  let rows;
+  try {
+    rows = await parseGuestWorkbook(await file.arrayBuffer());
+  } catch {
+    return NextResponse.json({ error: "invalid xlsx file" }, { status: 400 });
+  }
+
   const result = await importGuests(id, rows);
   return NextResponse.json(result);
 }

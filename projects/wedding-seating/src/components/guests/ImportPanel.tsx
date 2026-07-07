@@ -62,7 +62,13 @@ export default function ImportPanel({
           {importing ? "Importing..." : "Import"}
         </button>
       </form>
-      {result && (
+      {result && result.guests === 0 && (
+        <p style={{ color: "#d97706" }}>
+          Nenhum convidado importado — confirma que as colunas se chamam <code>nome</code> e{" "}
+          <code>grupo</code>.
+        </p>
+      )}
+      {result && result.guests > 0 && (
         <p style={{ color: "#16a34a" }}>
           Imported {result.guests} guest(s), {result.groups} new group(s).
         </p>

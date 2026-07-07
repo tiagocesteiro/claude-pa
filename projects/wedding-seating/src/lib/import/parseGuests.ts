@@ -22,7 +22,7 @@ export async function parseGuestWorkbook(data: ArrayBuffer | Buffer): Promise<Gu
   let nameCol = -1;
   let groupCol = -1;
   ws.getRow(1).eachCell((cell, col) => {
-    const h = norm(String(cell.value ?? ""));
+    const h = norm(cell.text ?? "");
     if (h === "nome" || h === "name") nameCol = col;
     else if (h === "grupo" || h === "group") groupCol = col;
   });
@@ -31,9 +31,9 @@ export async function parseGuestWorkbook(data: ArrayBuffer | Buffer): Promise<Gu
   const rows: GuestRow[] = [];
   for (let r = 2; r <= ws.rowCount; r++) {
     const row = ws.getRow(r);
-    const name = String(row.getCell(nameCol).value ?? "").trim();
+    const name = (row.getCell(nameCol).text ?? "").trim();
     if (!name) continue;
-    const group = groupCol !== -1 ? String(row.getCell(groupCol).value ?? "").trim() : "";
+    const group = groupCol !== -1 ? (row.getCell(groupCol).text ?? "").trim() : "";
     rows.push(group ? { name, group } : { name });
   }
   return rows;
