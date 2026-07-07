@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { usePlan } from "@/components/plan/usePlan";
+import type { Warning } from "@/lib/seating";
+import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePlan";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
+import TableList, { type TableListRow } from "@/components/plan/TableList";
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
   ssr: false,
@@ -27,6 +29,28 @@ function imageUrlFor(image: string): string | undefined {
   if (!image) return undefined;
   const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
   return `/api/uploads/${rel}`;
+}
+
+// Resolves an engine warning to a human-readable, NAME-based message: group-split looks up
+// warning.groupId in the groups list, together-split/separate-unsatisfiable look up both ids
+// in warning.guestIds. Falls back to the engine's raw message if a lookup misses (e.g. group
+// or guest was deleted since the plan was generated).
+function resolveWarningText(w: Warning, groups: PlanGroup[], guests: PlanGuest[]): string {
+  if (w.kind === "group-split" && w.groupId) {
+    const group = groups.find((g) => g.id === w.groupId);
+    if (group) return `O grupo "${group.name}" ficou dividido por mais do que uma mesa.`;
+  }
+  if ((w.kind === "together-split" || w.kind === "separate-unsatisfiable") && w.guestIds) {
+    const [aId, bId] = w.guestIds;
+    const a = guests.find((g) => g.id === aId);
+    const b = guests.find((g) => g.id === bId);
+    if (a && b) {
+      return w.kind === "together-split"
+        ? `${a.name} e ${b.name} deviam ficar juntos mas ficaram em mesas diferentes.`
+        : `${a.name} e ${b.name} deviam ficar separados mas ficaram na mesma mesa.`;
+    }
+  }
+  return w.message;
 }
 
 export default function PlanPage() {
@@ -51,6 +75,7 @@ export default function PlanPage() {
   const {
     guests,
     tables,
+    groups,
     loading,
     generating,
     error,
@@ -63,6 +88,15 @@ export default function PlanPage() {
 
   const selectedFloorPlan = floorPlans.find((f) => f.id === floorPlanId);
 
+  // Stable, human labels ("Mesa 1", "Mesa 2", ...) derived from table order — used by the
+  // canvas, the warnings list, and the TableList so a table reads the same everywhere
+  // instead of showing a raw id.
+  const tableLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    tables.forEach((t, i) => map.set(t.id, `Mesa ${i + 1}`));
+    return map;
+  }, [tables]);
+
   const tableViews: PlanTableView[] = useMemo(
     () =>
       tables.map((t) => ({
@@ -71,14 +105,31 @@ export default function PlanPage() {
         capacity: t.capacity,
         x: t.x,
         y: t.y,
+        label: tableLabels.get(t.id),
         guests: guests
           .filter((g) => g.assignedTableId === t.id)
           .map((g) => ({ id: g.id, name: g.name })),
       })),
-    [tables, guests]
+    [tables, guests, tableLabels]
   );
 
   const unassigned = guests.filter((g) => g.assignedTableId === null);
+
+  const tableListRows: TableListRow[] = useMemo(
+    () =>
+      tables.map((t) => {
+        const seated = guests.filter((g) => g.assignedTableId === t.id);
+        return {
+          id: t.id,
+          label: tableLabels.get(t.id) ?? t.id.slice(0, 6),
+          occupancy: seated.length,
+          capacity: t.capacity,
+          guests: seated.map((g) => ({ id: g.id, name: g.name })),
+          overCapacity: violations.overCapacity.includes(t.id),
+        };
+      }),
+    [tables, guests, tableLabels, violations.overCapacity]
+  );
 
   const hasWarnings =
     warnings.length > 0 || violations.overCapacity.length > 0 || violations.separated.length > 0;
@@ -134,7 +185,7 @@ export default function PlanPage() {
               <ul style={{ paddingLeft: 18, fontSize: 13, margin: 0 }}>
                 {warnings.map((w, i) => (
                   <li key={`w-${i}`} style={{ color: "#d97706" }}>
-                    {w.message}
+                    {resolveWarningText(w, groups, guests)}
                   </li>
                 ))}
                 {violations.overCapacity.map((id) => {
@@ -142,7 +193,7 @@ export default function PlanPage() {
                   const occ = t ? guests.filter((g) => g.assignedTableId === id).length : 0;
                   return (
                     <li key={`oc-${id}`} style={{ color: "#dc2626" }}>
-                      Mesa {id.slice(0, 6)} está acima da capacidade ({occ}/{t?.capacity ?? "?"}).
+                      {tableLabels.get(id) ?? id.slice(0, 6)} está acima da capacidade ({occ}/{t?.capacity ?? "?"}).
                     </li>
                   );
                 })}
@@ -164,6 +215,13 @@ export default function PlanPage() {
             />
           </div>
         </div>
+      )}
+
+      {floorPlanId && (
+        <TableList
+          rows={tableListRows}
+          unassigned={unassigned.map((g) => ({ id: g.id, name: g.name }))}
+        />
       )}
     </main>
   );

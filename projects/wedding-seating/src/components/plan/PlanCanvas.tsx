@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Circle, Rect, Text } from "react-konva";
 
-const ROUND_RADIUS = 40;
-const RECT_WIDTH = 110;
-const RECT_HEIGHT = 60;
+const ROUND_RADIUS = 46;
+const RECT_WIDTH = 130;
+const RECT_HEIGHT = 70;
 
 function useImageElement(src: string | undefined): HTMLImageElement | undefined {
   const [image, setImage] = useState<HTMLImageElement | undefined>(undefined);
@@ -41,6 +41,8 @@ export interface PlanTableView {
   x: number;
   y: number;
   guests: PlanTableGuest[];
+  /** Stable human label ("Mesa 1"). Falls back to a short id if omitted. */
+  label?: string;
 }
 
 export interface PlanCanvasProps {
@@ -135,12 +137,12 @@ export default function PlanCanvas({
             <div
               style={{
                 position: "absolute",
-                top: g.height + 4,
-                left: -30,
-                width: g.width + 60,
+                top: g.height + 6,
+                left: -40,
+                width: g.width + 80,
                 display: "flex",
                 flexWrap: "wrap",
-                gap: 2,
+                gap: 4,
                 justifyContent: "center",
               }}
             >
@@ -150,12 +152,16 @@ export default function PlanCanvas({
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("guestId", guest.id)}
                   style={{
-                    fontSize: 10,
-                    background: "#e5e7eb",
-                    borderRadius: 4,
-                    padding: "1px 4px",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                    background: "#fff",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: 6,
+                    padding: "3px 8px",
                     cursor: "grab",
                     whiteSpace: "nowrap",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
                   }}
                 >
                   {guest.name}
@@ -174,8 +180,9 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
   const stroke = overCapacity ? "#dc2626" : "#111827";
   const strokeWidth = overCapacity ? 3 : 1.5;
   const fill = overCapacity ? "#fee2e2" : "#fef3c7";
-  const labelWidth = 130;
+  const labelWidth = 150;
 
+  const tableLabel = table.label ?? `#${table.id.slice(0, 6)}`;
   const occupancyLabel = `${table.guests.length}/${table.capacity}`;
 
   return (
@@ -204,11 +211,20 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
       )}
       <Text
         x={displayX - labelWidth / 2}
-        y={displayY - 10}
+        y={displayY - 16}
+        width={labelWidth}
+        align="center"
+        text={tableLabel}
+        fontSize={13}
+        fill="#374151"
+      />
+      <Text
+        x={displayX - labelWidth / 2}
+        y={displayY + 1}
         width={labelWidth}
         align="center"
         text={occupancyLabel}
-        fontSize={14}
+        fontSize={18}
         fontStyle="bold"
         fill={overCapacity ? "#dc2626" : "#111827"}
       />

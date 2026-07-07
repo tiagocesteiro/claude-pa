@@ -31,10 +31,18 @@ export interface PlanConstraint {
   guestBId: string;
 }
 
+export interface PlanGroup {
+  id: string;
+  weddingId: string;
+  name: string;
+  color: string | null;
+}
+
 export function usePlan(weddingId: string, floorPlanId: string | null) {
   const [guests, setGuests] = useState<PlanGuest[]>([]);
   const [tables, setTables] = useState<PlanTable[]>([]);
   const [constraints, setConstraints] = useState<PlanConstraint[]>([]);
+  const [groups, setGroups] = useState<PlanGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +82,28 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load + reload on floor-plan change
     refresh();
   }, [refresh]);
+
+  // Groups aren't floor-plan scoped; fetched once per wedding, used only to resolve
+  // warning names (group-split). Best-effort — a failed fetch just means warnings
+  // fall back to the engine's raw message instead of the group name.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGroups() {
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/groups`);
+        if (!res.ok) return;
+        const data = (await res.json()) as PlanGroup[];
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount/wedding change
+        if (!cancelled) setGroups(data ?? []);
+      } catch {
+        // silent — see comment above
+      }
+    }
+    loadGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, [weddingId]);
 
   const generate = useCallback(async () => {
     if (!floorPlanId) return;
@@ -135,6 +165,7 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     guests,
     tables,
     constraints,
+    groups,
     loading,
     generating,
     error,
