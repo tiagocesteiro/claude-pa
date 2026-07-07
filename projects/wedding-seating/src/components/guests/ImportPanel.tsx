@@ -27,21 +27,32 @@ export default function ImportPanel({
       return;
     }
     setImporting(true);
+    // Safety timeout: without this, a genuinely hung request would leave the
+    // spinner spinning forever with no feedback. (The first import in `next dev`
+    // is also slower because the route compiles on demand — well under this cap.)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
     try {
       const form = new FormData();
       form.set("file", file);
       const res = await fetch(`/api/weddings/${weddingId}/import`, {
         method: "POST",
         body: form,
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error("import failed");
       const data = (await res.json()) as ImportResult;
       setResult(data);
       setFile(null);
       onImported();
-    } catch {
-      setError("Failed to import guest list");
+    } catch (err) {
+      setError(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "A importação demorou demasiado. Verifica a ligação e tenta novamente."
+          : "Failed to import guest list"
+      );
     } finally {
+      clearTimeout(timeout);
       setImporting(false);
     }
   }
