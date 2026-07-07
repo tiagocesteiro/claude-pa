@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface Venue {
   id: string;
   name: string;
   location: string | null;
+  createdAt: string;
+}
+
+interface Wedding {
+  id: string;
+  couple: string;
+  date: string | null;
   createdAt: string;
 }
 
@@ -18,16 +26,53 @@ export default function AdminPage() {
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [weddings, setWeddings] = useState<Wedding[]>([]);
+  const [coupleName, setCoupleName] = useState("");
+  const [weddingError, setWeddingError] = useState<string | null>(null);
+  const [creatingWedding, setCreatingWedding] = useState(false);
+
   async function loadVenues() {
     const res = await fetch("/api/venues");
     const data = await res.json();
     setVenues(data);
   }
 
+  async function loadWeddings() {
+    const res = await fetch("/api/weddings");
+    const data = await res.json();
+    setWeddings(data);
+  }
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadVenues();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+    loadWeddings();
   }, []);
+
+  async function handleCreateWedding(e: React.FormEvent) {
+    e.preventDefault();
+    setWeddingError(null);
+    if (!coupleName.trim()) {
+      setWeddingError("Couple name is required");
+      return;
+    }
+    setCreatingWedding(true);
+    try {
+      const res = await fetch("/api/weddings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ couple: coupleName }),
+      });
+      if (!res.ok) throw new Error("failed");
+      setCoupleName("");
+      await loadWeddings();
+    } catch {
+      setWeddingError("Failed to create wedding");
+    } finally {
+      setCreatingWedding(false);
+    }
+  }
 
   async function handleCreateVenue(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +114,38 @@ export default function AdminPage() {
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+      <h1>Weddings</h1>
+
+      <form onSubmit={handleCreateWedding} style={{ marginBottom: 24 }}>
+        <h2>New wedding</h2>
+        <div style={{ marginBottom: 8 }}>
+          <label>
+            Couple:{" "}
+            <input value={coupleName} onChange={(e) => setCoupleName(e.target.value)} />
+          </label>
+        </div>
+        <button type="submit" disabled={creatingWedding}>
+          {creatingWedding ? "Creating..." : "Create wedding"}
+        </button>
+        {weddingError && <p style={{ color: "#dc2626" }}>{weddingError}</p>}
+      </form>
+
+      <h2>Existing weddings</h2>
+      {weddings.length === 0 && <p>No weddings yet.</p>}
+      <ul style={{ listStyle: "none", padding: 0, marginBottom: 32 }}>
+        {weddings.map((w) => (
+          <li
+            key={w.id}
+            style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
+          >
+            <Link href={`/admin/wedding/${w.id}`}>
+              <strong>{w.couple}</strong>
+            </Link>
+            {w.date && <span> — {new Date(w.date).toLocaleDateString()}</span>}
+          </li>
+        ))}
+      </ul>
+
       <h1>Venues</h1>
 
       <form onSubmit={handleCreateVenue} style={{ marginBottom: 24 }}>

@@ -1,0 +1,154 @@
+"use client";
+
+import { useState } from "react";
+import type { Group, Guest } from "./useGuestBoard";
+
+const UNGROUPED = "__ungrouped__";
+
+export default function GroupBoard({
+  guests,
+  groups,
+  assign,
+  addGroup,
+  renameGroup,
+  removeGroup,
+}: {
+  guests: Guest[];
+  groups: Group[];
+  assign: (guestId: string, groupId: string | null) => Promise<void>;
+  addGroup: (name: string) => Promise<void>;
+  renameGroup: (id: string, name: string) => Promise<void>;
+  removeGroup: (id: string) => Promise<void>;
+}) {
+  const [newGroupName, setNewGroupName] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+
+  async function handleAddGroup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newGroupName.trim()) return;
+    await addGroup(newGroupName.trim());
+    setNewGroupName("");
+  }
+
+  function startRename(group: Group) {
+    setRenamingId(group.id);
+    setRenameValue(group.name);
+  }
+
+  async function commitRename(id: string) {
+    if (renameValue.trim()) await renameGroup(id, renameValue.trim());
+    setRenamingId(null);
+  }
+
+  function handleDragStart(e: React.DragEvent, guestId: string) {
+    e.dataTransfer.setData("id", guestId);
+  }
+
+  function handleDrop(e: React.DragEvent, columnGroupId: string | null) {
+    e.preventDefault();
+    setDragOverCol(null);
+    const guestId = e.dataTransfer.getData("id");
+    if (guestId) void assign(guestId, columnGroupId);
+  }
+
+  const columns: { key: string; groupId: string | null; group: Group | null }[] = [
+    { key: UNGROUPED, groupId: null, group: null },
+    ...groups.map((g) => ({ key: g.id, groupId: g.id, group: g })),
+  ];
+
+  return (
+    <div>
+      <form onSubmit={handleAddGroup} style={{ marginBottom: 16 }}>
+        <label>
+          New group:{" "}
+          <input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} />
+        </label>
+        <button type="submit" style={{ marginLeft: 8 }}>
+          Add group
+        </button>
+      </form>
+
+      <div style={{ display: "flex", gap: 16, overflowX: "auto" }}>
+        {columns.map((col) => {
+          const colGuests = guests.filter((g) => g.groupId === col.groupId);
+          const isOver = dragOverCol === col.key;
+          return (
+            <div
+              key={col.key}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverCol(col.key);
+              }}
+              onDragLeave={() => setDragOverCol((c) => (c === col.key ? null : c))}
+              onDrop={(e) => handleDrop(e, col.groupId)}
+              data-testid={`column-${col.key}`}
+              style={{
+                minWidth: 220,
+                flex: "0 0 220px",
+                border: isOver ? "2px dashed #2563eb" : "1px solid #ddd",
+                borderRadius: 8,
+                padding: 8,
+                background: isOver ? "#eff6ff" : "#fafafa",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {col.group ? (
+                  renamingId === col.group.id ? (
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => commitRename(col.group!.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitRename(col.group!.id);
+                      }}
+                    />
+                  ) : (
+                    <strong onClick={() => startRename(col.group!)} style={{ cursor: "pointer" }}>
+                      {col.group.name}
+                    </strong>
+                  )
+                ) : (
+                  <strong>Sem grupo</strong>
+                )}
+                {col.group && (
+                  <button
+                    type="button"
+                    onClick={() => removeGroup(col.group!.id)}
+                    title="Delete group"
+                    style={{ fontSize: 12 }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>
+                {colGuests.length} guest(s)
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {colGuests.map((guest) => (
+                  <div
+                    key={guest.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, guest.id)}
+                    style={{
+                      border: "1px solid #ccc",
+                      borderRadius: 6,
+                      padding: "6px 8px",
+                      background: "#fff",
+                      cursor: "grab",
+                    }}
+                  >
+                    {guest.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
