@@ -36,8 +36,10 @@ function wouldViolateSeparation(
   input: SeatingInput
 ): boolean {
   const trial: Assignment = { ...assignment, [guestId]: tableId };
-  return separationViolations(trial, input.constraints).length >
-    separationViolations(assignment, input.constraints).length;
+  return (
+    separationViolations(trial, input.constraints, input.tables).length >
+    separationViolations(assignment, input.constraints, input.tables).length
+  );
 }
 
 function placeGuest(

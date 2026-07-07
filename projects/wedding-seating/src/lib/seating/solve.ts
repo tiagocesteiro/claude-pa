@@ -28,7 +28,7 @@ function collectWarnings(assignment: Assignment, input: SeatingInput): Warning[]
     });
   }
 
-  for (const c of separationViolations(assignment, input.constraints)) {
+  for (const c of separationViolations(assignment, input.constraints, input.tables)) {
     warnings.push({
       kind: "separate-unsatisfiable",
       message: `Could not separate ${c.a} and ${c.b}; they share a table.`,

@@ -4,6 +4,7 @@ import {
   separationViolations,
   isHardValid,
   occupantsByTable,
+  tableOfGuest,
 } from "./constraints";
 import type { SeatingInput, SeatTable, SeatingConstraint, Assignment } from "./types";
 
@@ -43,4 +44,29 @@ it("isHardValid is false when a separation is violated", () => {
   };
   const assignment: Assignment = { g1: "t1", g2: "t1" };
   expect(isHardValid(assignment, input)).toBe(false);
+});
+
+it("resolves a guest's table from fixedGuestIds when not in the assignment", () => {
+  const tables: SeatTable[] = [{ id: "head", capacity: 4, fixed: true, fixedGuestIds: ["bride"] }];
+  expect(tableOfGuest("bride", {}, tables)).toBe("head");
+  expect(tableOfGuest("x", { x: "head" }, tables)).toBe("head");
+  expect(tableOfGuest("nobody", {}, tables)).toBeUndefined();
+});
+
+it("flags a separate pair between a movable guest and a fixed occupant of the same table", () => {
+  const tables: SeatTable[] = [{ id: "head", capacity: 4, fixed: true, fixedGuestIds: ["bride"] }];
+  const constraints: SeatingConstraint[] = [{ type: "separate", a: "g1", b: "bride" }];
+  // g1 assigned to the head table where bride is a fixed occupant → violation
+  expect(separationViolations({ g1: "head" }, constraints, tables).length).toBe(1);
+  // g1 elsewhere → no violation
+  expect(separationViolations({ g1: "t2" }, constraints, tables).length).toBe(0);
+});
+
+it("isHardValid sees fixed-occupant separation violations", () => {
+  const input: SeatingInput = {
+    guests: [{ id: "g1", name: "A", groupId: null }],
+    tables: [{ id: "head", capacity: 4, fixed: true, fixedGuestIds: ["bride"] }],
+    constraints: [{ type: "separate", a: "g1", b: "bride" }],
+  };
+  expect(isHardValid({ g1: "head" }, input)).toBe(false);
 });
