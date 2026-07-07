@@ -81,3 +81,22 @@ it("respects fixed tables without moving pre-seated guests", () => {
   expect(result.assignment["bride"]).toBeUndefined();
   expect(isHardValid(result.assignment, input)).toBe(true);
 });
+
+it("group-split warning carries the groupId; together-split carries guestIds", () => {
+  const groupSplit: SeatingInput = {
+    guests: [
+      { id: "g1", name: "A", groupId: "fam" },
+      { id: "g2", name: "B", groupId: "fam" },
+    ],
+    tables: [
+      { id: "t1", capacity: 1, fixed: false, fixedGuestIds: [] },
+      { id: "t2", capacity: 1, fixed: false, fixedGuestIds: [] },
+    ],
+    constraints: [{ type: "together", a: "g1", b: "g2" }],
+  };
+  const res = solveSeating(groupSplit);
+  const gs = res.warnings.find((w) => w.kind === "group-split");
+  expect(gs?.groupId).toBe("fam");
+  const ts = res.warnings.find((w) => w.kind === "together-split");
+  expect(ts?.guestIds?.sort()).toEqual(["g1", "g2"]);
+});

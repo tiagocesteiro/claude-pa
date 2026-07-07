@@ -36,6 +36,8 @@ export type WarningKind =
 export interface Warning {
   kind: WarningKind;
   message: string;
+  groupId?: string;
+  guestIds?: [string, string];
 }
 
 export interface SeatingResult {

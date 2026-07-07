@@ -32,6 +32,7 @@ function collectWarnings(assignment: Assignment, input: SeatingInput): Warning[]
     warnings.push({
       kind: "separate-unsatisfiable",
       message: `Could not separate ${c.a} and ${c.b}; they share a table.`,
+      guestIds: [c.a, c.b],
     });
   }
 
@@ -45,6 +46,7 @@ function collectWarnings(assignment: Assignment, input: SeatingInput): Warning[]
       warnings.push({
         kind: "together-split",
         message: `Wanted ${c.a} and ${c.b} together, but they are apart.`,
+        guestIds: [c.a, c.b],
       });
     }
   }
@@ -62,6 +64,7 @@ function collectWarnings(assignment: Assignment, input: SeatingInput): Warning[]
       warnings.push({
         kind: "group-split",
         message: `Group ${groupId} is split across ${set.size} tables.`,
+        groupId,
       });
     }
   }
