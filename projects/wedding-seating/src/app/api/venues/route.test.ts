@@ -20,4 +20,9 @@ it("POST rejects a missing name", async () => {
   expect(res.status).toBe(400);
 });
 
+it("POST returns 400 (not 500) on an empty body", async () => {
+  const res = await POST(new Request("http://x/api/venues", { method: "POST", body: "" }));
+  expect(res.status).toBe(400);
+});
+
 afterAll(async () => { await prisma.$disconnect(); });

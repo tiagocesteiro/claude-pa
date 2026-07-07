@@ -6,7 +6,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const b = await req.json();
+  const b = await req.json().catch(() => ({}));
   if (!b?.couple || typeof b.couple !== "string") {
     return NextResponse.json({ error: "couple is required" }, { status: 400 });
   }

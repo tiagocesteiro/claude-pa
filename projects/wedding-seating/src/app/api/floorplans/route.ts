@@ -11,7 +11,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const b = await req.json();
+  const b = await req.json().catch(() => ({}));
   if (!b?.venueId) return NextResponse.json({ error: "venueId required" }, { status: 400 });
   const fp = await createFloorPlan({
     venueId: b.venueId,

@@ -8,7 +8,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json()) as { tables: TableInput[] };
+  const body = (await req.json().catch(() => ({}))) as { tables?: TableInput[] };
   if (!Array.isArray(body?.tables)) return NextResponse.json({ error: "tables[] required" }, { status: 400 });
   await saveTables(id, body.tables);
   return NextResponse.json({ ok: true });

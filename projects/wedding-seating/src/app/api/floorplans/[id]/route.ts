@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const b = await req.json();
+  const b = await req.json().catch(() => ({}));
   if (typeof b?.scale !== "number") return NextResponse.json({ error: "scale required" }, { status: 400 });
   return NextResponse.json(await updateFloorPlanScale(id, b.scale));
 }

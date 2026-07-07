@@ -8,7 +8,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const b = await req.json();
+  const b = await req.json().catch(() => ({}));
   if ((b?.type !== "together" && b?.type !== "separate") || !b?.guestAId || !b?.guestBId) {
     return NextResponse.json({ error: "type (together|separate), guestAId, guestBId required" }, { status: 400 });
   }
