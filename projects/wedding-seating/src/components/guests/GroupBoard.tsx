@@ -8,6 +8,7 @@ const UNGROUPED = "__ungrouped__";
 export default function GroupBoard({
   guests,
   groups,
+  error,
   assign,
   addGroup,
   renameGroup,
@@ -15,6 +16,7 @@ export default function GroupBoard({
 }: {
   guests: Guest[];
   groups: Group[];
+  error?: string | null;
   assign: (guestId: string, groupId: string | null) => Promise<void>;
   addGroup: (name: string) => Promise<void>;
   renameGroup: (id: string, name: string) => Promise<void>;
@@ -24,6 +26,7 @@ export default function GroupBoard({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   async function handleAddGroup(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +43,16 @@ export default function GroupBoard({
   async function commitRename(id: string) {
     if (renameValue.trim()) await renameGroup(id, renameValue.trim());
     setRenamingId(null);
+  }
+
+  async function handleRemoveGroup(id: string) {
+    if (removingId) return;
+    setRemovingId(id);
+    try {
+      await removeGroup(id);
+    } finally {
+      setRemovingId(null);
+    }
   }
 
   function handleDragStart(e: React.DragEvent, guestId: string) {
@@ -69,6 +82,8 @@ export default function GroupBoard({
           Add group
         </button>
       </form>
+
+      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
       <div style={{ display: "flex", gap: 16, overflowX: "auto" }}>
         {columns.map((col) => {
@@ -116,11 +131,12 @@ export default function GroupBoard({
                 {col.group && (
                   <button
                     type="button"
-                    onClick={() => removeGroup(col.group!.id)}
+                    onClick={() => handleRemoveGroup(col.group!.id)}
+                    disabled={removingId !== null}
                     title="Delete group"
                     style={{ fontSize: 12 }}
                   >
-                    Delete
+                    {removingId === col.group.id ? "Deleting..." : "Delete"}
                   </button>
                 )}
               </div>

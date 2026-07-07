@@ -21,6 +21,7 @@ export function useGuestBoard(weddingId: string) {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -40,11 +41,17 @@ export function useGuestBoard(weddingId: string) {
 
   const assign = useCallback(
     async (guestId: string, groupId: string | null) => {
-      await fetch(`/api/guests/${guestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId }),
-      });
+      setError(null);
+      try {
+        const res = await fetch(`/api/guests/${guestId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ groupId }),
+        });
+        if (!res.ok) setError("Não foi possível mover o convidado.");
+      } catch {
+        setError("Não foi possível mover o convidado.");
+      }
       await refresh();
     },
     [refresh]
@@ -52,11 +59,17 @@ export function useGuestBoard(weddingId: string) {
 
   const addGroup = useCallback(
     async (name: string) => {
-      await fetch(`/api/weddings/${weddingId}/groups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
+      setError(null);
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/groups`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) setError("Não foi possível criar o grupo.");
+      } catch {
+        setError("Não foi possível criar o grupo.");
+      }
       await refresh();
     },
     [weddingId, refresh]
@@ -64,11 +77,17 @@ export function useGuestBoard(weddingId: string) {
 
   const renameGroup = useCallback(
     async (id: string, name: string) => {
-      await fetch(`/api/groups/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
+      setError(null);
+      try {
+        const res = await fetch(`/api/groups/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) setError("Não foi possível renomear o grupo.");
+      } catch {
+        setError("Não foi possível renomear o grupo.");
+      }
       await refresh();
     },
     [refresh]
@@ -76,19 +95,38 @@ export function useGuestBoard(weddingId: string) {
 
   const removeGroup = useCallback(
     async (id: string) => {
-      const stragglers = guests.filter((g) => g.groupId === id);
-      for (const guest of stragglers) {
-        await fetch(`/api/guests/${guest.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ groupId: null }),
-        });
+      setError(null);
+      try {
+        const stragglers = guests.filter((g) => g.groupId === id);
+        let failed = false;
+        for (const guest of stragglers) {
+          const res = await fetch(`/api/guests/${guest.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ groupId: null }),
+          });
+          if (!res.ok) failed = true;
+        }
+        const delRes = await fetch(`/api/groups/${id}`, { method: "DELETE" });
+        if (!delRes.ok) failed = true;
+        if (failed) setError("Não foi possível remover o grupo.");
+      } catch {
+        setError("Não foi possível remover o grupo.");
       }
-      await fetch(`/api/groups/${id}`, { method: "DELETE" });
       await refresh();
     },
     [guests, refresh]
   );
 
-  return { guests, groups, loading, refresh, assign, addGroup, renameGroup, removeGroup };
+  return {
+    guests,
+    groups,
+    loading,
+    error,
+    refresh,
+    assign,
+    addGroup,
+    renameGroup,
+    removeGroup,
+  };
 }

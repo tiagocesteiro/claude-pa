@@ -17,7 +17,7 @@ export default function WeddingWorkspacePage() {
   const weddingId = params.id;
 
   const [wedding, setWedding] = useState<WeddingRecord | null>(null);
-  const { guests, groups, loading, refresh, assign, addGroup, renameGroup, removeGroup } =
+  const { guests, groups, loading, error, refresh, assign, addGroup, renameGroup, removeGroup } =
     useGuestBoard(weddingId);
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function WeddingWorkspacePage() {
         <GroupBoard
           guests={guests}
           groups={groups}
+          error={error}
           assign={assign}
           addGroup={addGroup}
           renameGroup={renameGroup}
