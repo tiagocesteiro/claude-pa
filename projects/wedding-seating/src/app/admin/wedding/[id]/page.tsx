@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useGuestBoard } from "@/components/guests/useGuestBoard";
 import ImportPanel from "@/components/guests/ImportPanel";
 import GroupBoard from "@/components/guests/GroupBoard";
@@ -35,6 +36,10 @@ export default function WeddingWorkspacePage() {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
       <h1>{wedding ? wedding.couple : "Wedding"}</h1>
+
+      <p>
+        <Link href={`/admin/wedding/${weddingId}/plan`}>Ver plano de mesas &rarr;</Link>
+      </p>
 
       <ImportPanel weddingId={weddingId} onImported={refresh} />
 
