@@ -96,14 +96,34 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     }
   }, [weddingId, floorPlanId, refresh]);
 
-  // TODO (Task 6): wire this to a real persistence endpoint for manual
-  // drag-to-assign. For now it only updates local state so the canvas, tray,
-  // and live violations can be exercised ahead of the drag UI landing.
-  const assign = useCallback((guestId: string, tableId: string | null) => {
-    setGuests((prev) =>
-      prev.map((g) => (g.id === guestId ? { ...g, assignedTableId: tableId } : g))
-    );
-  }, []);
+  // Optimistic local update + persist via PUT; live `violations` (below) picks
+  // up the change on next render. Reverts and surfaces an error if the PUT fails.
+  const assign = useCallback(
+    async (guestId: string, tableId: string | null) => {
+      let previous: string | null = null;
+      setGuests((prev) =>
+        prev.map((g) => {
+          if (g.id !== guestId) return g;
+          previous = g.assignedTableId;
+          return { ...g, assignedTableId: tableId };
+        })
+      );
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/assignment`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignments: [{ guestId, tableId }] }),
+        });
+        if (!res.ok) throw new Error("assign failed");
+      } catch {
+        setGuests((prev) =>
+          prev.map((g) => (g.id === guestId ? { ...g, assignedTableId: previous } : g))
+        );
+        setError("Não foi possível guardar a alteração.");
+      }
+    },
+    [weddingId]
+  );
 
   const violations: PlanViolations = useMemo(
     () => planViolations(guests, tables, constraints),

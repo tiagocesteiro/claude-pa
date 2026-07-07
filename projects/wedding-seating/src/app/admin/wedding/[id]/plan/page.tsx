@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { usePlan } from "@/components/plan/usePlan";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
+import UnassignedTray from "@/components/plan/UnassignedTray";
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
   ssr: false,
@@ -56,6 +57,7 @@ export default function PlanPage() {
     score,
     warnings,
     generate,
+    assign,
     violations,
   } = usePlan(weddingId, floorPlanId);
 
@@ -69,7 +71,9 @@ export default function PlanPage() {
         capacity: t.capacity,
         x: t.x,
         y: t.y,
-        guestNames: guests.filter((g) => g.assignedTableId === t.id).map((g) => g.name),
+        guests: guests
+          .filter((g) => g.assignedTableId === t.id)
+          .map((g) => ({ id: g.id, name: g.name })),
       })),
     [tables, guests]
   );
@@ -120,6 +124,7 @@ export default function PlanPage() {
             overCapacityIds={violations.overCapacity}
             maxWidth={CANVAS_WIDTH}
             maxHeight={CANVAS_HEIGHT}
+            onAssign={assign}
           />
 
           <div style={{ minWidth: 260, flex: "0 0 260px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -141,38 +146,22 @@ export default function PlanPage() {
                     </li>
                   );
                 })}
-                {violations.separated.map((s, i) => (
-                  <li key={`sep-${i}`} style={{ color: "#dc2626" }}>
-                    Convidados que deviam estar separados partilham mesa ({s.a} / {s.b}).
-                  </li>
-                ))}
+                {violations.separated.map((s, i) => {
+                  const nameA = guests.find((g) => g.id === s.a)?.name ?? s.a;
+                  const nameB = guests.find((g) => g.id === s.b)?.name ?? s.b;
+                  return (
+                    <li key={`sep-${i}`} style={{ color: "#dc2626" }}>
+                      Convidados que deviam estar separados partilham mesa ({nameA} / {nameB}).
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
-            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-              <h3 style={{ marginTop: 0 }}>Por atribuir ({unassigned.length})</h3>
-              <ul
-                style={{
-                  listStyle: "none",
-                  padding: 0,
-                  margin: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                  maxHeight: 400,
-                  overflowY: "auto",
-                }}
-              >
-                {unassigned.map((g) => (
-                  <li
-                    key={g.id}
-                    style={{ border: "1px solid #ccc", borderRadius: 6, padding: "6px 8px" }}
-                  >
-                    {g.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <UnassignedTray
+              guests={unassigned.map((g) => ({ id: g.id, name: g.name }))}
+              onDrop={(guestId) => assign(guestId, null)}
+            />
           </div>
         </div>
       )}

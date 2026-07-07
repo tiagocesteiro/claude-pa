@@ -27,6 +27,11 @@ function useImageElement(src: string | undefined): HTMLImageElement | undefined 
   return image;
 }
 
+export interface PlanTableGuest {
+  id: string;
+  name: string;
+}
+
 /** A table plus the derived, render-ready info the canvas needs — no db/engine types leak in here. */
 export interface PlanTableView {
   id: string;
@@ -35,7 +40,7 @@ export interface PlanTableView {
   /** Image-natural pixel coordinates (same space as the Plan 2 editor). */
   x: number;
   y: number;
-  guestNames: string[];
+  guests: PlanTableGuest[];
 }
 
 export interface PlanCanvasProps {
@@ -45,6 +50,16 @@ export interface PlanCanvasProps {
   overCapacityIds: string[];
   maxWidth: number;
   maxHeight: number;
+  /** Called when a guest card (dragged from another table or the unassigned tray) is dropped onto a table. */
+  onAssign: (guestId: string, tableId: string) => void;
+}
+
+interface TableGeom {
+  table: PlanTableView;
+  displayX: number;
+  displayY: number;
+  width: number;
+  height: number;
 }
 
 export default function PlanCanvas({
@@ -53,6 +68,7 @@ export default function PlanCanvas({
   overCapacityIds,
   maxWidth,
   maxHeight,
+  onAssign,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
 
@@ -66,49 +82,101 @@ export default function PlanCanvas({
 
   const overCapacitySet = new Set(overCapacityIds);
 
+  const geoms: TableGeom[] = tables.map((t) => {
+    const isRound = t.shape === "round";
+    return {
+      table: t,
+      displayX: t.x * displayScale,
+      displayY: t.y * displayScale,
+      width: (isRound ? ROUND_RADIUS * 2 : RECT_WIDTH) * displayScale,
+      height: (isRound ? ROUND_RADIUS * 2 : RECT_HEIGHT) * displayScale,
+    };
+  });
+
   return (
-    <Stage width={stageWidth} height={stageHeight} style={{ border: "1px solid #ccc" }}>
-      <Layer>
-        {image && (
-          <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
-        )}
-      </Layer>
-      <Layer listening={false}>
-        {tables.map((t) => (
-          <TableShape
-            key={t.id}
-            table={t}
-            displayScale={displayScale}
-            overCapacity={overCapacitySet.has(t.id)}
-          />
+    <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
+      <Stage width={stageWidth} height={stageHeight} style={{ border: "1px solid #ccc" }}>
+        <Layer>
+          {image && (
+            <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
+          )}
+        </Layer>
+        <Layer listening={false}>
+          {geoms.map((g) => (
+            <TableShape key={g.table.id} geom={g} overCapacity={overCapacitySet.has(g.table.id)} />
+          ))}
+        </Layer>
+      </Stage>
+
+      {/* HTML drop-target overlay: Konva shapes don't receive native HTML drag events,
+          so each table gets a transparent, absolutely-positioned div aligned to its
+          on-screen (display-scaled) position. It doubles as the home for the seated
+          guests' draggable chips, so a guest can be picked back up off a table. */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {geoms.map((g) => (
+          <div
+            key={g.table.id}
+            data-testid={`table-drop-${g.table.id}`}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const guestId = e.dataTransfer.getData("guestId");
+              if (guestId) onAssign(guestId, g.table.id);
+            }}
+            style={{
+              position: "absolute",
+              left: g.displayX - g.width / 2,
+              top: g.displayY - g.height / 2,
+              width: g.width,
+              height: g.height,
+              pointerEvents: "auto",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: g.height + 4,
+                left: -30,
+                width: g.width + 60,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                justifyContent: "center",
+              }}
+            >
+              {g.table.guests.map((guest) => (
+                <span
+                  key={guest.id}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData("guestId", guest.id)}
+                  style={{
+                    fontSize: 10,
+                    background: "#e5e7eb",
+                    borderRadius: 4,
+                    padding: "1px 4px",
+                    cursor: "grab",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {guest.name}
+                </span>
+              ))}
+            </div>
+          </div>
         ))}
-      </Layer>
-    </Stage>
+      </div>
+    </div>
   );
 }
 
-function TableShape({
-  table,
-  displayScale,
-  overCapacity,
-}: {
-  table: PlanTableView;
-  displayScale: number;
-  overCapacity: boolean;
-}) {
+function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boolean }) {
+  const { table, displayX, displayY, width, height } = geom;
   const stroke = overCapacity ? "#dc2626" : "#111827";
   const strokeWidth = overCapacity ? 3 : 1.5;
   const fill = overCapacity ? "#fee2e2" : "#fef3c7";
+  const labelWidth = 130;
 
-  const displayX = table.x * displayScale;
-  const displayY = table.y * displayScale;
-  const radius = ROUND_RADIUS * displayScale;
-  const rectWidth = RECT_WIDTH * displayScale;
-  const rectHeight = RECT_HEIGHT * displayScale;
-  const labelWidth = 130 * displayScale;
-
-  const occupancyLabel = `${table.guestNames.length}/${table.capacity}`;
-  const namesLabel = table.guestNames.join(", ");
+  const occupancyLabel = `${table.guests.length}/${table.capacity}`;
 
   return (
     <>
@@ -116,7 +184,7 @@ function TableShape({
         <Circle
           x={displayX}
           y={displayY}
-          radius={radius}
+          radius={width / 2}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
@@ -125,10 +193,10 @@ function TableShape({
         <Rect
           x={displayX}
           y={displayY}
-          offsetX={rectWidth / 2}
-          offsetY={rectHeight / 2}
-          width={rectWidth}
-          height={rectHeight}
+          offsetX={width / 2}
+          offsetY={height / 2}
+          width={width}
+          height={height}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
@@ -143,16 +211,6 @@ function TableShape({
         fontSize={14}
         fontStyle="bold"
         fill={overCapacity ? "#dc2626" : "#111827"}
-      />
-      <Text
-        x={displayX - labelWidth / 2}
-        y={displayY + 8}
-        width={labelWidth}
-        align="center"
-        text={namesLabel}
-        fontSize={10}
-        fill="#374151"
-        wrap="word"
       />
     </>
   );
