@@ -7,9 +7,11 @@ import { useParams } from "next/navigation";
 import { useEditorState } from "@/components/editor/useEditorState";
 import CalibrationTool from "@/components/editor/CalibrationTool";
 import TableInspector from "@/components/editor/TableInspector";
-import type { EditorTable } from "@/lib/floorplan/editorState";
+import type { EditorTable, TablePreset } from "@/lib/floorplan/editorState";
 import type { CanvasMode } from "@/components/editor/FloorPlanCanvas";
 import type { Point } from "@/lib/floorplan/geometry";
+import { spacingViolations } from "@/lib/floorplan/spacing";
+import type { TableTypeRecord } from "@/components/venue/TableTypeCatalog";
 
 const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), {
   ssr: false,
@@ -29,6 +31,7 @@ interface FloorPlanRecord {
   scale: number;
   width: number;
   depth: number;
+  minSpacing: number | null;
 }
 
 interface TableRecord {
@@ -38,6 +41,9 @@ interface TableRecord {
   x: number;
   y: number;
   fixed: boolean;
+  width?: number | null;
+  depth?: number | null;
+  minCapacity?: number | null;
 }
 
 function imageUrlFor(image: string): string | undefined {
@@ -61,6 +67,14 @@ export default function FloorPlanEditorPage() {
   const [saving, setSaving] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const [tableTypes, setTableTypes] = useState<TableTypeRecord[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState("");
+  const [pendingPreset, setPendingPreset] = useState<TablePreset | null>(null);
+
+  const [minSpacingInput, setMinSpacingInput] = useState("");
+  const [savingSpacing, setSavingSpacing] = useState(false);
+  const [spacingError, setSpacingError] = useState<string | null>(null);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     const [fpRes, tablesRes] = await Promise.all([
@@ -70,6 +84,11 @@ export default function FloorPlanEditorPage() {
     if (fpRes.ok) {
       const fp = (await fpRes.json()) as FloorPlanRecord;
       setFloorPlan(fp);
+      setMinSpacingInput(fp.minSpacing != null ? String(fp.minSpacing) : "");
+      const typesRes = await fetch(`/api/venues/${fp.venueId}/table-types`);
+      if (typesRes.ok) {
+        setTableTypes((await typesRes.json()) as TableTypeRecord[]);
+      }
     }
     if (tablesRes.ok) {
       const tables = (await tablesRes.json()) as TableRecord[];
@@ -80,6 +99,9 @@ export default function FloorPlanEditorPage() {
         x: t.x,
         y: t.y,
         fixed: t.fixed,
+        width: t.width,
+        depth: t.depth,
+        minCapacity: t.minCapacity,
       }));
       load(editorTables);
     }
@@ -138,12 +160,85 @@ export default function FloorPlanEditorPage() {
     }
   }
 
+  function handleAddTable(at: Point) {
+    if (pendingPreset) {
+      addTable(at, pendingPreset);
+      setPendingPreset(null);
+      setSelectedTypeId("");
+      setMode("select");
+      return;
+    }
+    addTable(at);
+  }
+
+  function handleSelectType(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setSelectedTypeId(id);
+    if (!id) {
+      setPendingPreset(null);
+      setMode((m) => (m === "add-table" ? "select" : m));
+      return;
+    }
+    const type = tableTypes.find((t) => t.id === id);
+    if (!type) return;
+    setPendingPreset({
+      shape: type.shape === "rect" ? "rect" : "round",
+      capacity: type.maxSeats,
+      minCapacity: type.minSeats,
+      width: type.width,
+      depth: type.depth,
+    });
+    setMode("add-table");
+  }
+
+  async function handleSaveSpacing() {
+    setSpacingError(null);
+    const trimmed = minSpacingInput.trim();
+    const value = trimmed === "" ? null : Number(trimmed);
+    if (value !== null && (!Number.isFinite(value) || value < 0)) {
+      setSpacingError("Enter a non-negative number");
+      return;
+    }
+    setSavingSpacing(true);
+    try {
+      const res = await fetch(`/api/floorplans/${floorPlanId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ minSpacing: value }),
+      });
+      if (!res.ok) throw new Error("failed to save spacing");
+      setFloorPlan((prev) => (prev ? { ...prev, minSpacing: value } : prev));
+    } catch {
+      setSpacingError("Failed to save minimum spacing");
+    } finally {
+      setSavingSpacing(false);
+    }
+  }
+
   const selectedTable = state.tables.find((t) => t.id === state.selectedId);
+
+  function tableLabel(id: string): string {
+    const index = state.tables.findIndex((t) => t.id === id);
+    return `Mesa ${index >= 0 ? index + 1 : "?"}`;
+  }
+
+  const violations =
+    floorPlan?.minSpacing != null && floorPlan.minSpacing >= 0 && floorPlan.scale > 0
+      ? spacingViolations(state.tables, floorPlan.minSpacing, floorPlan.scale)
+      : [];
+
+  const warningTableIds = Array.from(new Set(violations.flatMap((v) => [v.a, v.b])));
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
       <p>
         <Link href="/admin">&larr; Back to venues</Link>
+        {floorPlan && (
+          <>
+            {" · "}
+            <Link href={`/admin/venue/${floorPlan.venueId}`}>Table type catalog</Link>
+          </>
+        )}
       </p>
       <h1>Floor plan editor</h1>
 
@@ -159,15 +254,33 @@ export default function FloorPlanEditorPage() {
             {uploadError && <span style={{ color: "#dc2626", marginLeft: 8 }}>{uploadError}</span>}
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
             <button
               type="button"
-              onClick={() => setMode(mode === "add-table" ? "select" : "add-table")}
+              onClick={() => {
+                setPendingPreset(null);
+                setSelectedTypeId("");
+                setMode(mode === "add-table" ? "select" : "add-table");
+              }}
               disabled={calibrationActive}
-              style={{ fontWeight: mode === "add-table" ? "bold" : "normal" }}
+              style={{ fontWeight: mode === "add-table" && !pendingPreset ? "bold" : "normal" }}
             >
-              {mode === "add-table" ? "Cancel add table" : "Add table"}
+              {mode === "add-table" && !pendingPreset ? "Cancel add table" : "Add table"}
             </button>
+
+            <label>
+              Adicionar do catálogo:{" "}
+              <select value={selectedTypeId} onChange={handleSelectType} disabled={calibrationActive}>
+                <option value="">-- selecionar tipo --</option>
+                {tableTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.minSeats}-{t.maxSeats})
+                  </option>
+                ))}
+              </select>
+            </label>
+            {pendingPreset && <span>Clique no mapa para colocar a mesa</span>}
+
             <button type="button" onClick={handleSave} disabled={!state.dirty || saving}>
               {saving ? "Saving..." : "Save layout"}
             </button>
@@ -186,6 +299,35 @@ export default function FloorPlanEditorPage() {
             />
           </div>
 
+          <div style={{ marginBottom: 12, border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <label>
+              Espaçamento mínimo (m):{" "}
+              <input
+                type="number"
+                step="0.1"
+                min={0}
+                value={minSpacingInput}
+                onChange={(e) => setMinSpacingInput(e.target.value)}
+                style={{ width: 80 }}
+              />
+            </label>
+            <button type="button" onClick={handleSaveSpacing} disabled={savingSpacing} style={{ marginLeft: 8 }}>
+              {savingSpacing ? "Saving..." : "Save"}
+            </button>
+            {spacingError && <span style={{ color: "#dc2626", marginLeft: 8 }}>{spacingError}</span>}
+
+            {violations.length > 0 && (
+              <ul style={{ marginTop: 8, color: "#b45309" }}>
+                {violations.map((v) => (
+                  <li key={`${v.a}-${v.b}`}>
+                    {tableLabel(v.a)} e {tableLabel(v.b)} demasiado próximas (
+                    {v.gapMetres.toFixed(1)}m &lt; {floorPlan?.minSpacing?.toFixed(1)}m)
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 16 }}>
             <FloorPlanCanvas
               imageUrl={imageUrlFor(floorPlan?.image ?? "")}
@@ -195,7 +337,8 @@ export default function FloorPlanEditorPage() {
               calibrationPoints={calibrationPoints}
               maxWidth={CANVAS_WIDTH}
               maxHeight={CANVAS_HEIGHT}
-              onAddTable={addTable}
+              warningTableIds={warningTableIds}
+              onAddTable={handleAddTable}
               onMoveTable={moveTable}
               onSelect={select}
               onCalibrateClick={handleCalibrateClick}

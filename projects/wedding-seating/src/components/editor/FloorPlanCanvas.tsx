@@ -43,6 +43,8 @@ export interface FloorPlanCanvasProps {
   /** Max on-screen bounds for the stage; actual stage size is fit within these preserving image aspect ratio. */
   maxWidth: number;
   maxHeight: number;
+  /** Table ids currently flagged by a spacing/min-occupancy warning; rendered with a highlighted outline. */
+  warningTableIds?: string[];
   /** All positions handed to these callbacks are in image-natural pixel space. */
   onAddTable: (at: Point) => void;
   onMoveTable: (id: string, to: Point) => void;
@@ -58,6 +60,7 @@ export default function FloorPlanCanvas({
   calibrationPoints = [],
   maxWidth,
   maxHeight,
+  warningTableIds = [],
   onAddTable,
   onMoveTable,
   onSelect,
@@ -118,6 +121,7 @@ export default function FloorPlanCanvas({
             table={t}
             displayScale={displayScale}
             isSelected={t.id === selectedId}
+            hasWarning={warningTableIds.includes(t.id)}
             onSelect={() => onSelect(t.id)}
             onDragEnd={(e) =>
               onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }))
@@ -151,17 +155,19 @@ function TableShape({
   table,
   displayScale,
   isSelected,
+  hasWarning,
   onSelect,
   onDragEnd,
 }: {
   table: EditorTable;
   displayScale: number;
   isSelected: boolean;
+  hasWarning?: boolean;
   onSelect: () => void;
   onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
 }) {
-  const stroke = isSelected ? "#2563eb" : table.fixed ? "#dc2626" : "#111827";
-  const strokeWidth = isSelected ? 3 : 1.5;
+  const stroke = isSelected ? "#2563eb" : hasWarning ? "#f59e0b" : table.fixed ? "#dc2626" : "#111827";
+  const strokeWidth = isSelected || hasWarning ? 3 : 1.5;
   const fill = "#fef3c7";
 
   // table.x/y are stored in image-natural pixels; scale up only for display.

@@ -176,7 +176,7 @@ export default function AdminPage() {
           >
             <strong>{v.name}</strong>
             {v.location && <span> — {v.location}</span>}
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
               <button
                 type="button"
                 onClick={() => handleNewFloorPlan(v.id)}
@@ -184,6 +184,7 @@ export default function AdminPage() {
               >
                 {creatingFor === v.id ? "Creating..." : "New floor plan"}
               </button>
+              <Link href={`/admin/venue/${v.id}`}>Table type catalog</Link>
             </div>
           </li>
         ))}

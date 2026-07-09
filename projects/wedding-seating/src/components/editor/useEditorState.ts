@@ -5,13 +5,17 @@ import {
   editorReducer,
   initialEditorState,
   type EditorTable,
+  type TablePreset,
 } from "@/lib/floorplan/editorState";
 import type { Point } from "@/lib/floorplan/geometry";
 
 export function useEditorState(floorPlanId: string) {
   const [state, dispatch] = useReducer(editorReducer, undefined, initialEditorState);
 
-  const addTable = useCallback((at: Point) => dispatch({ type: "add-table", at }), []);
+  const addTable = useCallback(
+    (at: Point, preset?: TablePreset) => dispatch({ type: "add-table", at, preset }),
+    []
+  );
 
   const moveTable = useCallback(
     (id: string, to: Point) => dispatch({ type: "move-table", id, to }),

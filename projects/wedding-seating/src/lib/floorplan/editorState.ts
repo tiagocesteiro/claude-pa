@@ -7,6 +7,9 @@ export interface EditorTable {
   x: number;
   y: number;
   fixed: boolean;
+  width?: number | null;
+  depth?: number | null;
+  minCapacity?: number | null;
 }
 
 export interface EditorState {
@@ -15,8 +18,13 @@ export interface EditorState {
   dirty: boolean;
 }
 
+/** Prefilled attributes when a table is placed from a venue's table-type catalog. */
+export type TablePreset = Partial<
+  Pick<EditorTable, "shape" | "capacity" | "minCapacity" | "width" | "depth">
+>;
+
 export type EditorAction =
-  | { type: "add-table"; at: Point }
+  | { type: "add-table"; at: Point; preset?: TablePreset }
   | { type: "move-table"; id: string; to: Point }
   | { type: "update-table"; id: string; patch: Partial<Omit<EditorTable, "id">> }
   | { type: "delete-table"; id: string }
@@ -41,7 +49,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         dirty: true,
         tables: [
           ...state.tables,
-          { id: newId(), shape: "round", capacity: 8, x: action.at.x, y: action.at.y, fixed: false },
+          {
+            id: newId(),
+            shape: action.preset?.shape ?? "round",
+            capacity: action.preset?.capacity ?? 8,
+            x: action.at.x,
+            y: action.at.y,
+            fixed: false,
+            width: action.preset?.width,
+            depth: action.preset?.depth,
+            minCapacity: action.preset?.minCapacity,
+          },
         ],
       };
     case "move-table":
