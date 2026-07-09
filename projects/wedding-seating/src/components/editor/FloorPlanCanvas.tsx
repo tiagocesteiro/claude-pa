@@ -31,7 +31,7 @@ function useImageElement(src: string | undefined): HTMLImageElement | undefined 
   return image;
 }
 
-export type CanvasMode = "select" | "add-table" | "calibrate";
+export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-boundary";
 
 export interface FloorPlanCanvasProps {
   imageUrl?: string;
@@ -40,6 +40,8 @@ export interface FloorPlanCanvasProps {
   mode: CanvasMode;
   /** Reference calibration points, in image-natural pixel space. */
   calibrationPoints?: Point[];
+  /** Room boundary polygon, in image-natural pixel space. */
+  boundary?: Point[];
   /** Max on-screen bounds for the stage; actual stage size is fit within these preserving image aspect ratio. */
   maxWidth: number;
   maxHeight: number;
@@ -50,6 +52,7 @@ export interface FloorPlanCanvasProps {
   onMoveTable: (id: string, to: Point) => void;
   onSelect: (id: string | null) => void;
   onCalibrateClick?: (at: Point) => void;
+  onBoundaryClick?: (at: Point) => void;
 }
 
 export default function FloorPlanCanvas({
@@ -58,6 +61,7 @@ export default function FloorPlanCanvas({
   selectedId,
   mode,
   calibrationPoints = [],
+  boundary = [],
   maxWidth,
   maxHeight,
   warningTableIds = [],
@@ -65,6 +69,7 @@ export default function FloorPlanCanvas({
   onMoveTable,
   onSelect,
   onCalibrateClick,
+  onBoundaryClick,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
@@ -96,10 +101,15 @@ export default function FloorPlanCanvas({
       onCalibrateClick?.(naturalPos);
       return;
     }
+    if (mode === "draw-boundary") {
+      onBoundaryClick?.(naturalPos);
+      return;
+    }
     onSelect(null);
   }
 
-  const cursor = mode === "add-table" ? "copy" : mode === "calibrate" ? "crosshair" : "default";
+  const cursor =
+    mode === "add-table" ? "copy" : mode === "calibrate" || mode === "draw-boundary" ? "crosshair" : "default";
 
   return (
     <Stage
@@ -113,6 +123,20 @@ export default function FloorPlanCanvas({
         {image && (
           <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
         )}
+      </Layer>
+      <Layer listening={false}>
+        {boundary.length >= 2 && (
+          <Line
+            points={boundary.flatMap((p) => [p.x * displayScale, p.y * displayScale])}
+            closed
+            fill="rgba(37, 99, 235, 0.15)"
+            stroke="#2563eb"
+            strokeWidth={2}
+          />
+        )}
+        {boundary.map((p, i) => (
+          <Circle key={i} x={p.x * displayScale} y={p.y * displayScale} radius={4} fill="#2563eb" />
+        ))}
       </Layer>
       <Layer>
         {tables.map((t) => (

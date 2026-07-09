@@ -11,6 +11,7 @@ import type { EditorTable, TablePreset } from "@/lib/floorplan/editorState";
 import type { CanvasMode } from "@/components/editor/FloorPlanCanvas";
 import type { Point } from "@/lib/floorplan/geometry";
 import { spacingViolations } from "@/lib/floorplan/spacing";
+import { outOfBoundsTables } from "@/lib/floorplan/boundary";
 import type { TableTypeRecord } from "@/components/venue/TableTypeCatalog";
 
 const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), {
@@ -32,6 +33,7 @@ interface FloorPlanRecord {
   width: number;
   depth: number;
   minSpacing: number | null;
+  boundary: string | null;
 }
 
 interface TableRecord {
@@ -75,6 +77,10 @@ export default function FloorPlanEditorPage() {
   const [savingSpacing, setSavingSpacing] = useState(false);
   const [spacingError, setSpacingError] = useState<string | null>(null);
 
+  const [boundaryDrawActive, setBoundaryDrawActive] = useState(false);
+  const [boundaryPoints, setBoundaryPoints] = useState<Point[]>([]);
+  const [savingBoundary, setSavingBoundary] = useState(false);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     const [fpRes, tablesRes] = await Promise.all([
@@ -85,6 +91,11 @@ export default function FloorPlanEditorPage() {
       const fp = (await fpRes.json()) as FloorPlanRecord;
       setFloorPlan(fp);
       setMinSpacingInput(fp.minSpacing != null ? String(fp.minSpacing) : "");
+      try {
+        setBoundaryPoints(fp.boundary ? (JSON.parse(fp.boundary) as Point[]) : []);
+      } catch {
+        setBoundaryPoints([]);
+      }
       const typesRes = await fetch(`/api/venues/${fp.venueId}/table-types`);
       if (typesRes.ok) {
         setTableTypes((await typesRes.json()) as TableTypeRecord[]);
@@ -139,6 +150,7 @@ export default function FloorPlanEditorPage() {
   function handleToggleCalibration() {
     setCalibrationActive((prev) => {
       const next = !prev;
+      if (next) setBoundaryDrawActive(false);
       setMode(next ? "calibrate" : "select");
       if (!next) setCalibrationPoints([]);
       return next;
@@ -149,6 +161,48 @@ export default function FloorPlanEditorPage() {
     setFloorPlan((prev) => (prev ? { ...prev, scale } : prev));
     setCalibrationActive(false);
     setMode("select");
+  }
+
+  async function persistBoundary(boundary: string | null) {
+    setSavingBoundary(true);
+    try {
+      const res = await fetch(`/api/floorplans/${floorPlanId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boundary }),
+      });
+      if (res.ok) setFloorPlan((prev) => (prev ? { ...prev, boundary } : prev));
+    } finally {
+      setSavingBoundary(false);
+    }
+  }
+
+  function handleToggleBoundaryDraw() {
+    setBoundaryDrawActive((prev) => {
+      const next = !prev;
+      if (next) {
+        setCalibrationActive(false);
+        setCalibrationPoints([]);
+        setPendingPreset(null);
+        setSelectedTypeId("");
+      } else {
+        // Finishing the draw: persist once here rather than per-click, so
+        // overlapping in-flight PATCH requests can't complete out of order
+        // and clobber a later (or cleared) boundary with a stale one.
+        void persistBoundary(boundaryPoints.length > 0 ? JSON.stringify(boundaryPoints) : null);
+      }
+      setMode(next ? "draw-boundary" : "select");
+      return next;
+    });
+  }
+
+  function handleBoundaryClick(p: Point) {
+    setBoundaryPoints((prev) => [...prev, p]);
+  }
+
+  async function handleClearBoundary() {
+    setBoundaryPoints([]);
+    await persistBoundary(null);
   }
 
   async function handleSave() {
@@ -227,7 +281,11 @@ export default function FloorPlanEditorPage() {
       ? spacingViolations(state.tables, floorPlan.minSpacing, floorPlan.scale)
       : [];
 
-  const warningTableIds = Array.from(new Set(violations.flatMap((v) => [v.a, v.b])));
+  const outOfBoundsIds = outOfBoundsTables(state.tables, boundaryPoints);
+
+  const warningTableIds = Array.from(
+    new Set([...violations.flatMap((v) => [v.a, v.b]), ...outOfBoundsIds])
+  );
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
@@ -260,9 +318,10 @@ export default function FloorPlanEditorPage() {
               onClick={() => {
                 setPendingPreset(null);
                 setSelectedTypeId("");
+                setBoundaryDrawActive(false);
                 setMode(mode === "add-table" ? "select" : "add-table");
               }}
-              disabled={calibrationActive}
+              disabled={calibrationActive || boundaryDrawActive}
               style={{ fontWeight: mode === "add-table" && !pendingPreset ? "bold" : "normal" }}
             >
               {mode === "add-table" && !pendingPreset ? "Cancel add table" : "Add table"}
@@ -270,7 +329,11 @@ export default function FloorPlanEditorPage() {
 
             <label>
               Adicionar do catálogo:{" "}
-              <select value={selectedTypeId} onChange={handleSelectType} disabled={calibrationActive}>
+              <select
+                value={selectedTypeId}
+                onChange={handleSelectType}
+                disabled={calibrationActive || boundaryDrawActive}
+              >
                 <option value="">-- selecionar tipo --</option>
                 {tableTypes.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -328,6 +391,36 @@ export default function FloorPlanEditorPage() {
             )}
           </div>
 
+          <div style={{ marginBottom: 12, border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <strong>Limites da sala</strong>{" "}
+            <button
+              type="button"
+              onClick={handleToggleBoundaryDraw}
+              disabled={calibrationActive || (mode === "add-table" && !boundaryDrawActive)}
+              style={{ marginLeft: 8, fontWeight: boundaryDrawActive ? "bold" : "normal" }}
+            >
+              {boundaryDrawActive ? "Concluir desenho" : "Desenhar limites"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClearBoundary}
+              disabled={boundaryPoints.length === 0 || savingBoundary}
+              style={{ marginLeft: 8 }}
+            >
+              Limpar limites
+            </button>
+            {savingBoundary && <span style={{ marginLeft: 8 }}>Saving...</span>}
+            {boundaryDrawActive && <p>Clique no mapa para adicionar pontos ao limite da sala.</p>}
+
+            {outOfBoundsIds.length > 0 && (
+              <ul style={{ marginTop: 8, color: "#b45309" }}>
+                {outOfBoundsIds.map((id) => (
+                  <li key={id}>{tableLabel(id)} fora dos limites da sala</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 16 }}>
             <FloorPlanCanvas
               imageUrl={imageUrlFor(floorPlan?.image ?? "")}
@@ -335,6 +428,7 @@ export default function FloorPlanEditorPage() {
               selectedId={state.selectedId}
               mode={mode}
               calibrationPoints={calibrationPoints}
+              boundary={boundaryPoints}
               maxWidth={CANVAS_WIDTH}
               maxHeight={CANVAS_HEIGHT}
               warningTableIds={warningTableIds}
@@ -342,6 +436,7 @@ export default function FloorPlanEditorPage() {
               onMoveTable={moveTable}
               onSelect={select}
               onCalibrateClick={handleCalibrateClick}
+              onBoundaryClick={handleBoundaryClick}
             />
             <div style={{ minWidth: 240 }}>
               <TableInspector table={selectedTable} onUpdate={updateTable} onDelete={deleteTable} />
