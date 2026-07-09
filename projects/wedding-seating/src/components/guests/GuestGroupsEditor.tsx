@@ -49,10 +49,12 @@ export default function GuestGroupsEditor({
     setPrimaryGroupId(newId);
     // A group can't be both primary and an extra — drop it from the extras if present.
     setExtraGroupIds((prev) => prev.filter((id) => id !== newId));
+    // Drop any pending "add extra" selection — it may no longer be valid (e.g. now equals primary).
+    setAddValue("");
   }
 
   function handleAddExtra() {
-    if (!addValue) return;
+    if (!addValue || addValue === primaryGroupId || extraGroupIds.includes(addValue)) return;
     setExtraGroupIds((prev) => [...prev, addValue]);
     setAddValue("");
   }
@@ -164,7 +166,12 @@ export default function GuestGroupsEditor({
             </option>
           ))}
         </select>
-        <button type="button" onClick={handleAddExtra} disabled={!addValue} style={{ fontSize: 12 }}>
+        <button
+          type="button"
+          onClick={handleAddExtra}
+          disabled={!addValue || usedIds.has(addValue)}
+          style={{ fontSize: 12 }}
+        >
           Adicionar
         </button>
       </div>
