@@ -7,6 +7,9 @@ export interface TableInput {
   x: number;
   y: number;
   fixed: boolean;
+  width?: number;
+  depth?: number;
+  minCapacity?: number;
 }
 
 export async function saveTables(floorPlanId: string, tables: TableInput[]): Promise<void> {
