@@ -70,6 +70,9 @@ model Guest {
   group          Group?  @relation(fields: [groupId], references: [id])
   assignedTableId String?
   locked          Boolean  @default(false)
+  ageGroup        String?
+  gender          String?
+  dietary         String?
 }
 
 model Constraint {
