@@ -62,6 +62,10 @@ export interface PlanCanvasProps {
   onToggleTableFixed: (tableId: string, fixed: boolean) => void;
   /** Called when guest A is dropped directly onto guest B's chip — exchanges their tables. */
   onSwap: (guestAId: string, guestBId: string) => void;
+  /** Maps guest id -> hex color for the currently selected color attribute (Task 4).
+   * Guests absent from this map (attribute is "Nenhum", or the guest has no value for
+   * the selected attribute) render with the plain Plan 5 chip styling. */
+  colorByGuest?: Record<string, string>;
 }
 
 interface TableGeom {
@@ -82,6 +86,7 @@ export default function PlanCanvas({
   onToggleGuestLock,
   onToggleTableFixed,
   onSwap,
+  colorByGuest = {},
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
 
@@ -180,11 +185,14 @@ export default function PlanCanvas({
                 justifyContent: "center",
               }}
             >
-              {g.table.guests.map((guest) => (
+              {g.table.guests.map((guest) => {
+                const color = colorByGuest[guest.id];
+                return (
                 <span
                   key={guest.id}
                   draggable
                   data-testid={`guest-chip-${guest.id}`}
+                  data-color={color ?? ""}
                   onDragStart={(e) => e.dataTransfer.setData("guestId", guest.id)}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -203,10 +211,11 @@ export default function PlanCanvas({
                     fontSize: 13,
                     fontWeight: 500,
                     lineHeight: 1.3,
-                    background: guest.locked ? "#fffbeb" : "#fff",
+                    background: color ? `${color}1a` : guest.locked ? "#fffbeb" : "#fff",
                     border: guest.locked ? "2px solid #b45309" : "1px solid #cbd5e1",
+                    borderLeft: color ? `4px solid ${color}` : undefined,
                     borderRadius: 6,
-                    padding: "3px 8px",
+                    padding: color ? "3px 8px 3px 6px" : "3px 8px",
                     cursor: "grab",
                     whiteSpace: "nowrap",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
@@ -233,7 +242,8 @@ export default function PlanCanvas({
                     {guest.locked ? "🔒" : "🔓"}
                   </button>
                 </span>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

@@ -9,6 +9,28 @@ import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePl
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
+import type { AttributeKey } from "@/lib/plan/colors";
+
+// "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
+// for "no color") passed to setColorAttr / buildColorMap.
+const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
+  { label: "Nenhum", value: "" },
+  { label: "Faixa etária", value: "ageGroup" },
+  { label: "Género", value: "gender" },
+  { label: "Alimentar", value: "dietary" },
+];
+
+// Same "adult"/"child"/"senior" -> Portuguese mapping as TableList, used for the legend's
+// value labels when coloring by ageGroup (gender/dietary values are shown as stored).
+const AGE_GROUP_LABELS: Record<string, string> = {
+  adult: "adulto",
+  child: "criança",
+  senior: "idoso",
+};
+
+function legendLabel(attr: AttributeKey, value: string): string {
+  return attr === "ageGroup" ? (AGE_GROUP_LABELS[value] ?? value) : value;
+}
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
   ssr: false,
@@ -87,6 +109,9 @@ export default function PlanPage() {
     toggleTableFixed,
     swap,
     violations,
+    colorAttr,
+    setColorAttr,
+    colorMap,
   } = usePlan(weddingId, floorPlanId);
 
   const selectedFloorPlan = floorPlans.find((f) => f.id === floorPlanId);
@@ -128,7 +153,13 @@ export default function PlanPage() {
           label: tableLabels.get(t.id) ?? t.id.slice(0, 6),
           occupancy: seated.length,
           capacity: t.capacity,
-          guests: seated.map((g) => ({ id: g.id, name: g.name })),
+          guests: seated.map((g) => ({
+            id: g.id,
+            name: g.name,
+            ageGroup: g.ageGroup,
+            gender: g.gender,
+            dietary: g.dietary,
+          })),
           overCapacity: violations.overCapacity.includes(t.id),
         };
       }),
@@ -165,6 +196,20 @@ export default function PlanPage() {
         </button>
         {score !== null && <span data-testid="plan-score">Score: {score.toFixed(2)}</span>}
         {loading && <span style={{ color: "#666" }}>A carregar...</span>}
+        <label>
+          Pintar por:{" "}
+          <select
+            data-testid="color-attr-select"
+            value={colorAttr ?? ""}
+            onChange={(e) => setColorAttr((e.target.value || null) as AttributeKey | null)}
+          >
+            {COLOR_ATTR_OPTIONS.map((o) => (
+              <option key={o.label} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
@@ -183,9 +228,37 @@ export default function PlanPage() {
             onToggleGuestLock={toggleGuestLock}
             onToggleTableFixed={toggleTableFixed}
             onSwap={swap}
+            colorByGuest={colorMap.colorByGuest}
           />
 
           <div style={{ minWidth: 260, flex: "0 0 260px", display: "flex", flexDirection: "column", gap: 16 }}>
+            {colorAttr && colorMap.legend.length > 0 && (
+              <div data-testid="color-legend" style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+                <h3 style={{ marginTop: 0 }}>Legenda</h3>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {colorMap.legend.map((entry) => (
+                    <li
+                      key={entry.value}
+                      data-testid={`legend-entry-${entry.value}`}
+                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}
+                    >
+                      <span
+                        style={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: 3,
+                          background: entry.color,
+                          display: "inline-block",
+                          flexShrink: 0,
+                        }}
+                      />
+                      {legendLabel(colorAttr, entry.value)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
               <h3 style={{ marginTop: 0 }}>Avisos</h3>
               {!hasWarnings && <p style={{ fontSize: 13, color: "#666" }}>Sem avisos.</p>}
@@ -229,7 +302,13 @@ export default function PlanPage() {
       {floorPlanId && (
         <TableList
           rows={tableListRows}
-          unassigned={unassigned.map((g) => ({ id: g.id, name: g.name }))}
+          unassigned={unassigned.map((g) => ({
+            id: g.id,
+            name: g.name,
+            ageGroup: g.ageGroup,
+            gender: g.gender,
+            dietary: g.dietary,
+          }))}
         />
       )}
     </main>

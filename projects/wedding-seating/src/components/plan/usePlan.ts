@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Warning } from "@/lib/seating";
 import { planViolations, type PlanViolations } from "@/lib/plan/validate";
+import { buildColorMap, type AttributeKey } from "@/lib/plan/colors";
 
 export interface PlanGuest {
   id: string;
@@ -11,6 +12,9 @@ export interface PlanGuest {
   groupId: string | null;
   assignedTableId: string | null;
   locked: boolean;
+  ageGroup: string | null;
+  gender: string | null;
+  dietary: string | null;
 }
 
 export interface PlanTable {
@@ -48,6 +52,7 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState<number | null>(null);
   const [warnings, setWarnings] = useState<Warning[]>([]);
+  const [colorAttr, setColorAttr] = useState<AttributeKey | null>(null);
 
   const refresh = useCallback(async () => {
     if (!floorPlanId) {
@@ -262,6 +267,14 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     [guests, tables, constraints]
   );
 
+  // Derived color map for the selected attribute — recomputed only when the guest list
+  // or the chosen attribute changes. `null` (no attribute selected) yields empty maps,
+  // which both PlanCanvas (no tinting) and the legend (nothing to render) treat as "off".
+  const colorMap = useMemo(
+    () => (colorAttr ? buildColorMap(guests, colorAttr) : { legend: [], colorByGuest: {} }),
+    [guests, colorAttr]
+  );
+
   return {
     guests,
     tables,
@@ -279,5 +292,8 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     toggleTableFixed,
     swap,
     violations,
+    colorAttr,
+    setColorAttr,
+    colorMap,
   };
 }

@@ -5,6 +5,28 @@ import type { CSSProperties } from "react";
 export interface TableListGuest {
   id: string;
   name: string;
+  ageGroup?: string | null;
+  gender?: string | null;
+  dietary?: string | null;
+}
+
+// "adult"/"child"/"senior" are the normalized values stored on Guest (see
+// lib/import/parseGuests.ts); translate back to Portuguese for the printable list.
+// Gender/dietary are free text as entered, so they're shown as-is.
+const AGE_GROUP_LABELS: Record<string, string> = {
+  adult: "adulto",
+  child: "criança",
+  senior: "idoso",
+};
+
+/** Compact "Ana (adulto, F, vegetariana)" suffix, omitting any null/empty parts. */
+function attrSuffix(g: TableListGuest): string {
+  const parts = [
+    g.ageGroup ? (AGE_GROUP_LABELS[g.ageGroup] ?? g.ageGroup) : null,
+    g.gender || null,
+    g.dietary || null,
+  ].filter((p): p is string => Boolean(p));
+  return parts.length > 0 ? ` (${parts.join(", ")})` : "";
 }
 
 export interface TableListRow {
@@ -69,13 +91,17 @@ export default function TableList({ rows, unassigned }: TableListProps) {
                 >
                   {row.occupancy}/{row.capacity}
                 </td>
-                <td style={tdStyle}>{row.guests.map((g) => g.name).join(", ") || "—"}</td>
+                <td style={tdStyle}>
+                  {row.guests.map((g) => `${g.name}${attrSuffix(g)}`).join(", ") || "—"}
+                </td>
               </tr>
             ))}
             <tr data-testid="table-list-row-unassigned" style={{ borderTop: "1px solid #e5e7eb" }}>
               <td style={{ ...tdStyle, fontWeight: 600 }}>Por atribuir</td>
               <td style={tdStyle}>{unassigned.length}</td>
-              <td style={tdStyle}>{unassigned.map((g) => g.name).join(", ") || "—"}</td>
+              <td style={tdStyle}>
+                {unassigned.map((g) => `${g.name}${attrSuffix(g)}`).join(", ") || "—"}
+              </td>
             </tr>
           </tbody>
         </table>

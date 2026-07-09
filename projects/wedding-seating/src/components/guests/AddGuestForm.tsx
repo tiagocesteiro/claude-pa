@@ -3,15 +3,31 @@
 import { useState } from "react";
 import type { Group } from "./useGuestBoard";
 
+// Same "adult"/"child"/"senior" values normalized by lib/import/parseGuests.ts, so a
+// manually-added guest colors/filters identically to one brought in via bulk import.
+const AGE_GROUP_OPTIONS: { label: string; value: string }[] = [
+  { label: "—", value: "" },
+  { label: "Adulto", value: "adult" },
+  { label: "Criança", value: "child" },
+  { label: "Idoso", value: "senior" },
+];
+
 export default function AddGuestForm({
   groups,
   addGuest,
 }: {
   groups: Group[];
-  addGuest: (name: string, groupId?: string | null) => Promise<void>;
+  addGuest: (
+    name: string,
+    groupId?: string | null,
+    attrs?: { ageGroup?: string | null; gender?: string | null; dietary?: string | null }
+  ) => Promise<void>;
 }) {
   const [name, setName] = useState("");
   const [groupId, setGroupId] = useState("");
+  const [ageGroup, setAgeGroup] = useState("");
+  const [gender, setGender] = useState("");
+  const [dietary, setDietary] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,9 +37,16 @@ export default function AddGuestForm({
     setError(null);
     setSaving(true);
     try {
-      await addGuest(name.trim(), groupId || null);
+      await addGuest(name.trim(), groupId || null, {
+        ageGroup: ageGroup || null,
+        gender: gender.trim() || null,
+        dietary: dietary.trim() || null,
+      });
       setName("");
       setGroupId("");
+      setAgeGroup("");
+      setGender("");
+      setDietary("");
     } catch {
       setError("Não foi possível adicionar o convidado.");
     } finally {
@@ -48,6 +71,31 @@ export default function AddGuestForm({
             </option>
           ))}
         </select>
+        <select
+          data-testid="add-guest-age-group"
+          value={ageGroup}
+          onChange={(e) => setAgeGroup(e.target.value)}
+          title="Faixa etária"
+        >
+          {AGE_GROUP_OPTIONS.map((o) => (
+            <option key={o.label} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <input
+          data-testid="add-guest-gender"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          placeholder="Género"
+          style={{ width: 90 }}
+        />
+        <input
+          data-testid="add-guest-dietary"
+          value={dietary}
+          onChange={(e) => setDietary(e.target.value)}
+          placeholder="Alimentar (ex: vegetariana)"
+        />
         <button type="submit" disabled={saving || !name.trim()}>
           {saving ? "A adicionar..." : "Adicionar convidado"}
         </button>

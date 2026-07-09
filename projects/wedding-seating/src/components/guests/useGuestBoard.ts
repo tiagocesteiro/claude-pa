@@ -8,6 +8,9 @@ export interface Guest {
   name: string;
   groupId: string | null;
   assignedTableId: string | null;
+  ageGroup: string | null;
+  gender: string | null;
+  dietary: string | null;
 }
 
 export interface Group {
@@ -58,13 +61,23 @@ export function useGuestBoard(weddingId: string) {
   );
 
   const addGuest = useCallback(
-    async (name: string, groupId?: string | null) => {
+    async (
+      name: string,
+      groupId?: string | null,
+      attrs?: { ageGroup?: string | null; gender?: string | null; dietary?: string | null }
+    ) => {
       setError(null);
       try {
         const res = await fetch(`/api/weddings/${weddingId}/guests`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, groupId: groupId ?? null }),
+          body: JSON.stringify({
+            name,
+            groupId: groupId ?? null,
+            ageGroup: attrs?.ageGroup ?? null,
+            gender: attrs?.gender ?? null,
+            dietary: attrs?.dietary ?? null,
+          }),
         });
         if (!res.ok) setError("Não foi possível adicionar o convidado.");
       } catch {
