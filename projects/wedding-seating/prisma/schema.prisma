@@ -40,6 +40,7 @@ model FloorPlan {
   width     Float    // metres
   depth     Float    // metres
   minSpacing Float?  // metres, minimum clearance between tables
+  boundary  String?  // JSON array of {x,y} points, natural pixels
   tables    Table[]
   weddings  Wedding[]
   createdAt DateTime @default(now())

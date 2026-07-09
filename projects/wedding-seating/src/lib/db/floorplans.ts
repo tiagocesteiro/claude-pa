@@ -22,3 +22,7 @@ export function updateFloorPlanScale(id: string, scale: number): Promise<FloorPl
 export function updateFloorPlanSpacing(id: string, minSpacing: number | null): Promise<FloorPlan> {
   return prisma.floorPlan.update({ where: { id }, data: { minSpacing } });
 }
+
+export function updateFloorPlanBoundary(id: string, boundary: string | null): Promise<FloorPlan> {
+  return prisma.floorPlan.update({ where: { id }, data: { boundary } });
+}
