@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupSpread, satisfiedTogether, fillSpread, scoreAssignment, WEIGHTS } from "./score";
+import { groupReward, GROUP_WEIGHTS, satisfiedTogether, fillSpread, scoreAssignment, WEIGHTS } from "./score";
 import type { Guest, SeatTable, SeatingInput } from "./types";
 
 const guests: Guest[] = [
@@ -8,13 +8,25 @@ const guests: Guest[] = [
   { id: "g3", name: "C", groupId: "grp1" },
 ];
 
-it("groupSpread is 0 when a group is fully together", () => {
-  expect(groupSpread({ g1: "t1", g2: "t1", g3: "t1" }, guests)).toBe(0);
+it("groupReward rewards seating a guest with a same-group member", () => {
+  const guests = [
+    { id: "g1", name: "A", groupId: "fam" },
+    { id: "g2", name: "B", groupId: "fam" },
+  ];
+  // both at t1 → each earns primary weight
+  expect(groupReward({ g1: "t1", g2: "t1" }, guests)).toBe(GROUP_WEIGHTS[0] * 2);
+  // split → neither has a same-group tablemate → 0
+  expect(groupReward({ g1: "t1", g2: "t2" }, guests)).toBe(0);
 });
 
-it("groupSpread counts extra tables a group spans", () => {
-  // grp1 spans t1 and t2 -> distinctTables 2 -> spread 1
-  expect(groupSpread({ g1: "t1", g2: "t1", g3: "t2" }, guests)).toBe(1);
+it("groupReward honors priority order via groupIds", () => {
+  // g1's primary is "fam" (with nobody), secondary "fac" (with g2)
+  const guests = [
+    { id: "g1", name: "A", groupId: "fam", groupIds: ["fam", "fac"] },
+    { id: "g2", name: "B", groupId: "fac", groupIds: ["fac"] },
+  ];
+  // both at t1: g1 shares "fac" with g2 → secondary weight; g2 shares "fac" with g1 → primary weight
+  expect(groupReward({ g1: "t1", g2: "t1" }, guests)).toBe(GROUP_WEIGHTS[1] + GROUP_WEIGHTS[0]);
 });
 
 it("satisfiedTogether counts pairs sharing a table", () => {
@@ -22,7 +34,7 @@ it("satisfiedTogether counts pairs sharing a table", () => {
   expect(n).toBe(1);
 });
 
-it("scoreAssignment rewards togetherness and penalises spread", () => {
+it("scoreAssignment rewards togetherness and group reward, penalises fill imbalance", () => {
   const input: SeatingInput = {
     guests,
     tables: [
@@ -34,8 +46,9 @@ it("scoreAssignment rewards togetherness and penalises spread", () => {
   const together = scoreAssignment({ g1: "t1", g2: "t1", g3: "t1" }, input);
   const split = scoreAssignment({ g1: "t1", g2: "t1", g3: "t2" }, input);
   expect(together).toBeGreaterThan(split);
-  // together: 1*100 - 0 - 0 = 100 ; split: 1*100 - 1*10 - fillSpread(2-1=1)*1 = 89
-  expect(together).toBe(100);
-  expect(split).toBe(89);
+  // together: 1*100 + groupReward(all 3 share grp1, each earns GROUP_WEIGHTS[0]=10 -> 30) - fillSpread(0)*1 = 130
+  // split: 1*100 + groupReward(g1,g2 share table & grp1 -> each 10 = 20; g3 alone -> 0) - fillSpread(2-1=1)*1 = 119
+  expect(together).toBe(130);
+  expect(split).toBe(119);
   expect(WEIGHTS.together).toBe(100);
 });

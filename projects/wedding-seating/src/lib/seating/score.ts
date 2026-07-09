@@ -1,22 +1,50 @@
 import type { Assignment, Guest, SeatingConstraint, SeatingInput, SeatTable } from "./types";
 import { occupantsByTable } from "./constraints";
 
-export const WEIGHTS = { together: 100, groupSpread: 10, balance: 1 } as const;
+export const WEIGHTS = { together: 100, balance: 1 } as const;
 
-export function groupSpread(assignment: Assignment, guests: Guest[]): number {
-  const tablesByGroup = new Map<string, Set<string>>();
+export const GROUP_WEIGHTS = [10, 5, 2] as const;
+
+export function groupsOf(guest: Guest): string[] {
+  const raw = guest.groupIds ?? (guest.groupId != null ? [guest.groupId] : []);
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const g of raw) {
+    if (!seen.has(g)) {
+      seen.add(g);
+      result.push(g);
+    }
+  }
+  return result;
+}
+
+export function groupReward(assignment: Assignment, guests: Guest[]): number {
+  const tableOf = new Map<string, string>();
   for (const g of guests) {
-    if (g.groupId == null) continue;
     const tableId = assignment[g.id];
-    if (tableId === undefined) continue;
-    if (!tablesByGroup.has(g.groupId)) tablesByGroup.set(g.groupId, new Set());
-    tablesByGroup.get(g.groupId)!.add(tableId);
+    if (tableId !== undefined) tableOf.set(g.id, tableId);
   }
-  let spread = 0;
-  for (const set of tablesByGroup.values()) {
-    spread += set.size - 1;
+
+  let reward = 0;
+  for (const g of guests) {
+    const myTable = tableOf.get(g.id);
+    if (myTable === undefined) continue;
+    const myGroups = groupsOf(g);
+    for (let i = 0; i < myGroups.length; i++) {
+      const groupId = myGroups[i];
+      const hasMatch = guests.some((h) => {
+        if (h.id === g.id) return false;
+        if (tableOf.get(h.id) !== myTable) return false;
+        return groupsOf(h).includes(groupId);
+      });
+      if (hasMatch) {
+        const idx = Math.min(i, GROUP_WEIGHTS.length - 1);
+        reward += GROUP_WEIGHTS[idx];
+        break;
+      }
+    }
   }
-  return spread;
+  return reward;
 }
 
 export function satisfiedTogether(
@@ -42,8 +70,8 @@ export function fillSpread(assignment: Assignment, tables: SeatTable[]): number 
 
 export function scoreAssignment(assignment: Assignment, input: SeatingInput): number {
   return (
-    satisfiedTogether(assignment, input.constraints) * WEIGHTS.together -
-    groupSpread(assignment, input.guests) * WEIGHTS.groupSpread -
+    satisfiedTogether(assignment, input.constraints) * WEIGHTS.together +
+    groupReward(assignment, input.guests) -
     fillSpread(assignment, input.tables) * WEIGHTS.balance
   );
 }

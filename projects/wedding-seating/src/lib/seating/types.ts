@@ -2,6 +2,8 @@ export interface Guest {
   id: string;
   name: string;
   groupId: string | null;
+  /** Ordered by priority (index 0 = primary). Overrides groupId for scoring when present. */
+  groupIds?: string[];
 }
 
 export interface SeatTable {
