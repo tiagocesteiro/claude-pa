@@ -60,3 +60,18 @@ it("uses cell display text for hyperlink/rich-text cells (not [object Object])",
   const rows = await parseGuestWorkbook(buf);
   expect(rows).toEqual([{ name: "Ana" }]);
 });
+
+it("parses optional attribute columns (age group normalized; gender/dietary free text)", async () => {
+  const buf = await makeWorkbook(
+    [
+      ["Ana", "Família", "Adulto", "F", "Vegetariana"],
+      ["Zé Kid", "Família", "Criança", "M", ""],
+      ["Avó", "Família", "Idoso", "", "Sem lactose"],
+    ],
+    ["nome", "grupo", "faixa", "género", "alergias"]
+  );
+  const rows = await parseGuestWorkbook(buf);
+  expect(rows[0]).toEqual({ name: "Ana", group: "Família", ageGroup: "adult", gender: "F", dietary: "Vegetariana" });
+  expect(rows[1]).toEqual({ name: "Zé Kid", group: "Família", ageGroup: "child", gender: "M" });
+  expect(rows[2]).toEqual({ name: "Avó", group: "Família", ageGroup: "senior", dietary: "Sem lactose" });
+});

@@ -25,6 +25,9 @@ export async function importGuests(
       weddingId,
       name: r.name,
       groupId: r.group ? groupIdByName.get(r.group)! : null,
+      ageGroup: r.ageGroup ?? null,
+      gender: r.gender ?? null,
+      dietary: r.dietary ?? null,
     })),
   });
 

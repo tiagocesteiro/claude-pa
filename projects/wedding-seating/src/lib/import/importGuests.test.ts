@@ -32,4 +32,16 @@ it("reuses an existing group of the same name on a second import", async () => {
   expect((await listGroups(w.id)).filter((g) => g.name === "X").length).toBe(1);
 });
 
+it("persists guest attributes on import", async () => {
+  const w = await createWedding({ couple: "Attrs Import" });
+  await importGuests(w.id, [
+    { name: "Ana", group: "Fam", ageGroup: "adult", gender: "F", dietary: "Vegetariana" },
+  ]);
+  const guests = await listGuests(w.id);
+  const ana = guests.find((g) => g.name === "Ana")!;
+  expect(ana.ageGroup).toBe("adult");
+  expect(ana.gender).toBe("F");
+  expect(ana.dietary).toBe("Vegetariana");
+});
+
 afterAll(async () => { await prisma.$disconnect(); });
