@@ -20,8 +20,19 @@ export default function WeddingWorkspacePage() {
   const weddingId = params.id;
 
   const [wedding, setWedding] = useState<WeddingRecord | null>(null);
-  const { guests, groups, loading, error, refresh, assign, addGuest, addGroup, renameGroup, removeGroup } =
-    useGuestBoard(weddingId);
+  const {
+    guests,
+    groups,
+    loading,
+    error,
+    refresh,
+    assign,
+    addGuest,
+    addGroup,
+    renameGroup,
+    removeGroup,
+    setGuestGroups,
+  } = useGuestBoard(weddingId);
 
   useEffect(() => {
     async function loadWedding() {
@@ -58,6 +69,7 @@ export default function WeddingWorkspacePage() {
             addGroup={addGroup}
             renameGroup={renameGroup}
             removeGroup={removeGroup}
+            setGuestGroups={setGuestGroups}
           />
 
           <ConstraintsPanel weddingId={weddingId} guests={guests} />

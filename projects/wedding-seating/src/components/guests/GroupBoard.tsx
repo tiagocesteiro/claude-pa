@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Group, Guest } from "./useGuestBoard";
+import GuestGroupsEditor from "./GuestGroupsEditor";
 
 const UNGROUPED = "__ungrouped__";
 
@@ -13,6 +14,7 @@ export default function GroupBoard({
   addGroup,
   renameGroup,
   removeGroup,
+  setGuestGroups,
 }: {
   guests: Guest[];
   groups: Group[];
@@ -21,12 +23,18 @@ export default function GroupBoard({
   addGroup: (name: string) => Promise<void>;
   renameGroup: (id: string, name: string) => Promise<void>;
   removeGroup: (id: string) => Promise<void>;
+  setGuestGroups: (
+    guestId: string,
+    primaryGroupId: string | null,
+    extraGroupIds: string[]
+  ) => Promise<void>;
 }) {
   const [newGroupName, setNewGroupName] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [editingGuestId, setEditingGuestId] = useState<string | null>(null);
 
   async function handleAddGroup(e: React.FormEvent) {
     e.preventDefault();
@@ -147,17 +155,44 @@ export default function GroupBoard({
                 {colGuests.map((guest) => (
                   <div
                     key={guest.id}
-                    draggable
+                    draggable={editingGuestId !== guest.id}
                     onDragStart={(e) => handleDragStart(e, guest.id)}
                     style={{
                       border: "1px solid #ccc",
                       borderRadius: 6,
                       padding: "6px 8px",
                       background: "#fff",
-                      cursor: "grab",
+                      cursor: editingGuestId === guest.id ? "default" : "grab",
                     }}
                   >
-                    {guest.name}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <span>{guest.name}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingGuestId((id) => (id === guest.id ? null : guest.id))
+                        }
+                        title="Editar grupos do convidado"
+                        style={{ fontSize: 11 }}
+                      >
+                        {editingGuestId === guest.id ? "Fechar" : "Editar grupos"}
+                      </button>
+                    </div>
+                    {editingGuestId === guest.id && (
+                      <GuestGroupsEditor
+                        guest={guest}
+                        groups={groups}
+                        setGuestGroups={setGuestGroups}
+                        onClose={() => setEditingGuestId(null)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

@@ -7,6 +7,7 @@ export interface Guest {
   weddingId: string;
   name: string;
   groupId: string | null;
+  extraGroups: string | null;
   assignedTableId: string | null;
   ageGroup: string | null;
   gender: string | null;
@@ -124,6 +125,24 @@ export function useGuestBoard(weddingId: string) {
     [refresh]
   );
 
+  const setGuestGroups = useCallback(
+    async (guestId: string, primaryGroupId: string | null, extraGroupIds: string[]) => {
+      setError(null);
+      try {
+        const res = await fetch(`/api/guests/${guestId}/groups`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ primaryGroupId, extraGroupIds }),
+        });
+        if (!res.ok) setError("Não foi possível atualizar os grupos do convidado.");
+      } catch {
+        setError("Não foi possível atualizar os grupos do convidado.");
+      }
+      await refresh();
+    },
+    [refresh]
+  );
+
   const removeGroup = useCallback(
     async (id: string) => {
       setError(null);
@@ -160,5 +179,6 @@ export function useGuestBoard(weddingId: string) {
     addGroup,
     renameGroup,
     removeGroup,
+    setGuestGroups,
   };
 }
