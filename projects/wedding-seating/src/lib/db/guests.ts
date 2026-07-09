@@ -32,3 +32,17 @@ export function createGuest(input: {
 export function setGuestLocked(guestId: string, locked: boolean): Promise<Guest> {
   return prisma.guest.update({ where: { id: guestId }, data: { locked } });
 }
+
+export function setGuestGroups(
+  guestId: string,
+  primaryGroupId: string | null,
+  extraGroupIds: string[]
+): Promise<Guest> {
+  return prisma.guest.update({
+    where: { id: guestId },
+    data: {
+      groupId: primaryGroupId,
+      extraGroups: extraGroupIds.length ? JSON.stringify(extraGroupIds) : null,
+    },
+  });
+}
