@@ -4,6 +4,7 @@ export interface GuestRowInput {
   id: string;
   name: string;
   groupId: string | null;
+  extraGroups: string | null;
   assignedTableId: string | null;
   locked: boolean;
 }
@@ -43,7 +44,22 @@ export function buildSeatingInput(
 
   const engineGuests = guests
     .filter((g) => !(g.assignedTableId && (fixedTableIds.has(g.assignedTableId) || g.locked)))
-    .map((g) => ({ id: g.id, name: g.name, groupId: g.groupId }));
+    .map((g) => {
+      let extra: unknown[] = [];
+      if (g.extraGroups) {
+        try {
+          const parsed = JSON.parse(g.extraGroups);
+          if (Array.isArray(parsed)) extra = parsed;
+        } catch {
+          extra = [];
+        }
+      }
+      const groupIds: string[] = [];
+      for (const id of [g.groupId, ...extra]) {
+        if (typeof id === "string" && !groupIds.includes(id)) groupIds.push(id);
+      }
+      return { id: g.id, name: g.name, groupId: g.groupId, groupIds };
+    });
 
   const engineConstraints = constraints.map((c) => ({
     type: c.type as ConstraintType,

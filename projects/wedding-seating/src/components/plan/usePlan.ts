@@ -10,6 +10,7 @@ export interface PlanGuest {
   weddingId: string;
   name: string;
   groupId: string | null;
+  extraGroups: string | null;
   assignedTableId: string | null;
   locked: boolean;
   ageGroup: string | null;
