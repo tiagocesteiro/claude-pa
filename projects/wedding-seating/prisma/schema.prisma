@@ -13,7 +13,22 @@ model Venue {
   location  String?
   photos    String?    // JSON array of file paths
   floorPlans FloorPlan[]
+  tableTypes TableType[]
   createdAt DateTime   @default(now())
+}
+
+model TableType {
+  id        String  @id @default(cuid())
+  venueId   String
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name      String
+  shape     String  // "round" | "rect"
+  minSeats  Int
+  maxSeats  Int
+  width     Float   // metres
+  depth     Float   // metres
+  quantity  Int     @default(1)
+  createdAt DateTime @default(now())
 }
 
 model FloorPlan {
@@ -24,6 +39,7 @@ model FloorPlan {
   scale     Float    // pixels per metre
   width     Float    // metres
   depth     Float    // metres
+  minSpacing Float?  // metres, minimum clearance between tables
   tables    Table[]
   weddings  Wedding[]
   createdAt DateTime @default(now())
@@ -35,6 +51,9 @@ model Table {
   floorPlan   FloorPlan @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
   shape       String   // "round" | "rect"
   capacity    Int
+  width       Float?   // metres
+  depth       Float?   // metres
+  minCapacity Int?
   x           Float
   y           Float
   fixed       Boolean  @default(false)
