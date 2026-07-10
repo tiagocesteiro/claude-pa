@@ -14,6 +14,7 @@ model Venue {
   photos    String?    // JSON array of file paths
   floorPlans FloorPlan[]
   tableTypes TableType[]
+  layoutTemplates LayoutTemplate[]
   createdAt DateTime   @default(now())
 }
 
@@ -28,6 +29,17 @@ model TableType {
   width     Float   // metres
   depth     Float   // metres
   quantity  Int     @default(1)
+  createdAt DateTime @default(now())
+}
+
+model LayoutTemplate {
+  id        String  @id @default(cuid())
+  venueId   String
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name      String
+  minGuests Int
+  maxGuests Int
+  lines     String  // JSON: { tableTypeId: string; quantity: number }[]
   createdAt DateTime @default(now())
 }
 
