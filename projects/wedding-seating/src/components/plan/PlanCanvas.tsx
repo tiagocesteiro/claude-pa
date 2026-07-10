@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Circle, Rect, Text } from "react-konva";
+import { chairPositions } from "@/lib/floorplan/chairs";
 
 const ROUND_RADIUS = 46;
 const RECT_WIDTH = 130;
 const RECT_HEIGHT = 70;
+
+// Chair dots (natural pixels, before displayScale). Occupied chairs with no attribute
+// color selected fall back to CHAIR_NEUTRAL_FILL; empty seats always render CHAIR_EMPTY_FILL.
+const CHAIR_RADIUS = 6;
+const CHAIR_NEUTRAL_FILL = "#6b7280";
+const CHAIR_EMPTY_FILL = "#e5e7eb";
 
 function useImageElement(src: string | undefined): HTMLImageElement | undefined {
   const [image, setImage] = useState<HTMLImageElement | undefined>(undefined);
@@ -123,6 +130,32 @@ export default function PlanCanvas({
           {geoms.map((g) => (
             <TableShape key={g.table.id} geom={g} overCapacity={overCapacitySet.has(g.table.id)} />
           ))}
+        </Layer>
+        {/* Decorative chair layer — non-listening so it never intercepts the HTML
+            drag/drop overlay below. Occupied chairs (first `occupancy` seats, in the
+            table's seated-guest order) take colorByGuest; the rest render neutral/empty. */}
+        <Layer listening={false}>
+          {geoms.map((g) =>
+            chairPositions(
+              { x: g.table.x, y: g.table.y, capacity: g.table.capacity, shape: g.table.shape },
+              1
+            ).map((chair, i) => {
+              const guest = g.table.guests[i];
+              const fill = guest ? colorByGuest[guest.id] ?? CHAIR_NEUTRAL_FILL : CHAIR_EMPTY_FILL;
+              return (
+                <Circle
+                  key={`${g.table.id}-chair-${i}`}
+                  x={chair.x * displayScale}
+                  y={chair.y * displayScale}
+                  radius={CHAIR_RADIUS * displayScale}
+                  fill={fill}
+                  stroke="#9ca3af"
+                  strokeWidth={1}
+                  listening={false}
+                />
+              );
+            })
+          )}
         </Layer>
       </Stage>
 
