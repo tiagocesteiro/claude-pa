@@ -1,0 +1,78 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, usePathname } from "next/navigation";
+import Link from "next/link";
+
+interface WeddingRecord {
+  id: string;
+  couple: string;
+  date: string | null;
+}
+
+export default function WeddingLayout({ children }: { children: React.ReactNode }) {
+  const params = useParams<{ id: string }>();
+  const weddingId = params.id;
+  const pathname = usePathname();
+
+  const [wedding, setWedding] = useState<WeddingRecord | null>(null);
+
+  useEffect(() => {
+    async function loadWedding() {
+      const res = await fetch("/api/weddings");
+      if (!res.ok) return;
+      const all = (await res.json()) as WeddingRecord[];
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+      setWedding(all.find((w) => w.id === weddingId) ?? null);
+    }
+    loadWedding();
+  }, [weddingId]);
+
+  const guestsHref = `/admin/wedding/${weddingId}`;
+  const constraintsHref = `/admin/wedding/${weddingId}/constraints`;
+  const planHref = `/admin/wedding/${weddingId}/plan`;
+
+  const isGuestsActive = pathname === guestsHref;
+  const isConstraintsActive = pathname?.endsWith("/constraints") ?? false;
+  const isPlanActive = pathname?.endsWith("/plan") ?? false;
+
+  const tabs = [
+    { label: "Convidados & Grupos", href: guestsHref, active: isGuestsActive },
+    { label: "Restrições", href: constraintsHref, active: isConstraintsActive },
+    { label: "Plano de mesas", href: planHref, active: isPlanActive },
+  ];
+
+  return (
+    <main style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+      <h1>{wedding ? wedding.couple : "Wedding"}</h1>
+
+      <nav
+        style={{
+          display: "flex",
+          gap: 4,
+          borderBottom: "1px solid #ddd",
+          marginBottom: 24,
+        }}
+      >
+        {tabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            style={{
+              padding: "8px 16px",
+              textDecoration: "none",
+              color: tab.active ? "#111" : "#666",
+              fontWeight: tab.active ? 600 : 400,
+              borderBottom: tab.active ? "2px solid #111" : "2px solid transparent",
+              marginBottom: -1,
+            }}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
+
+      {children}
+    </main>
+  );
+}
