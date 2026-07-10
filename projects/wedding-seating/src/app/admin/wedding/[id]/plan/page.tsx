@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { Warning } from "@/lib/seating";
 import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePlan";
@@ -170,10 +169,7 @@ export default function PlanPage() {
     warnings.length > 0 || violations.overCapacity.length > 0 || violations.separated.length > 0;
 
   return (
-    <main style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <p>
-        <Link href={`/admin/wedding/${weddingId}`}>&larr; Back to wedding</Link>
-      </p>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
       <h1>Plano de mesas</h1>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
@@ -311,6 +307,6 @@ export default function PlanPage() {
           }))}
         />
       )}
-    </main>
+    </div>
   );
 }
