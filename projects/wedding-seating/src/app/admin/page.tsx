@@ -18,6 +18,14 @@ interface Wedding {
   createdAt: string;
 }
 
+interface FloorPlanListItem {
+  id: string;
+  venueId: string;
+  image: string;
+  createdAt: string;
+  venue?: { name: string };
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -31,6 +39,8 @@ export default function AdminPage() {
   const [weddingError, setWeddingError] = useState<string | null>(null);
   const [creatingWedding, setCreatingWedding] = useState(false);
 
+  const [floorPlans, setFloorPlans] = useState<FloorPlanListItem[]>([]);
+
   async function loadVenues() {
     const res = await fetch("/api/venues");
     const data = await res.json();
@@ -43,11 +53,19 @@ export default function AdminPage() {
     setWeddings(data);
   }
 
+  async function loadFloorPlans() {
+    const res = await fetch("/api/floorplans");
+    const data = await res.json();
+    setFloorPlans(data);
+  }
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadVenues();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadWeddings();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+    loadFloorPlans();
   }, []);
 
   async function handleCreateWedding(e: React.FormEvent) {
@@ -105,6 +123,7 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error("failed");
       const fp = await res.json();
+      await loadFloorPlans();
       router.push(`/admin/floorplan/${fp.id}`);
     } catch {
       setError("Failed to create floor plan");
@@ -169,25 +188,49 @@ export default function AdminPage() {
       <h2>Existing venues</h2>
       {venues.length === 0 && <p>No venues yet.</p>}
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {venues.map((v) => (
-          <li
-            key={v.id}
-            style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
-          >
-            <strong>{v.name}</strong>
-            {v.location && <span> — {v.location}</span>}
-            <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => handleNewFloorPlan(v.id)}
-                disabled={creatingFor === v.id}
-              >
-                {creatingFor === v.id ? "Creating..." : "New floor plan"}
-              </button>
-              <Link href={`/admin/venue/${v.id}`}>Table type catalog</Link>
-            </div>
-          </li>
-        ))}
+        {venues.map((v) => {
+          const venuePlans = floorPlans
+            .filter((fp) => fp.venueId === v.id)
+            .slice()
+            .sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+          return (
+            <li
+              key={v.id}
+              style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
+            >
+              <strong>{v.name}</strong>
+              {v.location && <span> — {v.location}</span>}
+              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => handleNewFloorPlan(v.id)}
+                  disabled={creatingFor === v.id}
+                >
+                  {creatingFor === v.id ? "Creating..." : "New floor plan"}
+                </button>
+                <Link href={`/admin/venue/${v.id}`}>Table type catalog</Link>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                {venuePlans.length === 0 ? (
+                  <span style={{ color: "#6b7280", fontSize: 14 }}>Sem plantas ainda.</span>
+                ) : (
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    {venuePlans.map((fp, i) => (
+                      <li key={fp.id} style={{ fontSize: 14, marginBottom: 4 }}>
+                        <Link href={`/admin/floorplan/${fp.id}`}>Planta {i + 1}</Link>
+                        {!fp.image && (
+                          <span style={{ color: "#6b7280" }}> (sem imagem)</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </main>
   );
