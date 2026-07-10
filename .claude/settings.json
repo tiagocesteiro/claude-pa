@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "PowerShell(*)",
+      "Edit(/.claude/skills/**)",
+      "Write(/.claude/skills/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -6,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/pre_tool_use.py"
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre_tool_use.py\""
           }
         ]
       }
@@ -17,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/permission_request.py --auto-allow"
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/permission_request.py\" --auto-allow"
           }
         ]
       }
@@ -28,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/session_start.py --load-context"
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py\" --load-context"
           }
         ]
       }
