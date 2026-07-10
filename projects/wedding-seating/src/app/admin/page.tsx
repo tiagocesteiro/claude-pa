@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Venue {
@@ -18,28 +17,16 @@ interface Wedding {
   createdAt: string;
 }
 
-interface FloorPlanListItem {
-  id: string;
-  venueId: string;
-  image: string;
-  createdAt: string;
-  venue?: { name: string };
-}
-
 export default function AdminPage() {
-  const router = useRouter();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-  const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [weddings, setWeddings] = useState<Wedding[]>([]);
   const [coupleName, setCoupleName] = useState("");
   const [weddingError, setWeddingError] = useState<string | null>(null);
   const [creatingWedding, setCreatingWedding] = useState(false);
-
-  const [floorPlans, setFloorPlans] = useState<FloorPlanListItem[]>([]);
 
   async function loadVenues() {
     const res = await fetch("/api/venues");
@@ -53,19 +40,11 @@ export default function AdminPage() {
     setWeddings(data);
   }
 
-  async function loadFloorPlans() {
-    const res = await fetch("/api/floorplans");
-    const data = await res.json();
-    setFloorPlans(data);
-  }
-
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadVenues();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadWeddings();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-    loadFloorPlans();
   }, []);
 
   async function handleCreateWedding(e: React.FormEvent) {
@@ -111,24 +90,6 @@ export default function AdminPage() {
     setName("");
     setLocation("");
     await loadVenues();
-  }
-
-  async function handleNewFloorPlan(venueId: string) {
-    setCreatingFor(venueId);
-    try {
-      const res = await fetch("/api/floorplans", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueId, image: "", scale: 0, width: 0, depth: 0 }),
-      });
-      if (!res.ok) throw new Error("failed");
-      const fp = await res.json();
-      await loadFloorPlans();
-      router.push(`/admin/floorplan/${fp.id}`);
-    } catch {
-      setError("Failed to create floor plan");
-      setCreatingFor(null);
-    }
   }
 
   return (
@@ -188,49 +149,18 @@ export default function AdminPage() {
       <h2>Existing venues</h2>
       {venues.length === 0 && <p>No venues yet.</p>}
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {venues.map((v) => {
-          const venuePlans = floorPlans
-            .filter((fp) => fp.venueId === v.id)
-            .slice()
-            .sort(
-              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            );
-          return (
-            <li
-              key={v.id}
-              style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
-            >
-              <strong>{v.name}</strong>
-              {v.location && <span> — {v.location}</span>}
-              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => handleNewFloorPlan(v.id)}
-                  disabled={creatingFor === v.id}
-                >
-                  {creatingFor === v.id ? "Creating..." : "New floor plan"}
-                </button>
-                <Link href={`/admin/venue/${v.id}`}>Table type catalog</Link>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                {venuePlans.length === 0 ? (
-                  <span style={{ color: "#6b7280", fontSize: 14 }}>Sem plantas ainda.</span>
-                ) : (
-                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {venuePlans.map((fp, i) => (
-                      <li key={fp.id} style={{ fontSize: 14, marginBottom: 4 }}>
-                        <Link href={`/admin/floorplan/${fp.id}`}>Planta {i + 1}</Link>
-                        {!fp.image && (
-                          <span style={{ color: "#6b7280" }}> (sem imagem)</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </li>
-          );
-        })}
+        {venues.map((v) => (
+          <li
+            key={v.id}
+            style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
+          >
+            <strong>{v.name}</strong>
+            {v.location && <span> — {v.location}</span>}
+            <div style={{ marginTop: 8 }}>
+              <Link href={`/admin/venue/${v.id}`}>Abrir quinta</Link>
+            </div>
+          </li>
+        ))}
       </ul>
     </main>
   );
