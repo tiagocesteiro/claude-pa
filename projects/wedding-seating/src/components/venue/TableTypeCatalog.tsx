@@ -14,9 +14,11 @@ export interface TableTypeRecord {
   quantity: number;
 }
 
+type Shape = "round" | "oval" | "rect";
+
 interface FormValues {
   name: string;
-  shape: "round" | "rect";
+  shape: Shape;
   minSeats: string;
   maxSeats: string;
   width: string;
@@ -33,6 +35,21 @@ const emptyForm: FormValues = {
   depth: "",
   quantity: "1",
 };
+
+function normalizeShape(shape: string): Shape {
+  return shape === "oval" || shape === "rect" ? shape : "round";
+}
+
+function shapeLabel(shape: string): string {
+  if (shape === "oval") return "Oval";
+  if (shape === "rect") return "Retangular";
+  return "Redonda";
+}
+
+function dimensionsLabel(t: TableTypeRecord): string {
+  if (t.shape === "round") return `⌀ ${t.width} m`;
+  return `${t.width} × ${t.depth} m`;
+}
 
 export interface TableTypeCatalogProps {
   venueId: string;
@@ -125,7 +142,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
     setRowError(null);
     setEditForm({
       name: t.name,
-      shape: t.shape === "rect" ? "rect" : "round",
+      shape: normalizeShape(t.shape),
       minSeats: String(t.minSeats),
       maxSeats: String(t.maxSeats),
       width: String(t.width),
@@ -191,8 +208,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                   <th style={{ textAlign: "left" }}>Shape</th>
                   <th style={{ textAlign: "left" }}>Min</th>
                   <th style={{ textAlign: "left" }}>Max</th>
-                  <th style={{ textAlign: "left" }}>Width (m)</th>
-                  <th style={{ textAlign: "left" }}>Depth (m)</th>
+                  <th style={{ textAlign: "left" }} colSpan={2}>Dimensions</th>
                   <th style={{ textAlign: "left" }}>Qty</th>
                   <th />
                 </tr>
@@ -211,12 +227,16 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                       <td>
                         <select
                           value={editForm.shape}
-                          onChange={(e) =>
-                            setEditForm((f) => ({ ...f, shape: e.target.value as "round" | "rect" }))
-                          }
+                          onChange={(e) => {
+                            const shape = e.target.value as Shape;
+                            setEditForm((f) =>
+                              shape === "round" ? { ...f, shape, depth: f.width } : { ...f, shape }
+                            );
+                          }}
                         >
-                          <option value="round">Round</option>
-                          <option value="rect">Rect</option>
+                          <option value="round">Redonda</option>
+                          <option value="oval">Oval</option>
+                          <option value="rect">Retangular</option>
                         </select>
                       </td>
                       <td>
@@ -237,26 +257,50 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                           style={{ width: 50 }}
                         />
                       </td>
-                      <td>
-                        <input
-                          type="number"
-                          step="0.1"
-                          min={0}
-                          value={editForm.width}
-                          onChange={(e) => setEditForm((f) => ({ ...f, width: e.target.value }))}
-                          style={{ width: 60 }}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          step="0.1"
-                          min={0}
-                          value={editForm.depth}
-                          onChange={(e) => setEditForm((f) => ({ ...f, depth: e.target.value }))}
-                          style={{ width: 60 }}
-                        />
-                      </td>
+                      {editForm.shape === "round" ? (
+                        <td colSpan={2}>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min={0}
+                            value={editForm.width}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, width: e.target.value, depth: e.target.value }))
+                            }
+                            style={{ width: 60 }}
+                            aria-label="Diâmetro (m)"
+                          />
+                        </td>
+                      ) : (
+                        <>
+                          <td>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min={0}
+                              value={editForm.width}
+                              onChange={(e) => setEditForm((f) => ({ ...f, width: e.target.value }))}
+                              style={{ width: 60 }}
+                              aria-label={
+                                editForm.shape === "oval" ? "Diâmetro maior (m)" : "Comprimento (m)"
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min={0}
+                              value={editForm.depth}
+                              onChange={(e) => setEditForm((f) => ({ ...f, depth: e.target.value }))}
+                              style={{ width: 60 }}
+                              aria-label={
+                                editForm.shape === "oval" ? "Diâmetro menor (m)" : "Largura (m)"
+                              }
+                            />
+                          </td>
+                        </>
+                      )}
                       <td>
                         <input
                           type="number"
@@ -282,11 +326,10 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                   ) : (
                     <tr key={t.id}>
                       <td>{t.name}</td>
-                      <td>{t.shape === "rect" ? "Rect" : "Round"}</td>
+                      <td>{shapeLabel(t.shape)}</td>
                       <td>{t.minSeats}</td>
                       <td>{t.maxSeats}</td>
-                      <td>{t.width}</td>
-                      <td>{t.depth}</td>
+                      <td colSpan={2}>{dimensionsLabel(t)}</td>
                       <td>{t.quantity}</td>
                       <td>
                         <button type="button" onClick={() => startEdit(t)}>
@@ -325,10 +368,14 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
             Shape{" "}
             <select
               value={form.shape}
-              onChange={(e) => setForm((f) => ({ ...f, shape: e.target.value as "round" | "rect" }))}
+              onChange={(e) => {
+                const shape = e.target.value as Shape;
+                setForm((f) => (shape === "round" ? { ...f, shape, depth: f.width } : { ...f, shape }));
+              }}
             >
-              <option value="round">Round</option>
-              <option value="rect">Rect</option>
+              <option value="round">Redonda</option>
+              <option value="oval">Oval</option>
+              <option value="rect">Retangular</option>
             </select>
           </label>
           <label>
@@ -351,28 +398,44 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
               style={{ width: 60 }}
             />
           </label>
-          <label>
-            Width (m){" "}
-            <input
-              type="number"
-              step="0.1"
-              min={0}
-              value={form.width}
-              onChange={(e) => setForm((f) => ({ ...f, width: e.target.value }))}
-              style={{ width: 70 }}
-            />
-          </label>
-          <label>
-            Depth (m){" "}
-            <input
-              type="number"
-              step="0.1"
-              min={0}
-              value={form.depth}
-              onChange={(e) => setForm((f) => ({ ...f, depth: e.target.value }))}
-              style={{ width: 70 }}
-            />
-          </label>
+          {form.shape === "round" ? (
+            <label>
+              Diâmetro (m){" "}
+              <input
+                type="number"
+                step="0.1"
+                min={0}
+                value={form.width}
+                onChange={(e) => setForm((f) => ({ ...f, width: e.target.value, depth: e.target.value }))}
+                style={{ width: 70 }}
+              />
+            </label>
+          ) : (
+            <>
+              <label>
+                {form.shape === "oval" ? "Diâmetro maior (m)" : "Comprimento (m)"}{" "}
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  value={form.width}
+                  onChange={(e) => setForm((f) => ({ ...f, width: e.target.value }))}
+                  style={{ width: 70 }}
+                />
+              </label>
+              <label>
+                {form.shape === "oval" ? "Diâmetro menor (m)" : "Largura (m)"}{" "}
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  value={form.depth}
+                  onChange={(e) => setForm((f) => ({ ...f, depth: e.target.value }))}
+                  style={{ width: 70 }}
+                />
+              </label>
+            </>
+          )}
           <label>
             Quantity{" "}
             <input
