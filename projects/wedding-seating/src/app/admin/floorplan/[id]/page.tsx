@@ -10,8 +10,9 @@ import TableInspector from "@/components/editor/TableInspector";
 import type { EditorTable, TablePreset } from "@/lib/floorplan/editorState";
 import type { CanvasMode } from "@/components/editor/FloorPlanCanvas";
 import type { Point } from "@/lib/floorplan/geometry";
-import { spacingViolations } from "@/lib/floorplan/spacing";
+import { spacingViolations, DEFAULT_TABLE_METRES } from "@/lib/floorplan/spacing";
 import { outOfBoundsTables } from "@/lib/floorplan/boundary";
+import { autoGridPositions } from "@/lib/floorplan/autoLayout";
 import type { TableTypeRecord } from "@/components/venue/TableTypeCatalog";
 
 const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), {
@@ -34,6 +35,20 @@ interface FloorPlanRecord {
   depth: number;
   minSpacing: number | null;
   boundary: string | null;
+}
+
+interface TemplateLine {
+  tableTypeId: string;
+  quantity: number;
+}
+
+interface TemplateRecord {
+  id: string;
+  venueId: string;
+  name: string;
+  minGuests: number;
+  maxGuests: number;
+  lines: string;
 }
 
 interface TableRecord {
@@ -73,6 +88,11 @@ export default function FloorPlanEditorPage() {
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [pendingPreset, setPendingPreset] = useState<TablePreset | null>(null);
 
+  const [templates, setTemplates] = useState<TemplateRecord[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
+  const [templateMessage, setTemplateMessage] = useState<string | null>(null);
+
   const [minSpacingInput, setMinSpacingInput] = useState("");
   const [savingSpacing, setSavingSpacing] = useState(false);
   const [spacingError, setSpacingError] = useState<string | null>(null);
@@ -96,9 +116,15 @@ export default function FloorPlanEditorPage() {
       } catch {
         setBoundaryPoints([]);
       }
-      const typesRes = await fetch(`/api/venues/${fp.venueId}/table-types`);
+      const [typesRes, templatesRes] = await Promise.all([
+        fetch(`/api/venues/${fp.venueId}/table-types`),
+        fetch(`/api/venues/${fp.venueId}/templates`),
+      ]);
       if (typesRes.ok) {
         setTableTypes((await typesRes.json()) as TableTypeRecord[]);
+      }
+      if (templatesRes.ok) {
+        setTemplates((await templatesRes.json()) as TemplateRecord[]);
       }
     }
     if (tablesRes.ok) {
@@ -245,6 +271,103 @@ export default function FloorPlanEditorPage() {
     setMode("add-table");
   }
 
+  function parseTemplateLines(lines: string): TemplateLine[] {
+    try {
+      const parsed = JSON.parse(lines);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (l): l is TemplateLine =>
+          l && typeof l.tableTypeId === "string" && typeof l.quantity === "number"
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  async function handleApplyTemplate() {
+    const template = templates.find((t) => t.id === selectedTemplateId);
+    if (!template) return;
+    setTemplateMessage(null);
+
+    const lines = parseTemplateLines(template.lines);
+    const presets: TablePreset[] = [];
+    for (const line of lines) {
+      const type = tableTypes.find((t) => t.id === line.tableTypeId);
+      if (!type || !(line.quantity > 0)) continue; // skip unknown table types
+      for (let i = 0; i < line.quantity; i++) {
+        presets.push({
+          shape: type.shape === "rect" ? "rect" : "round",
+          capacity: type.maxSeats,
+          minCapacity: type.minSeats,
+          width: type.width,
+          depth: type.depth,
+        });
+      }
+    }
+
+    if (presets.length === 0) {
+      setTemplateMessage("Nenhuma mesa reconhecida neste template");
+      return;
+    }
+
+    const scale = floorPlan?.scale ?? 0;
+    const largestDimMetres = Math.max(
+      ...presets.map((p) => Math.max(p.width ?? 0, p.depth ?? 0)),
+      DEFAULT_TABLE_METRES
+    );
+    const GAP_PX = 20;
+    const DEFAULT_CELL_PX = 120;
+    const ORIGIN = 80;
+    const cellPx = scale > 0 ? largestDimMetres * scale + GAP_PX : DEFAULT_CELL_PX;
+    const positions = autoGridPositions(presets.length, {
+      originX: ORIGIN,
+      originY: ORIGIN,
+      cellPx,
+    });
+
+    setApplyingTemplate(true);
+    try {
+      // Update the visual editor state right away (non-destructive: existing
+      // tables are untouched, these are appended via the same add-table path
+      // used by "adicionar do catálogo").
+      presets.forEach((preset, i) => addTable(positions[i], preset));
+
+      // Persist explicitly rather than via the hook's `save()` — that closure
+      // captures `state.tables` from this render, which predates the
+      // dispatches above (React batches state updates), so it would PUT the
+      // pre-template table list. Build the merged list ourselves instead.
+      const existingTables = state.tables.map(({ id, ...rest }) => {
+        void id;
+        return rest;
+      });
+      const newTables = presets.map((preset, i) => ({
+        shape: preset.shape ?? "round",
+        capacity: preset.capacity ?? 8,
+        x: positions[i].x,
+        y: positions[i].y,
+        fixed: false,
+        width: preset.width,
+        depth: preset.depth,
+        minCapacity: preset.minCapacity,
+      }));
+      const res = await fetch(`/api/floorplans/${floorPlanId}/tables`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tables: [...existingTables, ...newTables] }),
+      });
+      if (!res.ok) throw new Error("failed to save layout");
+      const getRes = await fetch(`/api/floorplans/${floorPlanId}/tables`);
+      const saved = (await getRes.json()) as EditorTable[];
+      load(saved);
+      setTemplateMessage(`${presets.length} mesas adicionadas do template ${template.name}`);
+      setSelectedTemplateId("");
+    } catch {
+      setTemplateMessage("Falha ao aplicar o template");
+    } finally {
+      setApplyingTemplate(false);
+    }
+  }
+
   async function handleSaveSpacing() {
     setSpacingError(null);
     const trimmed = minSpacingInput.trim();
@@ -343,6 +466,30 @@ export default function FloorPlanEditorPage() {
               </select>
             </label>
             {pendingPreset && <span>Clique no mapa para colocar a mesa</span>}
+
+            <label>
+              Aplicar template:{" "}
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                disabled={calibrationActive || boundaryDrawActive || templates.length === 0}
+              >
+                <option value="">-- selecionar template --</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.minGuests}-{t.maxGuests})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={handleApplyTemplate}
+              disabled={!selectedTemplateId || applyingTemplate}
+            >
+              {applyingTemplate ? "A aplicar..." : "Aplicar"}
+            </button>
+            {templateMessage && <span>{templateMessage}</span>}
 
             <button type="button" onClick={handleSave} disabled={!state.dirty || saving}>
               {saving ? "Saving..." : "Save layout"}
