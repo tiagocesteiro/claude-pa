@@ -131,7 +131,7 @@ export default function FloorPlanEditorPage() {
       const tables = (await tablesRes.json()) as TableRecord[];
       const editorTables: EditorTable[] = tables.map((t) => ({
         id: t.id,
-        shape: t.shape === "rect" ? "rect" : "round",
+        shape: t.shape === "oval" || t.shape === "rect" ? t.shape : "round",
         capacity: t.capacity,
         x: t.x,
         y: t.y,
@@ -262,7 +262,7 @@ export default function FloorPlanEditorPage() {
     const type = tableTypes.find((t) => t.id === id);
     if (!type) return;
     setPendingPreset({
-      shape: type.shape === "rect" ? "rect" : "round",
+      shape: type.shape === "oval" || type.shape === "rect" ? type.shape : "round",
       capacity: type.maxSeats,
       minCapacity: type.minSeats,
       width: type.width,
@@ -296,7 +296,7 @@ export default function FloorPlanEditorPage() {
       if (!type || !(line.quantity > 0)) continue; // skip unknown table types
       for (let i = 0; i < line.quantity; i++) {
         presets.push({
-          shape: type.shape === "rect" ? "rect" : "round",
+          shape: type.shape === "oval" || type.shape === "rect" ? type.shape : "round",
           capacity: type.maxSeats,
           minCapacity: type.minSeats,
           width: type.width,
@@ -572,6 +572,7 @@ export default function FloorPlanEditorPage() {
             <FloorPlanCanvas
               imageUrl={imageUrlFor(floorPlan?.image ?? "")}
               tables={state.tables}
+              scale={floorPlan?.scale ?? 0}
               selectedId={state.selectedId}
               mode={mode}
               calibrationPoints={calibrationPoints}

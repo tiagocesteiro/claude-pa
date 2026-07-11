@@ -26,6 +26,8 @@ export interface PlanTable {
   x: number;
   y: number;
   fixed: boolean;
+  width?: number | null;
+  depth?: number | null;
 }
 
 export interface PlanConstraint {

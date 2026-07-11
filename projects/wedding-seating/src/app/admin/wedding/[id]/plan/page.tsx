@@ -43,6 +43,7 @@ const CANVAS_HEIGHT = 640;
 interface FloorPlanOption {
   id: string;
   image: string;
+  scale: number;
   venue?: { name: string };
 }
 
@@ -134,6 +135,8 @@ export default function PlanPage() {
         y: t.y,
         label: tableLabels.get(t.id),
         fixed: t.fixed,
+        width: t.width,
+        depth: t.depth,
         guests: guests
           .filter((g) => g.assignedTableId === t.id)
           .map((g) => ({ id: g.id, name: g.name, locked: g.locked })),
@@ -217,6 +220,7 @@ export default function PlanPage() {
           <PlanCanvas
             imageUrl={imageUrlFor(selectedFloorPlan?.image ?? "")}
             tables={tableViews}
+            scale={selectedFloorPlan?.scale ?? 0}
             overCapacityIds={violations.overCapacity}
             maxWidth={CANVAS_WIDTH}
             maxHeight={CANVAS_HEIGHT}

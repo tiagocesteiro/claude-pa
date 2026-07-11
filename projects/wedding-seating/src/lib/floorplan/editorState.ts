@@ -2,7 +2,7 @@ import type { Point } from "./geometry";
 
 export interface EditorTable {
   id: string;
-  shape: "round" | "rect";
+  shape: "round" | "oval" | "rect";
   capacity: number;
   x: number;
   y: number;

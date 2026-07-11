@@ -2,7 +2,7 @@ import type { Table } from "@prisma/client";
 import { prisma } from "./client";
 
 export interface TableInput {
-  shape: "round" | "rect";
+  shape: "round" | "oval" | "rect";
   capacity: number;
   x: number;
   y: number;

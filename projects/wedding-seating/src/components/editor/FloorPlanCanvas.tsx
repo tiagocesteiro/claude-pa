@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Stage, Layer, Image as KonvaImage, Circle, Rect, Text, Line } from "react-konva";
+import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text, Line } from "react-konva";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { EditorTable } from "@/lib/floorplan/editorState";
 import type { Point } from "@/lib/floorplan/geometry";
-
-const ROUND_RADIUS = 40;
-const RECT_WIDTH = 110;
-const RECT_HEIGHT = 60;
+import { tableRenderSize } from "@/lib/floorplan/tableShape";
 
 function useImageElement(src: string | undefined): HTMLImageElement | undefined {
   const [image, setImage] = useState<HTMLImageElement | undefined>(undefined);
@@ -36,6 +33,9 @@ export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-boundary";
 export interface FloorPlanCanvasProps {
   imageUrl?: string;
   tables: EditorTable[];
+  /** Floor plan's pixels-per-metre calibration; drives each table's real render size
+   * via `tableRenderSize`. 0/absent falls back to `tableRenderSize`'s fixed defaults. */
+  scale?: number;
   selectedId: string | null;
   mode: CanvasMode;
   /** Reference calibration points, in image-natural pixel space. */
@@ -58,6 +58,7 @@ export interface FloorPlanCanvasProps {
 export default function FloorPlanCanvas({
   imageUrl,
   tables,
+  scale = 0,
   selectedId,
   mode,
   calibrationPoints = [],
@@ -144,6 +145,7 @@ export default function FloorPlanCanvas({
             key={t.id}
             table={t}
             displayScale={displayScale}
+            scale={scale}
             isSelected={t.id === selectedId}
             hasWarning={warningTableIds.includes(t.id)}
             onSelect={() => onSelect(t.id)}
@@ -178,6 +180,7 @@ export default function FloorPlanCanvas({
 function TableShape({
   table,
   displayScale,
+  scale,
   isSelected,
   hasWarning,
   onSelect,
@@ -185,6 +188,7 @@ function TableShape({
 }: {
   table: EditorTable;
   displayScale: number;
+  scale: number;
   isSelected: boolean;
   hasWarning?: boolean;
   onSelect: () => void;
@@ -197,18 +201,23 @@ function TableShape({
   // table.x/y are stored in image-natural pixels; scale up only for display.
   const displayX = table.x * displayScale;
   const displayY = table.y * displayScale;
-  const radius = ROUND_RADIUS * displayScale;
-  const rectWidth = RECT_WIDTH * displayScale;
-  const rectHeight = RECT_HEIGHT * displayScale;
-  const labelWidth = 60 * displayScale;
+
+  // Real render size (natural pixels) from shape + width/depth (metres) x floor-plan
+  // scale, then scaled up for on-screen display — same helper the plan canvas uses,
+  // so the drag hit-box (the shape node itself) always matches the visible outline.
+  const { shape, wPx, hPx } = tableRenderSize(table, scale);
+  const width = wPx * displayScale;
+  const height = hPx * displayScale;
+  const labelWidth = Math.max(width, 60 * displayScale);
 
   return (
     <>
-      {table.shape === "round" ? (
-        <Circle
+      {shape === "round" || shape === "oval" ? (
+        <Ellipse
           x={displayX}
           y={displayY}
-          radius={radius}
+          radiusX={width / 2}
+          radiusY={height / 2}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
@@ -221,10 +230,10 @@ function TableShape({
         <Rect
           x={displayX}
           y={displayY}
-          offsetX={rectWidth / 2}
-          offsetY={rectHeight / 2}
-          width={rectWidth}
-          height={rectHeight}
+          offsetX={width / 2}
+          offsetY={height / 2}
+          width={width}
+          height={height}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}

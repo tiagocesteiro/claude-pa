@@ -25,9 +25,12 @@ export default function TableInspector({ table, onUpdate, onDelete }: TableInspe
           Shape:{" "}
           <select
             value={table.shape}
-            onChange={(e) => onUpdate(table.id, { shape: e.target.value as "round" | "rect" })}
+            onChange={(e) =>
+              onUpdate(table.id, { shape: e.target.value as "round" | "oval" | "rect" })
+            }
           >
             <option value="round">Round</option>
+            <option value="oval">Oval</option>
             <option value="rect">Rectangular</option>
           </select>
         </label>

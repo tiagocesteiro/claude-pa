@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Stage, Layer, Image as KonvaImage, Circle, Rect, Text } from "react-konva";
+import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text } from "react-konva";
 import { chairPositions } from "@/lib/floorplan/chairs";
-
-const ROUND_RADIUS = 46;
-const RECT_WIDTH = 130;
-const RECT_HEIGHT = 70;
+import { tableRenderSize, type TableShapeKind } from "@/lib/floorplan/tableShape";
 
 // Chair dots (natural pixels, before displayScale). Occupied chairs with no attribute
 // color selected fall back to CHAIR_NEUTRAL_FILL; empty seats always render CHAIR_EMPTY_FILL.
@@ -52,11 +49,17 @@ export interface PlanTableView {
   /** Stable human label ("Mesa 1"). Falls back to a short id if omitted. */
   label?: string;
   fixed: boolean;
+  /** Metres — same convention as the Prisma Table model; feeds `tableRenderSize`. */
+  width?: number | null;
+  depth?: number | null;
 }
 
 export interface PlanCanvasProps {
   imageUrl?: string;
   tables: PlanTableView[];
+  /** Floor plan's pixels-per-metre calibration; drives each table's real render size
+   * via `tableRenderSize`. 0/absent falls back to `tableRenderSize`'s fixed defaults. */
+  scale?: number;
   /** Table ids currently over capacity — rendered in red. */
   overCapacityIds: string[];
   maxWidth: number;
@@ -77,6 +80,7 @@ export interface PlanCanvasProps {
 
 interface TableGeom {
   table: PlanTableView;
+  shape: TableShapeKind;
   displayX: number;
   displayY: number;
   width: number;
@@ -86,6 +90,7 @@ interface TableGeom {
 export default function PlanCanvas({
   imageUrl,
   tables,
+  scale = 0,
   overCapacityIds,
   maxWidth,
   maxHeight,
@@ -108,13 +113,14 @@ export default function PlanCanvas({
   const overCapacitySet = new Set(overCapacityIds);
 
   const geoms: TableGeom[] = tables.map((t) => {
-    const isRound = t.shape === "round";
+    const { shape, wPx, hPx } = tableRenderSize(t, scale);
     return {
       table: t,
+      shape,
       displayX: t.x * displayScale,
       displayY: t.y * displayScale,
-      width: (isRound ? ROUND_RADIUS * 2 : RECT_WIDTH) * displayScale,
-      height: (isRound ? ROUND_RADIUS * 2 : RECT_HEIGHT) * displayScale,
+      width: wPx * displayScale,
+      height: hPx * displayScale,
     };
   });
 
@@ -137,8 +143,15 @@ export default function PlanCanvas({
         <Layer listening={false}>
           {geoms.map((g) =>
             chairPositions(
-              { x: g.table.x, y: g.table.y, capacity: g.table.capacity, shape: g.table.shape },
-              1
+              {
+                x: g.table.x,
+                y: g.table.y,
+                capacity: g.table.capacity,
+                shape: g.table.shape,
+                width: g.table.width,
+                depth: g.table.depth,
+              },
+              scale
             ).map((chair, i) => {
               const guest = g.table.guests[i];
               const fill = guest ? colorByGuest[guest.id] ?? CHAIR_NEUTRAL_FILL : CHAIR_EMPTY_FILL;
@@ -286,7 +299,7 @@ export default function PlanCanvas({
 }
 
 function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boolean }) {
-  const { table, displayX, displayY, width, height } = geom;
+  const { table, shape, displayX, displayY, width, height } = geom;
   const stroke = overCapacity ? "#dc2626" : table.fixed ? "#b45309" : "#111827";
   const strokeWidth = overCapacity ? 3 : table.fixed ? 2.5 : 1.5;
   const fill = overCapacity ? "#fee2e2" : "#fef3c7";
@@ -298,11 +311,12 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
 
   return (
     <>
-      {table.shape === "round" ? (
-        <Circle
+      {shape === "round" || shape === "oval" ? (
+        <Ellipse
           x={displayX}
           y={displayY}
-          radius={width / 2}
+          radiusX={width / 2}
+          radiusY={height / 2}
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
