@@ -4,6 +4,7 @@ import {
   updateFloorPlanScale,
   updateFloorPlanSpacing,
   updateFloorPlanBoundary,
+  updateFloorPlanZones,
 } from "@/lib/db/floorplans";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +21,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   if (typeof b?.boundary === "string" || b?.boundary === null) {
     return NextResponse.json(await updateFloorPlanBoundary(id, b.boundary));
+  }
+  if (typeof b?.zones === "string" || b?.zones === null) {
+    return NextResponse.json(await updateFloorPlanZones(id, b.zones));
   }
   if (typeof b?.scale !== "number") return NextResponse.json({ error: "scale required" }, { status: 400 });
   return NextResponse.json(await updateFloorPlanScale(id, b.scale));

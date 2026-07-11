@@ -1,5 +1,5 @@
 import { describe, it, expect, afterAll } from "vitest";
-import { createFloorPlan, getFloorPlan, updateFloorPlanScale, updateFloorPlanBoundary } from "./floorplans";
+import { createFloorPlan, getFloorPlan, updateFloorPlanScale, updateFloorPlanBoundary, updateFloorPlanZones } from "./floorplans";
 import { createVenue } from "./venues";
 import { prisma } from "./client";
 
@@ -27,6 +27,16 @@ it("stores and clears a floor plan boundary", async () => {
   expect(JSON.parse(updated.boundary!)).toHaveLength(3);
   const cleared = await updateFloorPlanBoundary(fp.id, null);
   expect(cleared.boundary).toBeNull();
+});
+
+it("stores and clears a floor plan's zones", async () => {
+  const v = await createVenue({ name: "V Zones" });
+  const fp = await createFloorPlan({ venueId: v.id, image: "x", scale: 50, width: 10, depth: 10 });
+  const zones = JSON.stringify([{ name: "Family", points: [{ x: 0, y: 0 }, { x: 50, y: 0 }, { x: 50, y: 50 }] }]);
+  const updated = await updateFloorPlanZones(fp.id, zones);
+  expect(JSON.parse(updated.zones!)).toHaveLength(1);
+  const cleared = await updateFloorPlanZones(fp.id, null);
+  expect(cleared.zones).toBeNull();
 });
 
 afterAll(async () => { await prisma.$disconnect(); });

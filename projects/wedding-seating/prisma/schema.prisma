@@ -33,14 +33,17 @@ model TableType {
 }
 
 model LayoutTemplate {
-  id        String  @id @default(cuid())
-  venueId   String
-  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  name      String
-  minGuests Int
-  maxGuests Int
-  lines     String  // JSON: { tableTypeId: string; quantity: number }[]
-  createdAt DateTime @default(now())
+  id          String     @id @default(cuid())
+  venueId     String
+  venue       Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  floorPlanId String?
+  floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  name        String
+  minGuests   Int
+  maxGuests   Int
+  lines       String?    // JSON: { tableTypeId: string; quantity: number }[] (legacy/optional)
+  tables      Table[]
+  createdAt   DateTime   @default(now())
 }
 
 model FloorPlan {
@@ -53,15 +56,19 @@ model FloorPlan {
   depth     Float    // metres
   minSpacing Float?  // metres, minimum clearance between tables
   boundary  String?  // JSON array of {x,y} points, natural pixels
+  zones     String?  // JSON, zone definitions
   tables    Table[]
+  templates LayoutTemplate[]
   weddings  Wedding[]
   createdAt DateTime @default(now())
 }
 
 model Table {
   id          String   @id @default(cuid())
-  floorPlanId String
-  floorPlan   FloorPlan @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+  floorPlanId String?
+  floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+  templateId  String?
+  template    LayoutTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
   shape       String   // "round" | "rect"
   capacity    Int
   width       Float?   // metres

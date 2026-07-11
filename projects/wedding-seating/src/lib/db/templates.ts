@@ -2,7 +2,7 @@ import type { LayoutTemplate } from "@prisma/client";
 import { prisma } from "./client";
 
 export function createTemplate(input: {
-  venueId: string; name: string; minGuests: number; maxGuests: number; lines: string;
+  venueId: string; floorPlanId?: string; name: string; minGuests: number; maxGuests: number; lines?: string;
 }): Promise<LayoutTemplate> {
   return prisma.layoutTemplate.create({ data: input });
 }

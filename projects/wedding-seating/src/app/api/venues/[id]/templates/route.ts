@@ -14,6 +14,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const template = await createTemplate({
     venueId: id,
+    floorPlanId: b.floorPlanId,
     name: b.name,
     minGuests: b.minGuests,
     maxGuests: b.maxGuests,
