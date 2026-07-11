@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text, Line } from "react-konva";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
@@ -28,7 +28,10 @@ function useImageElement(src: string | undefined): HTMLImageElement | undefined 
   return image;
 }
 
-export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-boundary";
+export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-zone";
+
+/** Stroke colors cycled per zone index so multiple zones stay visually distinguishable. */
+const ZONE_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c"];
 
 export interface FloorPlanCanvasProps {
   imageUrl?: string;
@@ -40,8 +43,10 @@ export interface FloorPlanCanvasProps {
   mode: CanvasMode;
   /** Reference calibration points, in image-natural pixel space. */
   calibrationPoints?: Point[];
-  /** Room boundary polygon, in image-natural pixel space. */
-  boundary?: Point[];
+  /** Zones (rooms/areas), each a closed polygon in image-natural pixel space. In
+   * "draw-zone" mode, clicks are reported via onZoneClick and the caller is
+   * expected to append them to the last (active) zone in this array. */
+  zones?: Point[][];
   /** Max on-screen bounds for the stage; actual stage size is fit within these preserving image aspect ratio. */
   maxWidth: number;
   maxHeight: number;
@@ -52,7 +57,7 @@ export interface FloorPlanCanvasProps {
   onMoveTable: (id: string, to: Point) => void;
   onSelect: (id: string | null) => void;
   onCalibrateClick?: (at: Point) => void;
-  onBoundaryClick?: (at: Point) => void;
+  onZoneClick?: (at: Point) => void;
 }
 
 export default function FloorPlanCanvas({
@@ -62,7 +67,7 @@ export default function FloorPlanCanvas({
   selectedId,
   mode,
   calibrationPoints = [],
-  boundary = [],
+  zones = [],
   maxWidth,
   maxHeight,
   warningTableIds = [],
@@ -70,7 +75,7 @@ export default function FloorPlanCanvas({
   onMoveTable,
   onSelect,
   onCalibrateClick,
-  onBoundaryClick,
+  onZoneClick,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
@@ -102,15 +107,15 @@ export default function FloorPlanCanvas({
       onCalibrateClick?.(naturalPos);
       return;
     }
-    if (mode === "draw-boundary") {
-      onBoundaryClick?.(naturalPos);
+    if (mode === "draw-zone") {
+      onZoneClick?.(naturalPos);
       return;
     }
     onSelect(null);
   }
 
   const cursor =
-    mode === "add-table" ? "copy" : mode === "calibrate" || mode === "draw-boundary" ? "crosshair" : "default";
+    mode === "add-table" ? "copy" : mode === "calibrate" || mode === "draw-zone" ? "crosshair" : "default";
 
   return (
     <Stage
@@ -126,18 +131,25 @@ export default function FloorPlanCanvas({
         )}
       </Layer>
       <Layer listening={false}>
-        {boundary.length >= 2 && (
-          <Line
-            points={boundary.flatMap((p) => [p.x * displayScale, p.y * displayScale])}
-            closed
-            fill="rgba(37, 99, 235, 0.15)"
-            stroke="#2563eb"
-            strokeWidth={2}
-          />
-        )}
-        {boundary.map((p, i) => (
-          <Circle key={i} x={p.x * displayScale} y={p.y * displayScale} radius={4} fill="#2563eb" />
-        ))}
+        {zones.map((zone, zi) => {
+          const color = ZONE_COLORS[zi % ZONE_COLORS.length];
+          return (
+            <Fragment key={zi}>
+              {zone.length >= 2 && (
+                <Line
+                  points={zone.flatMap((p) => [p.x * displayScale, p.y * displayScale])}
+                  closed
+                  fill="rgba(37, 99, 235, 0.12)"
+                  stroke={color}
+                  strokeWidth={2}
+                />
+              )}
+              {zone.map((p, i) => (
+                <Circle key={i} x={p.x * displayScale} y={p.y * displayScale} radius={4} fill={color} />
+              ))}
+            </Fragment>
+          );
+        })}
       </Layer>
       <Layer>
         {tables.map((t) => (
