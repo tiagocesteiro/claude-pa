@@ -9,7 +9,7 @@ export function createTemplate(input: {
 export function listTemplates(venueId: string): Promise<LayoutTemplate[]> {
   return prisma.layoutTemplate.findMany({ where: { venueId }, orderBy: { createdAt: "asc" } });
 }
-export function updateTemplate(id: string, patch: Partial<Pick<LayoutTemplate, "name" | "minGuests" | "maxGuests" | "lines">>): Promise<LayoutTemplate> {
+export function updateTemplate(id: string, patch: Partial<Pick<LayoutTemplate, "name" | "minGuests" | "maxGuests" | "lines" | "floorPlanId">>): Promise<LayoutTemplate> {
   return prisma.layoutTemplate.update({ where: { id }, data: patch });
 }
 export async function deleteTemplate(id: string): Promise<void> {

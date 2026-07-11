@@ -10,6 +10,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       minGuests: b?.minGuests,
       maxGuests: b?.maxGuests,
       lines: b?.lines,
+      floorPlanId: b?.floorPlanId,
     }).filter(([, v]) => v !== undefined)
   );
   return NextResponse.json(await updateTemplate(id, patch));

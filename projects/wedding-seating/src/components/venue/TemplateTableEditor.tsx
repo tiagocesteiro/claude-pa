@@ -1,0 +1,281 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import dynamic from "next/dynamic";
+import type { CanvasMode } from "@/components/editor/FloorPlanCanvas";
+import {
+  editorReducer,
+  initialEditorState,
+  type EditorTable,
+  type TablePreset,
+} from "@/lib/floorplan/editorState";
+import type { Point } from "@/lib/floorplan/geometry";
+import { pointInPolygon } from "@/lib/floorplan/boundary";
+import { spacingViolations } from "@/lib/floorplan/spacing";
+import type { TableInput } from "@/lib/db/tables";
+
+// Reuses the same canvas as the floor-plan/plan editors (Plan 2/12): image
+// background + zones + realistic round/oval/rect table shapes + drag. Loaded
+// dynamically because react-konva touches the DOM and can't run during SSR.
+const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), {
+  ssr: false,
+});
+
+const CANVAS_WIDTH = 900;
+const CANVAS_HEIGHT = 600;
+
+interface TableTypeRecord {
+  id: string;
+  name: string;
+  shape: string;
+  minSeats: number;
+  maxSeats: number;
+  width: number;
+  depth: number;
+}
+
+interface FloorPlanRecord {
+  id: string;
+  venueId: string;
+  image: string;
+  scale: number;
+  width: number;
+  depth: number;
+  minSpacing: number | null;
+  zones: string | null;
+  boundary: string | null;
+}
+
+function imageUrlFor(image: string): string | undefined {
+  if (!image) return undefined;
+  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
+  return `/api/uploads/${rel}`;
+}
+
+/** Zones (read-only background) for this layout: prefers the multi-zone field,
+ * falling back to the legacy single `boundary` polygon (same migration the
+ * floor-plan editor performs) so older layouts still render a background. */
+function parseZones(fp: FloorPlanRecord | null): Point[][] {
+  if (!fp) return [];
+  try {
+    if (fp.zones) return JSON.parse(fp.zones) as Point[][];
+    if (fp.boundary) return [JSON.parse(fp.boundary) as Point[]];
+  } catch {
+    // malformed zone/boundary JSON on the floor plan — render with no zones
+  }
+  return [];
+}
+
+function normalizeShape(shape: string): "round" | "oval" | "rect" {
+  return shape === "oval" || shape === "rect" ? shape : "round";
+}
+
+export interface TemplateTableEditorProps {
+  templateId: string;
+  venueId: string;
+  floorPlanId: string;
+  /** Optional close affordance; the parent decides what "closing" means (e.g. collapse inline). */
+  onClose?: () => void;
+}
+
+export default function TemplateTableEditor({
+  templateId,
+  venueId,
+  floorPlanId,
+  onClose,
+}: TemplateTableEditorProps) {
+  const [state, dispatch] = useReducer(editorReducer, undefined, initialEditorState);
+  const [floorPlan, setFloorPlan] = useState<FloorPlanRecord | null>(null);
+  const [tableTypes, setTableTypes] = useState<TableTypeRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [mode, setMode] = useState<CanvasMode>("select");
+  const [presetTypeId, setPresetTypeId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [tablesRes, fpRes, typesRes] = await Promise.all([
+        fetch(`/api/templates/${templateId}/tables`),
+        fetch(`/api/floorplans/${floorPlanId}`),
+        fetch(`/api/venues/${venueId}/table-types`),
+      ]);
+      if (!tablesRes.ok) throw new Error("failed to load template tables");
+      const tables = (await tablesRes.json()) as EditorTable[];
+      dispatch({ type: "load", tables });
+      setFloorPlan(fpRes.ok ? ((await fpRes.json()) as FloorPlanRecord) : null);
+      setTableTypes(typesRes.ok ? ((await typesRes.json()) as TableTypeRecord[]) : []);
+    } catch {
+      setLoadError("Failed to load editor data");
+    } finally {
+      setLoading(false);
+    }
+  }, [templateId, floorPlanId, venueId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+    load();
+  }, [load]);
+
+  const zones = useMemo(() => parseZones(floorPlan), [floorPlan]);
+
+  function presetFor(typeId: string): TablePreset | undefined {
+    const t = tableTypes.find((tt) => tt.id === typeId);
+    if (!t) return undefined;
+    return {
+      shape: normalizeShape(t.shape),
+      capacity: t.maxSeats,
+      minCapacity: t.minSeats,
+      width: t.width,
+      depth: t.depth,
+    };
+  }
+
+  function handleAddTable(at: Point) {
+    dispatch({ type: "add-table", at, preset: presetFor(presetTypeId) });
+  }
+
+  function handleMoveTable(id: string, to: Point) {
+    dispatch({ type: "move-table", id, to });
+  }
+
+  // Spacing: reuses the floor-plan spacing check against this layout's
+  // minSpacing/scale (0 when uncalibrated — spacingViolations then only ever
+  // flags literally overlapping tables, never a false positive).
+  const violations = useMemo(
+    () => spacingViolations(state.tables, floorPlan?.minSpacing ?? 0, floorPlan?.scale || 1),
+    [state.tables, floorPlan]
+  );
+  const spacingIds = useMemo(() => new Set(violations.flatMap((v) => [v.a, v.b])), [violations]);
+
+  // Out-of-zone: a table is flagged when its center falls inside NONE of the
+  // layout's zones. No zones drawn yet = nothing to flag against.
+  const outOfZoneIds = useMemo(() => {
+    if (zones.length === 0) return [] as string[];
+    return state.tables
+      .filter((t) => !zones.some((zone) => pointInPolygon({ x: t.x, y: t.y }, zone)))
+      .map((t) => t.id);
+  }, [state.tables, zones]);
+
+  const warningTableIds = useMemo(
+    () => Array.from(new Set([...spacingIds, ...outOfZoneIds])),
+    [spacingIds, outOfZoneIds]
+  );
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    setSavedAt(null);
+    try {
+      const tables: TableInput[] = state.tables.map(({ id, width, depth, minCapacity, ...rest }) => {
+        void id;
+        return {
+          ...rest,
+          width: width ?? undefined,
+          depth: depth ?? undefined,
+          minCapacity: minCapacity ?? undefined,
+        };
+      });
+      const res = await fetch(`/api/templates/${templateId}/tables`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tables }),
+      });
+      if (!res.ok) throw new Error("failed to save template tables");
+      const getRes = await fetch(`/api/templates/${templateId}/tables`);
+      const saved = (await getRes.json()) as EditorTable[];
+      dispatch({ type: "load", tables: saved });
+      setSavedAt(Date.now());
+    } catch {
+      setSaveError("Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginTop: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <strong>Editor de mesas do template</strong>
+        {onClose && (
+          <button type="button" onClick={onClose}>
+            Fechar
+          </button>
+        )}
+      </div>
+
+      {loading && <p>Loading...</p>}
+      {loadError && <p style={{ color: "#dc2626" }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0", flexWrap: "wrap" }}>
+            <label>
+              Tipo de mesa{" "}
+              <select value={presetTypeId} onChange={(e) => setPresetTypeId(e.target.value)}>
+                <option value="">Genérica (redonda, 8 lugares)</option>
+                {tableTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => setMode((m) => (m === "add-table" ? "select" : "add-table"))}
+              style={{ fontWeight: mode === "add-table" ? 700 : 400 }}
+            >
+              {mode === "add-table" ? "A adicionar — clique no mapa" : "Adicionar do catálogo"}
+            </button>
+            <button type="button" onClick={handleSave} disabled={saving}>
+              {saving ? "A guardar..." : "Guardar"}
+            </button>
+            {savedAt !== null && <span style={{ color: "#059669" }}>Guardado.</span>}
+          </div>
+
+          {saveError && <p style={{ color: "#dc2626" }}>{saveError}</p>}
+
+          {(spacingIds.size > 0 || outOfZoneIds.length > 0) && (
+            <div style={{ marginBottom: 8 }}>
+              {spacingIds.size > 0 && (
+                <p style={{ color: "#f59e0b", margin: "4px 0" }} data-testid="spacing-warning">
+                  {spacingIds.size} mesa(s) demasiado próximas.
+                </p>
+              )}
+              {outOfZoneIds.length > 0 && (
+                <p style={{ color: "#dc2626", margin: "4px 0" }} data-testid="zone-warning">
+                  {outOfZoneIds.length} mesa(s) fora de qualquer zona.
+                </p>
+              )}
+            </div>
+          )}
+
+          {!floorPlan?.image && (
+            <p style={{ color: "#6b7280" }}>Esta planta ainda não tem imagem.</p>
+          )}
+
+          <FloorPlanCanvas
+            imageUrl={imageUrlFor(floorPlan?.image ?? "")}
+            tables={state.tables}
+            scale={floorPlan?.scale ?? 0}
+            selectedId={state.selectedId}
+            mode={mode}
+            zones={zones}
+            maxWidth={CANVAS_WIDTH}
+            maxHeight={CANVAS_HEIGHT}
+            warningTableIds={warningTableIds}
+            onAddTable={handleAddTable}
+            onMoveTable={handleMoveTable}
+            onSelect={(id) => dispatch({ type: "select", id })}
+          />
+        </>
+      )}
+    </div>
+  );
+}

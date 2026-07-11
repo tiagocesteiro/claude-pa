@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import TemplateTableEditor from "@/components/venue/TemplateTableEditor";
 
 interface TableTypeRecord {
   id: string;
@@ -19,10 +20,18 @@ interface TemplateLine {
 interface TemplateRecord {
   id: string;
   venueId: string;
+  floorPlanId: string | null;
   name: string;
   minGuests: number;
   maxGuests: number;
   lines: string;
+}
+
+interface FloorPlanOption {
+  id: string;
+  venueId: string;
+  image: string;
+  createdAt: string;
 }
 
 interface LineRow {
@@ -34,6 +43,7 @@ interface FormValues {
   name: string;
   minGuests: string;
   maxGuests: string;
+  floorPlanId: string;
   lines: LineRow[];
 }
 
@@ -42,7 +52,7 @@ function emptyLine(): LineRow {
 }
 
 function emptyForm(): FormValues {
-  return { name: "", minGuests: "", maxGuests: "", lines: [emptyLine()] };
+  return { name: "", minGuests: "", maxGuests: "", floorPlanId: "", lines: [emptyLine()] };
 }
 
 function parseLines(lines: string): TemplateLine[] {
@@ -61,6 +71,7 @@ export default function VenueTemplatesPage() {
 
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
   const [tableTypes, setTableTypes] = useState<TableTypeRecord[]>([]);
+  const [floorPlans, setFloorPlans] = useState<FloorPlanOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState<FormValues>(emptyForm);
@@ -72,19 +83,31 @@ export default function VenueTemplatesPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
 
+  // Template whose table mini-editor is currently open below its row (one at a time).
+  const [openEditorId, setOpenEditorId] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [templatesRes, tableTypesRes] = await Promise.all([
+      const [templatesRes, tableTypesRes, floorPlansRes] = await Promise.all([
         fetch(`/api/venues/${venueId}/templates`),
         fetch(`/api/venues/${venueId}/table-types`),
+        fetch(`/api/floorplans`),
       ]);
       if (!templatesRes.ok) throw new Error("failed to load templates");
       if (!tableTypesRes.ok) throw new Error("failed to load table types");
+      if (!floorPlansRes.ok) throw new Error("failed to load floor plans");
       const templatesData = (await templatesRes.json()) as TemplateRecord[];
       const tableTypesData = (await tableTypesRes.json()) as TableTypeRecord[];
+      const floorPlansData = (await floorPlansRes.json()) as FloorPlanOption[];
       setTemplates(templatesData);
       setTableTypes(tableTypesData);
+      setFloorPlans(
+        floorPlansData
+          .filter((fp) => fp.venueId === venueId)
+          .slice()
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      );
     } catch {
       setError("Failed to load templates");
     } finally {
@@ -101,12 +124,20 @@ export default function VenueTemplatesPage() {
     return tableTypes.find((t) => t.id === id)?.name ?? "(tipo removido)";
   }
 
+  function layoutLabel(floorPlanId: string | null): string {
+    if (!floorPlanId) return "sem planta";
+    const index = floorPlans.findIndex((fp) => fp.id === floorPlanId);
+    if (index === -1) return "(planta removida)";
+    return `Planta ${index + 1}`;
+  }
+
   function validate(values: FormValues): string | null {
     if (!values.name.trim()) return "Name is required";
     const minGuests = Number(values.minGuests);
     const maxGuests = Number(values.maxGuests);
     if (!Number.isFinite(minGuests) || minGuests <= 0) return "Min guests must be greater than 0";
     if (!Number.isFinite(maxGuests) || maxGuests < minGuests) return "Max guests must be ≥ min guests";
+    if (!values.floorPlanId) return "Escolhe uma planta (layout)";
     return null;
   }
 
@@ -118,6 +149,7 @@ export default function VenueTemplatesPage() {
       name: values.name.trim(),
       minGuests: Number(values.minGuests),
       maxGuests: Number(values.maxGuests),
+      floorPlanId: values.floorPlanId || undefined,
       lines: JSON.stringify(lines),
     };
   }
@@ -157,8 +189,12 @@ export default function VenueTemplatesPage() {
         body: JSON.stringify(buildPayload(form)),
       });
       if (!res.ok) throw new Error("failed to create template");
+      const created = (await res.json()) as TemplateRecord;
       setForm(emptyForm());
       await load();
+      // Open the table mini-editor for the layout just chosen — this is the
+      // whole point of picking a layout up front (Plan 13 Task 3).
+      if (created.floorPlanId) setOpenEditorId(created.id);
     } catch {
       setError("Failed to create template");
     } finally {
@@ -174,6 +210,7 @@ export default function VenueTemplatesPage() {
       name: t.name,
       minGuests: String(t.minGuests),
       maxGuests: String(t.maxGuests),
+      floorPlanId: t.floorPlanId ?? "",
       lines:
         lines.length > 0
           ? lines.map((l) => ({ tableTypeId: l.tableTypeId, quantity: String(l.quantity) }))
@@ -215,13 +252,44 @@ export default function VenueTemplatesPage() {
     try {
       const res = await fetch(`/api/templates/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("failed to delete template");
+      if (openEditorId === id) setOpenEditorId(null);
       await load();
     } catch {
       setError("Failed to delete template");
     }
   }
 
+  function toggleEditor(id: string) {
+    setOpenEditorId((prev) => (prev === id ? null : id));
+  }
+
   const hasTableTypes = tableTypes.length > 0;
+  const hasFloorPlans = floorPlans.length > 0;
+
+  function renderLayoutSelect(
+    values: FormValues,
+    setter: React.Dispatch<React.SetStateAction<FormValues>>
+  ) {
+    return (
+      <label>
+        Planta{" "}
+        <select
+          value={values.floorPlanId}
+          onChange={(e) => setter((f) => ({ ...f, floorPlanId: e.target.value }))}
+          disabled={!hasFloorPlans}
+          style={{ width: 140 }}
+        >
+          <option value="">Selecionar planta</option>
+          {floorPlans.map((fp, i) => (
+            <option key={fp.id} value={fp.id}>
+              Planta {i + 1}
+              {!fp.image ? " (sem imagem)" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
 
   function renderLineRows(
     values: FormValues,
@@ -323,6 +391,7 @@ export default function VenueTemplatesPage() {
                           style={{ width: 70 }}
                         />
                       </label>
+                      {renderLayoutSelect(editForm, setEditForm)}
                     </div>
                     {renderLineRows(editForm, setEditForm)}
                     <div style={{ marginTop: 8 }}>
@@ -344,6 +413,7 @@ export default function VenueTemplatesPage() {
                     <span style={{ color: "#6b7280", marginLeft: 8 }}>
                       {t.minGuests}-{t.maxGuests} convidados
                     </span>
+                    <span style={{ color: "#6b7280", marginLeft: 8 }}>· {layoutLabel(t.floorPlanId)}</span>
                     <ul style={{ margin: "8px 0", paddingLeft: 20 }}>
                       {parseLines(t.lines).map((line, i) => (
                         <li key={i}>
@@ -361,6 +431,23 @@ export default function VenueTemplatesPage() {
                     >
                       Delete
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleEditor(t.id)}
+                      disabled={!t.floorPlanId}
+                      title={!t.floorPlanId ? "Escolhe uma planta primeiro" : undefined}
+                      style={{ marginLeft: 4 }}
+                    >
+                      {openEditorId === t.id ? "Fechar mesas" : "Editar mesas"}
+                    </button>
+                    {openEditorId === t.id && t.floorPlanId && (
+                      <TemplateTableEditor
+                        templateId={t.id}
+                        venueId={venueId}
+                        floorPlanId={t.floorPlanId}
+                        onClose={() => setOpenEditorId(null)}
+                      />
+                    )}
                   </div>
                 )
               )}
@@ -371,6 +458,9 @@ export default function VenueTemplatesPage() {
 
       <form onSubmit={handleCreate} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <strong>Novo template</strong>
+        {!loading && !hasFloorPlans && (
+          <p style={{ color: "#dc2626" }}>Cria uma planta (layout) primeiro</p>
+        )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
           <label>
             Name{" "}
@@ -400,6 +490,7 @@ export default function VenueTemplatesPage() {
               style={{ width: 70 }}
             />
           </label>
+          {renderLayoutSelect(form, setForm)}
         </div>
         {renderLineRows(form, setForm)}
         <button type="submit" disabled={creating} style={{ marginTop: 8 }}>
