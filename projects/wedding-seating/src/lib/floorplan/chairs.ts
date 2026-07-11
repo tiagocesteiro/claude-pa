@@ -1,4 +1,4 @@
-import { metresToPixels } from "./geometry";
+import { tableRenderSize } from "./tableShape";
 
 export interface ChairTableInput {
   x: number;
@@ -16,53 +16,47 @@ export interface ChairPoint {
   y: number;
 }
 
-// Mirrors PlanCanvas's own table-shape constants (natural pixels) so chairs default to
-// a sensible ring/box around the table even when no real width/depth is known.
-const DEFAULT_ROUND_RADIUS = 46;
-const DEFAULT_RECT_WIDTH = 130;
-const DEFAULT_RECT_HEIGHT = 70;
-
 // How far outside the table edge chairs sit, in natural pixels.
 const CHAIR_OFFSET = 18;
 
 /**
- * Evenly spaced chair positions around a table's perimeter, in natural pixels
- * (same coordinate space as the table's own x/y). Always returns exactly
- * `table.capacity` points. Pure and deterministic — same input, same output.
+ * Evenly spaced chair positions around a table's real outline, in natural
+ * pixels (same coordinate space as the table's own x/y). Always returns
+ * exactly `table.capacity` points. Pure and deterministic — same input, same
+ * output.
  *
- * `scale` converts the table's width/depth (metres) into natural pixels, the
- * same px/metre convention as `metresToPixels`/`scaleFromReference`. When
- * width/depth are absent, the table's on-canvas default size is used instead.
+ * The outline itself comes from `tableRenderSize`, which resolves shape +
+ * width/depth (metres) x `scale` into real pixel extents (falling back to
+ * sensible defaults when dimensions/scale are absent). round/oval tables get
+ * an elliptical ring of chairs; rect tables get chairs distributed around the
+ * four edges of the rectangle.
  */
 export function chairPositions(table: ChairTableInput, scale: number): ChairPoint[] {
   const n = Math.max(0, Math.floor(table.capacity));
   if (n === 0) return [];
 
-  if (table.shape === "round") {
-    const diameter =
-      table.width && table.width > 0 ? metresToPixels(table.width, scale) : DEFAULT_ROUND_RADIUS * 2;
-    const chairRadius = diameter / 2 + CHAIR_OFFSET;
+  const { shape, wPx, hPx } = tableRenderSize(table, scale);
+
+  if (shape === "round" || shape === "oval") {
+    const rx = wPx / 2 + CHAIR_OFFSET;
+    const ry = hPx / 2 + CHAIR_OFFSET;
     const points: ChairPoint[] = [];
     for (let i = 0; i < n; i++) {
       // Start at the top (12 o'clock) and go clockwise, matching screen-space
       // (y grows downward) so the layout reads naturally.
       const angle = (2 * Math.PI * i) / n - Math.PI / 2;
       points.push({
-        x: table.x + chairRadius * Math.cos(angle),
-        y: table.y + chairRadius * Math.sin(angle),
+        x: table.x + rx * Math.cos(angle),
+        y: table.y + ry * Math.sin(angle),
       });
     }
     return points;
   }
 
-  // Rectangular (or any non-round shape): distribute chairs by arc length around
-  // the four edges of a slightly larger rectangle (table size + chair offset).
-  const width =
-    table.width && table.width > 0 ? metresToPixels(table.width, scale) : DEFAULT_RECT_WIDTH;
-  const height =
-    table.depth && table.depth > 0 ? metresToPixels(table.depth, scale) : DEFAULT_RECT_HEIGHT;
-  const halfW = width / 2 + CHAIR_OFFSET;
-  const halfH = height / 2 + CHAIR_OFFSET;
+  // Rectangular: distribute chairs by arc length around the four edges of a
+  // slightly larger rectangle (table size + chair offset).
+  const halfW = wPx / 2 + CHAIR_OFFSET;
+  const halfH = hPx / 2 + CHAIR_OFFSET;
   const perimeter = 4 * halfW + 4 * halfH;
 
   const points: ChairPoint[] = [];
