@@ -28,18 +28,24 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
     loadWedding();
   }, [weddingId]);
 
+  const detailsHref = `/admin/wedding/${weddingId}/details`;
   const guestsHref = `/admin/wedding/${weddingId}`;
   const constraintsHref = `/admin/wedding/${weddingId}/constraints`;
   const planHref = `/admin/wedding/${weddingId}/plan`;
+  const coupleHref = `/admin/wedding/${weddingId}/couple`;
 
+  const isDetailsActive = pathname?.endsWith("/details") ?? false;
   const isGuestsActive = pathname === guestsHref;
   const isConstraintsActive = pathname?.endsWith("/constraints") ?? false;
   const isPlanActive = pathname?.endsWith("/plan") ?? false;
+  const isCoupleActive = pathname?.endsWith("/couple") ?? false;
 
   const tabs = [
+    { label: "Detalhes", href: detailsHref, active: isDetailsActive },
     { label: "Convidados & Grupos", href: guestsHref, active: isGuestsActive },
     { label: "Restrições", href: constraintsHref, active: isConstraintsActive },
     { label: "Plano de mesas", href: planHref, active: isPlanActive },
+    { label: "Vista do casal", href: coupleHref, active: isCoupleActive },
   ];
 
   return (

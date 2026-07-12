@@ -25,6 +25,8 @@ export default function AdminPage() {
 
   const [weddings, setWeddings] = useState<Wedding[]>([]);
   const [coupleName, setCoupleName] = useState("");
+  const [weddingVenueId, setWeddingVenueId] = useState("");
+  const [weddingDate, setWeddingDate] = useState("");
   const [weddingError, setWeddingError] = useState<string | null>(null);
   const [creatingWedding, setCreatingWedding] = useState(false);
 
@@ -59,10 +61,16 @@ export default function AdminPage() {
       const res = await fetch("/api/weddings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ couple: coupleName }),
+        body: JSON.stringify({
+          couple: coupleName,
+          venueId: weddingVenueId || null,
+          date: weddingDate || undefined,
+        }),
       });
       if (!res.ok) throw new Error("failed");
       setCoupleName("");
+      setWeddingVenueId("");
+      setWeddingDate("");
       await loadWeddings();
     } catch {
       setWeddingError("Failed to create wedding");
@@ -98,10 +106,29 @@ export default function AdminPage() {
 
       <form onSubmit={handleCreateWedding} style={{ marginBottom: 24 }}>
         <h2>New wedding</h2>
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, display: "flex", gap: 12, flexWrap: "wrap" }}>
           <label>
             Couple:{" "}
             <input value={coupleName} onChange={(e) => setCoupleName(e.target.value)} />
+          </label>
+          <label>
+            Quinta:{" "}
+            <select value={weddingVenueId} onChange={(e) => setWeddingVenueId(e.target.value)}>
+              <option value="">Sem quinta</option>
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Data:{" "}
+            <input
+              type="date"
+              value={weddingDate}
+              onChange={(e) => setWeddingDate(e.target.value)}
+            />
           </label>
         </div>
         <button type="submit" disabled={creatingWedding}>
