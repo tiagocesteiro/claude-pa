@@ -4,19 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import TemplateTableEditor from "@/components/venue/TemplateTableEditor";
 
-interface TableTypeRecord {
-  id: string;
-  name: string;
-  shape: string;
-  minSeats: number;
-  maxSeats: number;
-}
-
-interface TemplateLine {
-  tableTypeId: string;
-  quantity: number;
-}
-
 interface TemplateRecord {
   id: string;
   venueId: string;
@@ -34,35 +21,15 @@ interface FloorPlanOption {
   createdAt: string;
 }
 
-interface LineRow {
-  tableTypeId: string;
-  quantity: string;
-}
-
 interface FormValues {
   name: string;
   minGuests: string;
   maxGuests: string;
   floorPlanId: string;
-  lines: LineRow[];
-}
-
-function emptyLine(): LineRow {
-  return { tableTypeId: "", quantity: "1" };
 }
 
 function emptyForm(): FormValues {
-  return { name: "", minGuests: "", maxGuests: "", floorPlanId: "", lines: [emptyLine()] };
-}
-
-function parseLines(lines: string): TemplateLine[] {
-  try {
-    const parsed = JSON.parse(lines);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch {
-    return [];
-  }
+  return { name: "", minGuests: "", maxGuests: "", floorPlanId: "" };
 }
 
 export default function VenueTemplatesPage() {
@@ -70,7 +37,6 @@ export default function VenueTemplatesPage() {
   const venueId = params.id;
 
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
-  const [tableTypes, setTableTypes] = useState<TableTypeRecord[]>([]);
   const [floorPlans, setFloorPlans] = useState<FloorPlanOption[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -89,19 +55,15 @@ export default function VenueTemplatesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [templatesRes, tableTypesRes, floorPlansRes] = await Promise.all([
+      const [templatesRes, floorPlansRes] = await Promise.all([
         fetch(`/api/venues/${venueId}/templates`),
-        fetch(`/api/venues/${venueId}/table-types`),
         fetch(`/api/floorplans`),
       ]);
       if (!templatesRes.ok) throw new Error("failed to load templates");
-      if (!tableTypesRes.ok) throw new Error("failed to load table types");
       if (!floorPlansRes.ok) throw new Error("failed to load floor plans");
       const templatesData = (await templatesRes.json()) as TemplateRecord[];
-      const tableTypesData = (await tableTypesRes.json()) as TableTypeRecord[];
       const floorPlansData = (await floorPlansRes.json()) as FloorPlanOption[];
       setTemplates(templatesData);
-      setTableTypes(tableTypesData);
       setFloorPlans(
         floorPlansData
           .filter((fp) => fp.venueId === venueId)
@@ -119,10 +81,6 @@ export default function VenueTemplatesPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     load();
   }, [load]);
-
-  function tableTypeName(id: string): string {
-    return tableTypes.find((t) => t.id === id)?.name ?? "(tipo removido)";
-  }
 
   function layoutLabel(floorPlanId: string | null): string {
     if (!floorPlanId) return "sem planta";
@@ -142,35 +100,13 @@ export default function VenueTemplatesPage() {
   }
 
   function buildPayload(values: FormValues) {
-    const lines = values.lines
-      .filter((r) => r.tableTypeId && Number(r.quantity) > 0)
-      .map((r) => ({ tableTypeId: r.tableTypeId, quantity: Number(r.quantity) }));
     return {
       name: values.name.trim(),
       minGuests: Number(values.minGuests),
       maxGuests: Number(values.maxGuests),
       floorPlanId: values.floorPlanId || undefined,
-      lines: JSON.stringify(lines),
+      lines: "[]",
     };
-  }
-
-  function addLine(setter: React.Dispatch<React.SetStateAction<FormValues>>) {
-    setter((f) => ({ ...f, lines: [...f.lines, emptyLine()] }));
-  }
-
-  function removeLine(setter: React.Dispatch<React.SetStateAction<FormValues>>, index: number) {
-    setter((f) => ({ ...f, lines: f.lines.filter((_, i) => i !== index) }));
-  }
-
-  function updateLine(
-    setter: React.Dispatch<React.SetStateAction<FormValues>>,
-    index: number,
-    patch: Partial<LineRow>
-  ) {
-    setter((f) => ({
-      ...f,
-      lines: f.lines.map((line, i) => (i === index ? { ...line, ...patch } : line)),
-    }));
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -205,16 +141,11 @@ export default function VenueTemplatesPage() {
   function startEdit(t: TemplateRecord) {
     setEditingId(t.id);
     setRowError(null);
-    const lines = parseLines(t.lines);
     setEditForm({
       name: t.name,
       minGuests: String(t.minGuests),
       maxGuests: String(t.maxGuests),
       floorPlanId: t.floorPlanId ?? "",
-      lines:
-        lines.length > 0
-          ? lines.map((l) => ({ tableTypeId: l.tableTypeId, quantity: String(l.quantity) }))
-          : [emptyLine()],
     });
   }
 
@@ -263,7 +194,6 @@ export default function VenueTemplatesPage() {
     setOpenEditorId((prev) => (prev === id ? null : id));
   }
 
-  const hasTableTypes = tableTypes.length > 0;
   const hasFloorPlans = floorPlans.length > 0;
 
   function renderLayoutSelect(
@@ -291,63 +221,9 @@ export default function VenueTemplatesPage() {
     );
   }
 
-  function renderLineRows(
-    values: FormValues,
-    setter: React.Dispatch<React.SetStateAction<FormValues>>
-  ) {
-    return (
-      <div style={{ marginTop: 8 }}>
-        {values.lines.map((line, i) => (
-          <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-            <select
-              value={line.tableTypeId}
-              onChange={(e) => updateLine(setter, i, { tableTypeId: e.target.value })}
-              disabled={!hasTableTypes}
-              style={{ width: 160 }}
-            >
-              <option value="">Selecionar tipo de mesa</option>
-              {tableTypes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min={0}
-              value={line.quantity}
-              onChange={(e) => updateLine(setter, i, { quantity: e.target.value })}
-              style={{ width: 60 }}
-            />
-            <button
-              type="button"
-              onClick={() => removeLine(setter, i)}
-              disabled={values.lines.length <= 1}
-              style={{ color: "#dc2626" }}
-            >
-              Remover
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => addLine(setter)}
-          disabled={!hasTableTypes}
-          style={{ marginTop: 4 }}
-        >
-          + Adicionar linha
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div>
       <h2>Templates</h2>
-
-      {!loading && !hasTableTypes && (
-        <p style={{ color: "#dc2626" }}>Cria tipos de mesa primeiro</p>
-      )}
 
       {loading && <p>Loading...</p>}
 
@@ -393,7 +269,6 @@ export default function VenueTemplatesPage() {
                       </label>
                       {renderLayoutSelect(editForm, setEditForm)}
                     </div>
-                    {renderLineRows(editForm, setEditForm)}
                     <div style={{ marginTop: 8 }}>
                       <button type="button" onClick={() => handleSaveEdit(t.id)} disabled={savingEdit}>
                         {savingEdit ? "Saving..." : "Save"}
@@ -414,32 +289,27 @@ export default function VenueTemplatesPage() {
                       {t.minGuests}-{t.maxGuests} convidados
                     </span>
                     <span style={{ color: "#6b7280", marginLeft: 8 }}>· {layoutLabel(t.floorPlanId)}</span>
-                    <ul style={{ margin: "8px 0", paddingLeft: 20 }}>
-                      {parseLines(t.lines).map((line, i) => (
-                        <li key={i}>
-                          {line.quantity}× {tableTypeName(line.tableTypeId)}
-                        </li>
-                      ))}
-                    </ul>
-                    <button type="button" onClick={() => startEdit(t)}>
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(t.id)}
-                      style={{ marginLeft: 4, color: "#dc2626" }}
-                    >
-                      Delete
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleEditor(t.id)}
-                      disabled={!t.floorPlanId}
-                      title={!t.floorPlanId ? "Escolhe uma planta primeiro" : undefined}
-                      style={{ marginLeft: 4 }}
-                    >
-                      {openEditorId === t.id ? "Fechar mesas" : "Editar mesas"}
-                    </button>
+                    <div style={{ marginTop: 8 }}>
+                      <button type="button" onClick={() => startEdit(t)}>
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(t.id)}
+                        style={{ marginLeft: 4, color: "#dc2626" }}
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleEditor(t.id)}
+                        disabled={!t.floorPlanId}
+                        title={!t.floorPlanId ? "Escolhe uma planta primeiro" : undefined}
+                        style={{ marginLeft: 4 }}
+                      >
+                        {openEditorId === t.id ? "Fechar mesas" : "Editar mesas"}
+                      </button>
+                    </div>
                     {openEditorId === t.id && t.floorPlanId && (
                       <TemplateTableEditor
                         templateId={t.id}
@@ -492,7 +362,6 @@ export default function VenueTemplatesPage() {
           </label>
           {renderLayoutSelect(form, setForm)}
         </div>
-        {renderLineRows(form, setForm)}
         <button type="submit" disabled={creating} style={{ marginTop: 8 }}>
           {creating ? "Adding..." : "Add template"}
         </button>
