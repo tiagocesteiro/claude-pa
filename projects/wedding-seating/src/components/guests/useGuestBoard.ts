@@ -61,6 +61,27 @@ export function useGuestBoard(weddingId: string) {
     [refresh]
   );
 
+  const updateGuestAttrs = useCallback(
+    async (
+      guestId: string,
+      attrs: { ageGroup?: string | null; gender?: string | null; dietary?: string | null }
+    ) => {
+      setError(null);
+      try {
+        const res = await fetch(`/api/guests/${guestId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(attrs),
+        });
+        if (!res.ok) setError("Não foi possível atualizar o convidado.");
+      } catch {
+        setError("Não foi possível atualizar o convidado.");
+      }
+      await refresh();
+    },
+    [refresh]
+  );
+
   const addGuest = useCallback(
     async (
       name: string,
@@ -180,5 +201,6 @@ export function useGuestBoard(weddingId: string) {
     renameGroup,
     removeGroup,
     setGuestGroups,
+    updateGuestAttrs,
   };
 }

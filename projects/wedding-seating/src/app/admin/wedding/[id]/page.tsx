@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useGuestBoard } from "@/components/guests/useGuestBoard";
 import ImportPanel from "@/components/guests/ImportPanel";
 import AddGuestForm from "@/components/guests/AddGuestForm";
-import GroupBoard from "@/components/guests/GroupBoard";
+import GuestTable from "@/components/guests/GuestTable";
 
 export default function WeddingWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -22,6 +22,7 @@ export default function WeddingWorkspacePage() {
     renameGroup,
     removeGroup,
     setGuestGroups,
+    updateGuestAttrs,
   } = useGuestBoard(weddingId);
 
   return (
@@ -33,7 +34,7 @@ export default function WeddingWorkspacePage() {
       {loading ? (
         <p>Loading guests...</p>
       ) : (
-        <GroupBoard
+        <GuestTable
           guests={guests}
           groups={groups}
           error={error}
@@ -42,6 +43,7 @@ export default function WeddingWorkspacePage() {
           renameGroup={renameGroup}
           removeGroup={removeGroup}
           setGuestGroups={setGuestGroups}
+          updateGuestAttrs={updateGuestAttrs}
         />
       )}
     </div>

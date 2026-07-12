@@ -44,6 +44,11 @@ export default function VenueLayout({ children }: { children: React.ReactNode })
 
   return (
     <main style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+      <p style={{ marginBottom: 8 }}>
+        <Link href="/admin" style={{ color: "var(--text-muted)" }}>
+          &larr; Início
+        </Link>
+      </p>
       <h1>{venue ? venue.name : "Venue"}</h1>
       {venue?.location && <p>{venue.location}</p>}
 

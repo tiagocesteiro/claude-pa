@@ -52,12 +52,16 @@ export default function FloorPlanEditorPage() {
   const [zones, setZones] = useState<Point[][]>([]);
   const [savingZones, setSavingZones] = useState(false);
 
+  const [minSpacingInput, setMinSpacingInput] = useState("");
+  const [spacingSaved, setSpacingSaved] = useState(false);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     const fpRes = await fetch(`/api/floorplans/${floorPlanId}`);
     if (fpRes.ok) {
       const fp = (await fpRes.json()) as FloorPlanRecord;
       setFloorPlan(fp);
+      setMinSpacingInput(fp.minSpacing != null ? String(fp.minSpacing) : "");
       // Migrate a legacy single `boundary` polygon into zones[0] when this
       // floor plan predates multi-zone support (no `zones` saved yet).
       try {
@@ -174,6 +178,22 @@ export default function FloorPlanEditorPage() {
     await persistZones([]);
   }
 
+  async function saveMinSpacing() {
+    const raw = minSpacingInput.trim();
+    const val = raw === "" ? null : Number(raw);
+    if (val !== null && (Number.isNaN(val) || val < 0)) return;
+    const res = await fetch(`/api/floorplans/${floorPlanId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ minSpacing: val }),
+    });
+    if (res.ok) {
+      setFloorPlan((prev) => (prev ? { ...prev, minSpacing: val } : prev));
+      setSpacingSaved(true);
+      setTimeout(() => setSpacingSaved(false), 1500);
+    }
+  }
+
   const activeZoneIndex = zones.length > 0 ? zones.length - 1 : -1;
 
   return (
@@ -213,8 +233,33 @@ export default function FloorPlanEditorPage() {
             />
           </div>
 
-          <div style={{ marginBottom: 12, border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-            <strong>Zonas</strong>{" "}
+          <div style={{ marginBottom: 12, border: "1px solid var(--border)", borderRadius: 8, padding: 12 }}>
+            <strong>Distância mínima entre mesas</strong>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="number"
+                min={0}
+                step={0.1}
+                value={minSpacingInput}
+                onChange={(e) => setMinSpacingInput(e.target.value)}
+                onBlur={saveMinSpacing}
+                placeholder="ex: 1.2"
+                style={{ width: 100 }}
+              />
+              <span style={{ color: "var(--text-muted)" }}>metros</span>
+              <button type="button" onClick={saveMinSpacing}>
+                Guardar
+              </button>
+              {spacingSaved && <span style={{ color: "#16a34a" }}>Guardado.</span>}
+            </div>
+            <p style={{ color: "var(--text-muted)", marginTop: 6 }}>
+              Mesas mais próximas do que isto são assinaladas com aviso no plano. Deixa vazio para
+              não verificar.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 12, border: "1px solid var(--border)", borderRadius: 8, padding: 12 }}>
+            <strong>Zonas (limites da sala / paredes)</strong>{" "}
             <button
               type="button"
               onClick={handleToggleZoneDraw}
@@ -240,6 +285,10 @@ export default function FloorPlanEditorPage() {
               Limpar zonas
             </button>
             {savingZones && <span style={{ marginLeft: 8 }}>Saving...</span>}
+            <p style={{ color: "var(--text-muted)", marginTop: 6 }}>
+              Desenha os limites da sala (paredes). Mesas colocadas fora das zonas são assinaladas.
+              Podes ter várias zonas se a sala tiver divisões.
+            </p>
             {zoneDrawActive && (
               <p>
                 Clique no mapa para adicionar pontos à zona atual ({activeZoneIndex + 1}
