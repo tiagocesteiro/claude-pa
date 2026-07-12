@@ -1,15 +1,26 @@
 import { NextResponse } from "next/server";
 import { listGuests } from "@/lib/db/guests";
 import { listConstraints } from "@/lib/db/constraints";
-import { listTables } from "@/lib/db/tables";
+import { listWeddingTables } from "@/lib/db/weddingTables";
+import { getWedding } from "@/lib/db/weddings";
+import { getFloorPlan } from "@/lib/db/floorplans";
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const floorPlanId = new URL(req.url).searchParams.get("floorPlanId");
-  const [guests, constraints, tables] = await Promise.all([
+  const [wedding, guests, constraints, tables] = await Promise.all([
+    getWedding(id),
     listGuests(id),
     listConstraints(id),
-    floorPlanId ? listTables(floorPlanId) : Promise.resolve([]),
+    listWeddingTables(id),
   ]);
-  return NextResponse.json({ guests, constraints, tables });
+
+  let layout = null;
+  if (wedding?.floorPlanId) {
+    const fp = await getFloorPlan(wedding.floorPlanId);
+    if (fp) {
+      layout = { floorPlanId: fp.id, image: fp.image, scale: fp.scale, zones: fp.zones };
+    }
+  }
+
+  return NextResponse.json({ guests, constraints, tables, layout });
 }

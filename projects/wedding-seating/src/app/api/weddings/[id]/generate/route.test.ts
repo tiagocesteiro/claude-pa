@@ -4,20 +4,6 @@ import { createWedding } from "@/lib/db/weddings";
 import { listGuests } from "@/lib/db/guests";
 import { prisma } from "@/lib/db/client";
 
-async function seedFloorPlan() {
-  const venue = await prisma.venue.create({ data: { name: "V" } });
-  const fp = await prisma.floorPlan.create({
-    data: { venueId: venue.id, image: "x", scale: 50, width: 10, depth: 10 },
-  });
-  await prisma.table.createMany({
-    data: [
-      { floorPlanId: fp.id, shape: "round", capacity: 2, x: 0, y: 0, fixed: false },
-      { floorPlanId: fp.id, shape: "round", capacity: 2, x: 1, y: 1, fixed: false },
-    ],
-  });
-  return fp.id;
-}
-
 it("generates and persists an assignment for all guests", async () => {
   const w = await createWedding({ couple: "Gen Test" });
   await prisma.guest.createMany({
@@ -28,12 +14,16 @@ it("generates and persists an assignment for all guests", async () => {
       { weddingId: w.id, name: "D" },
     ],
   });
-  const floorPlanId = await seedFloorPlan();
+  await prisma.table.createMany({
+    data: [
+      { weddingId: w.id, shape: "round", capacity: 2, x: 0, y: 0, fixed: false },
+      { weddingId: w.id, shape: "round", capacity: 2, x: 1, y: 1, fixed: false },
+    ],
+  });
 
-  const res = await POST(
-    new Request("http://x/generate", { method: "POST", body: JSON.stringify({ floorPlanId }) }),
-    { params: Promise.resolve({ id: w.id }) }
-  );
+  const res = await POST(new Request("http://x/generate", { method: "POST", body: "{}" }), {
+    params: Promise.resolve({ id: w.id }),
+  });
   expect(res.status).toBe(200);
   const body = await res.json();
   expect(typeof body.score).toBe("number");
@@ -44,12 +34,14 @@ it("generates and persists an assignment for all guests", async () => {
   expect(guests.every((g) => g.assignedTableId !== null)).toBe(true);
 });
 
-it("400s when floorPlanId is missing", async () => {
+it("400s when the wedding has no tables yet", async () => {
   const w = await createWedding({ couple: "Gen 400" });
   const res = await POST(new Request("http://x/generate", { method: "POST", body: "{}" }), {
     params: Promise.resolve({ id: w.id }),
   });
   expect(res.status).toBe(400);
+  const body = await res.json();
+  expect(body.error).toBe("aplica um template primeiro");
 });
 
 afterAll(async () => { await prisma.$disconnect(); });
