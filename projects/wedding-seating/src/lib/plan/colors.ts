@@ -1,12 +1,15 @@
+// Soft, harmonious palette (lighter + more appealing than raw web-primaries).
+// Consistent lightness/saturation for a cohesive wedding feel, with enough hue
+// separation to stay distinguishable as small chair dots.
 export const PALETTE: string[] = [
-  "#2563eb", // blue
-  "#16a34a", // green
-  "#d97706", // amber
-  "#dc2626", // red
-  "#7c3aed", // violet
-  "#0891b2", // cyan
-  "#db2777", // pink
-  "#65a30d", // lime
+  "#6C9BD1", // dusty blue
+  "#6FBF9B", // sage green
+  "#E8B04B", // warm gold
+  "#E88B7D", // coral
+  "#A98BD1", // lilac
+  "#5FBCCB", // aqua
+  "#E39BC4", // blush pink
+  "#A9C266", // olive
 ];
 
 export type AttributeKey = "ageGroup" | "gender" | "dietary";

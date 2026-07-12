@@ -31,7 +31,7 @@ function useImageElement(src: string | undefined): HTMLImageElement | undefined 
 export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-zone";
 
 /** Stroke colors cycled per zone index so multiple zones stay visually distinguishable. */
-const ZONE_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c"];
+const ZONE_COLORS = ["#6C9BD1", "#E88B7D", "#6FBF9B", "#A98BD1", "#E8B04B"];
 
 export interface FloorPlanCanvasProps {
   imageUrl?: string;
@@ -139,7 +139,7 @@ export default function FloorPlanCanvas({
                 <Line
                   points={zone.flatMap((p) => [p.x * displayScale, p.y * displayScale])}
                   closed
-                  fill="rgba(37, 99, 235, 0.12)"
+                  fill={`${color}22`}
                   stroke={color}
                   strokeWidth={2}
                 />

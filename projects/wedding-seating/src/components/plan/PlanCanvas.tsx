@@ -9,7 +9,7 @@ import type { Point } from "@/lib/floorplan/geometry";
 
 // Same per-zone stroke cycling as the editor's FloorPlanCanvas, so a zone reads the
 // same color here as it did while being drawn.
-const ZONE_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c"];
+const ZONE_COLORS = ["#6C9BD1", "#E88B7D", "#6FBF9B", "#A98BD1", "#E8B04B"];
 
 // Chair dots (natural pixels, before displayScale). Occupied chairs with no attribute
 // color selected fall back to CHAIR_NEUTRAL_FILL; empty seats always render CHAIR_EMPTY_FILL.
@@ -193,7 +193,7 @@ export default function PlanCanvas({
                   <Line
                     points={zone.flatMap((p) => [p.x * displayScale, p.y * displayScale])}
                     closed
-                    fill="rgba(37, 99, 235, 0.12)"
+                    fill={`${color}22`}
                     stroke={color}
                     strokeWidth={2}
                   />
