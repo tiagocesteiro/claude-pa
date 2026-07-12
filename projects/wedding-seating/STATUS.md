@@ -1,8 +1,8 @@
 ---
 project: Wedding Seating Planner
 status: active build — MVP core + usability + attributes/colors + multi-group + venue catalog + walls/chairs + wedding-tabs + venue-tabs + layout-templates done
-last_updated: 2026-07-11
-branch: feat/wedding-seating-engine (79+ commits ahead of master, NOT merged)
+last_updated: 2026-07-12
+branch: feat/wedding-seating-engine (89+ commits ahead of master, NOT merged)
 tags: [wedding-seating, product, nextjs, local-first]
 ---
 
@@ -41,7 +41,10 @@ npx prisma migrate dev # if schema changed
 8. **Venue table catalog** — `TableType` (name/shape/min/max seats/dimensions/quantity) per venue; per-table dimensions/minCapacity; `FloorPlan.minSpacing`; add-from-catalog in editor; spacing + under-min warnings. (Fixed a mass-assignment PATCH bug.)
 9. **Walls + chairs** — `FloorPlan.boundary` polygon drawn over the photo (visual guide + out-of-bounds warning, NOT a solver constraint); chairs rendered around each table, occupied chairs colored by the selected attribute.
 10. **Wedding tabs + editable floor plans** — wedding workspace uses tabs (Convidados & Grupos | Restrições | Plano de mesas) instead of an arrow link (shared `layout.tsx` + constraints route); admin lists a venue's existing floor plans so they can be reopened/modified (not only created). Also: `.claude/settings.json` hooks hardened to `$CLAUDE_PROJECT_DIR` absolute paths (survive cwd changes).
-11. **Venue tabs + layout templates** — venue admin uses tabs (Mesas disponíveis [catalog] | Layouts de salas [floor plans] | Templates); `LayoutTemplate` model (name + guest range + JSON lines of `{tableTypeId, quantity}`); Templates tab to create/edit; "Aplicar template" in the editor bulk-adds tables from a template (prefilled from catalog, auto-grid positions, non-destructive). Templates are composition-only (no stored positions) — auto-grid on apply.
+11. **Venue tabs + layout templates** — venue admin uses tabs (Mesas disponíveis [catalog] | Layouts de salas | Templates); `LayoutTemplate` model. (NOTE: the composition-only version from this plan was superseded by Plan 13.)
+12. **Table shapes + realistic dimensions** — catalog: round (diameter), oval (large+small diameter), rectangular (length×width); `TableType.shape` gains "oval"; tables render on both canvases **to real scale** (circle/ellipse/rect via `tableRenderSize`), chairs on the real outline; drag alignment holds (shape + drop-overlay from the same size).
+13. **Layouts (zones) + template-owned tables** — venue re-architecture: the Layouts editor = image + scale + **multiple zones** only (no tables); tables now live on **templates** (positioned): `LayoutTemplate.floorPlanId` (the layout), `Table.templateId` (positioned tables), `FloorPlan.zones` (multi-polygon). The Templates tab is a table mini-editor placing catalog tables on the chosen layout's image+zones background (realistic shapes, spacing + out-of-any-zone warnings), saved to the template. **Table.floorPlanId is now nullable**; the wedding flow still reads floor-plan tables until Plan 14.
+- **PENDING (Plan 14):** wedding consumes a template as an EDITABLE COPY (pick template → copy its tables into the wedding → Generate + manual edits on the copy, rendered on the template's layout). Until then, new weddings have no tables to seat (the seating engine/plan view is unchanged and still reads `listTables(floorPlanId)`).
 
 ## Current data model (Prisma) — key fields added over time
 - Guest: `groupId` (primary group), `extraGroups` (JSON ordered extras), `assignedTableId`, `locked`, `ageGroup`, `gender`, `dietary`.
