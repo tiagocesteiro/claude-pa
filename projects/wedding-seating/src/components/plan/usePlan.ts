@@ -28,6 +28,7 @@ export interface PlanTable {
   fixed: boolean;
   width?: number | null;
   depth?: number | null;
+  minCapacity?: number | null;
 }
 
 export interface PlanConstraint {
@@ -65,6 +66,27 @@ export interface PlanTemplate {
   floorPlan?: { image: string } | null;
 }
 
+/** A venue's table-type catalog entry — the presets offered by the "add table" control
+ * while editing the wedding's copied tables (Task 4). */
+export interface PlanTableType {
+  id: string;
+  name: string;
+  shape: string;
+  minSeats: number;
+  maxSeats: number;
+  width: number;
+  depth: number;
+}
+
+/** Minimal shape accepted when placing a new table from the catalog — see `addTable`. */
+export interface TablePlacementPreset {
+  shape?: string;
+  capacity?: number;
+  minCapacity?: number | null;
+  width?: number | null;
+  depth?: number | null;
+}
+
 export function usePlan(weddingId: string) {
   const [guests, setGuests] = useState<PlanGuest[]>([]);
   const [tables, setTables] = useState<PlanTable[]>([]);
@@ -72,9 +94,11 @@ export function usePlan(weddingId: string) {
   const [groups, setGroups] = useState<PlanGroup[]>([]);
   const [layout, setLayout] = useState<PlanLayout | null>(null);
   const [templates, setTemplates] = useState<PlanTemplate[]>([]);
+  const [venueTableTypes, setVenueTableTypes] = useState<PlanTableType[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [savingTables, setSavingTables] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState<number | null>(null);
   const [warnings, setWarnings] = useState<Warning[]>([]);
@@ -127,6 +151,40 @@ export function usePlan(weddingId: string) {
       cancelled = true;
     };
   }, []);
+
+  // The applied template's venue, resolved without any API change: the template
+  // list (fetched above) already carries venueId, so we match the wedding's
+  // current layout back to the template that points at the same floor plan.
+  const venueId = useMemo(() => {
+    if (!layout?.floorPlanId) return null;
+    return templates.find((t) => t.floorPlanId === layout.floorPlanId)?.venueId ?? null;
+  }, [layout?.floorPlanId, templates]);
+
+  // The venue's table-type catalog, used by the "add table" control while editing
+  // the wedding's copied tables. Re-fetched whenever the resolved venue changes.
+  useEffect(() => {
+    if (!venueId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the catalog when there's no venue to fetch from
+      setVenueTableTypes([]);
+      return;
+    }
+    let cancelled = false;
+    async function loadTableTypes() {
+      try {
+        const res = await fetch(`/api/venues/${venueId}/table-types`);
+        if (!res.ok) return;
+        const data = (await res.json()) as PlanTableType[];
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- data load when the venue changes
+        if (!cancelled) setVenueTableTypes(data ?? []);
+      } catch {
+        // silent — the add-table control just shows no presets
+      }
+    }
+    loadTableTypes();
+    return () => {
+      cancelled = true;
+    };
+  }, [venueId]);
 
   // Copies the template's tables onto the wedding (replacing any current wedding
   // tables + clearing seating, server-side) and attaches its floor plan as the
@@ -334,6 +392,97 @@ export function usePlan(weddingId: string) {
     [weddingId, guests]
   );
 
+  // Shared persist step for move/add/remove: PUTs the full next table set (each
+  // entry carrying its existing `id` when it has one — the server's saveWeddingTables
+  // treats a recognized id as "update in place" and an omitted/unrecognized id as
+  // "create new", so kept/moved tables never lose their id and never disturb the
+  // guests already seated there). Always re-`refresh()`s afterward so newly created
+  // tables pick up their real DB id and any unassigned-by-removal guests show up in
+  // the tray. Reverts the optimistic local table list on failure.
+  const persistTables = useCallback(
+    async (next: PlanTable[], previous: PlanTable[]) => {
+      setSavingTables(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/tables`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tables: next.map((t) => ({
+              id: t.id,
+              shape: t.shape,
+              capacity: t.capacity,
+              x: t.x,
+              y: t.y,
+              fixed: t.fixed,
+              width: t.width ?? undefined,
+              depth: t.depth ?? undefined,
+              minCapacity: t.minCapacity ?? undefined,
+            })),
+          }),
+        });
+        if (!res.ok) throw new Error("save tables failed");
+        await refresh();
+      } catch {
+        setTables(previous);
+        setError("Não foi possível guardar as alterações às mesas.");
+      } finally {
+        setSavingTables(false);
+      }
+    },
+    [weddingId, refresh]
+  );
+
+  // Drags a table to a new position (natural/image-pixel space) and persists it.
+  // Optimistic: applied to local state immediately so Konva doesn't snap the shape
+  // back to its pre-drag position while the PUT is in flight.
+  const moveTable = useCallback(
+    (tableId: string, to: { x: number; y: number }) => {
+      const previous = tables;
+      const next = tables.map((t) => (t.id === tableId ? { ...t, x: to.x, y: to.y } : t));
+      setTables(next);
+      void persistTables(next, previous);
+    },
+    [tables, persistTables]
+  );
+
+  // Places a new table (from the venue's table-type catalog, or a generic default)
+  // at `at` (natural/image-pixel space) and persists it. The placeholder id is
+  // discarded by the follow-up refresh() once the server assigns a real one.
+  const addTable = useCallback(
+    (preset: TablePlacementPreset, at: { x: number; y: number }) => {
+      const previous = tables;
+      const placeholder: PlanTable = {
+        id: `tmp-${Date.now()}`,
+        floorPlanId: null,
+        shape: preset.shape ?? "round",
+        capacity: preset.capacity ?? 8,
+        minCapacity: preset.minCapacity ?? undefined,
+        x: at.x,
+        y: at.y,
+        fixed: false,
+        width: preset.width ?? undefined,
+        depth: preset.depth ?? undefined,
+      };
+      const next = [...tables, placeholder];
+      setTables(next);
+      void persistTables(next, previous);
+    },
+    [tables, persistTables]
+  );
+
+  // Removes a table and persists the smaller set; the server unassigns (only)
+  // that table's seated guests, who then reappear in the unassigned tray on refresh.
+  const removeTable = useCallback(
+    (tableId: string) => {
+      const previous = tables;
+      const next = tables.filter((t) => t.id !== tableId);
+      setTables(next);
+      void persistTables(next, previous);
+    },
+    [tables, persistTables]
+  );
+
   const violations: PlanViolations = useMemo(
     () => planViolations(guests, tables, constraints),
     [guests, tables, constraints]
@@ -354,9 +503,12 @@ export function usePlan(weddingId: string) {
     groups,
     layout,
     templates,
+    venueId,
+    venueTableTypes,
     loading,
     generating,
     applying,
+    savingTables,
     error,
     score,
     warnings,
@@ -367,6 +519,9 @@ export function usePlan(weddingId: string) {
     toggleGuestLock,
     toggleTableFixed,
     swap,
+    moveTable,
+    addTable,
+    removeTable,
     violations,
     colorAttr,
     setColorAttr,

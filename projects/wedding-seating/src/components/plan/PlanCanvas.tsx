@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text, Line } from "react-konva";
+import type { KonvaEventObject } from "konva/lib/Node";
 import { chairPositions } from "@/lib/floorplan/chairs";
 import { tableRenderSize, type TableShapeKind } from "@/lib/floorplan/tableShape";
 import type { Point } from "@/lib/floorplan/geometry";
@@ -85,6 +86,21 @@ export interface PlanCanvasProps {
    * Guests absent from this map (attribute is "Nenhum", or the guest has no value for
    * the selected attribute) render with the plain Plan 5 chip styling. */
   colorByGuest?: Record<string, string>;
+  /** Task 4 ("editar mesas"): when true, tables become draggable and the guest
+   * chip/drop-target overlay is replaced by a single remove button per table —
+   * guest seating edits and table structural edits are mutually exclusive modes,
+   * so the HTML drop-target overlay (which sits on top of the Stage) never fights
+   * Konva's own drag handling for the table shape underneath it. */
+  editMode?: boolean;
+  /** While `editMode`, clicking empty canvas places a new table (at the click's
+   * natural/image-pixel position) instead of merely deselecting. */
+  addTableMode?: boolean;
+  /** Called when a table is dragged to a new position (natural/image-pixel space). */
+  onMoveTable?: (tableId: string, to: Point) => void;
+  /** Called (in `addTableMode`) when the empty canvas is clicked. */
+  onAddTableAt?: (at: Point) => void;
+  /** Called when a table's remove button is clicked. */
+  onRemoveTable?: (tableId: string) => void;
 }
 
 interface TableGeom {
@@ -109,6 +125,11 @@ export default function PlanCanvas({
   onToggleTableFixed,
   onSwap,
   colorByGuest = {},
+  editMode = false,
+  addTableMode = false,
+  onMoveTable,
+  onAddTableAt,
+  onRemoveTable,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
 
@@ -134,9 +155,30 @@ export default function PlanCanvas({
     };
   });
 
+  function toNatural(p: Point): Point {
+    return { x: p.x / displayScale, y: p.y / displayScale };
+  }
+
+  // Placing a new table (editMode + addTableMode): a click on empty stage space
+  // (not on a table shape) reports its natural-space position to the caller.
+  function handleStageClick(e: KonvaEventObject<MouseEvent>) {
+    if (!editMode || !addTableMode) return;
+    if (e.target !== e.target.getStage()) return;
+    const pos = e.target.getStage()?.getPointerPosition();
+    if (!pos) return;
+    onAddTableAt?.(toNatural(pos));
+  }
+
+  const stageCursor = editMode && addTableMode ? "copy" : "default";
+
   return (
     <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
-      <Stage width={stageWidth} height={stageHeight} style={{ border: "1px solid #ccc" }}>
+      <Stage
+        width={stageWidth}
+        height={stageHeight}
+        onClick={handleStageClick}
+        style={{ border: "1px solid #ccc", cursor: stageCursor }}
+      >
         <Layer>
           {image && (
             <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
@@ -160,9 +202,19 @@ export default function PlanCanvas({
             );
           })}
         </Layer>
-        <Layer listening={false}>
+        <Layer listening={editMode}>
           {geoms.map((g) => (
-            <TableShape key={g.table.id} geom={g} overCapacity={overCapacitySet.has(g.table.id)} />
+            <TableShape
+              key={g.table.id}
+              geom={g}
+              overCapacity={overCapacitySet.has(g.table.id)}
+              draggable={editMode}
+              onDragEnd={
+                editMode
+                  ? (pos) => onMoveTable?.(g.table.id, toNatural(pos))
+                  : undefined
+              }
+            />
           ))}
         </Layer>
         {/* Decorative chair layer — non-listening so it never intercepts the HTML
@@ -203,9 +255,55 @@ export default function PlanCanvas({
       {/* HTML drop-target overlay: Konva shapes don't receive native HTML drag events,
           so each table gets a transparent, absolutely-positioned div aligned to its
           on-screen (display-scaled) position. It doubles as the home for the seated
-          guests' draggable chips, so a guest can be picked back up off a table. */}
+          guests' draggable chips, so a guest can be picked back up off a table.
+          In editMode the drop-target/guest-chip markup is swapped for a single
+          remove button — the two modes never overlap, so this HTML layer (which
+          sits on top of the Stage) never fights Konva's own drag handling for the
+          table shape underneath it (see editMode wiring above). */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        {geoms.map((g) => (
+        {editMode
+          ? geoms.map((g) => (
+              <div
+                key={g.table.id}
+                data-testid={`table-drop-${g.table.id}`}
+                style={{
+                  position: "absolute",
+                  left: g.displayX - g.width / 2,
+                  top: g.displayY - g.height / 2,
+                  width: g.width,
+                  height: g.height,
+                  pointerEvents: "none",
+                }}
+              >
+                <button
+                  type="button"
+                  data-testid={`remove-table-${g.table.id}`}
+                  onClick={() => onRemoveTable?.(g.table.id)}
+                  title="Remover mesa"
+                  style={{
+                    position: "absolute",
+                    top: -10,
+                    right: -10,
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    border: "1px solid #dc2626",
+                    background: "#fef2f2",
+                    color: "#dc2626",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    padding: 0,
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                    pointerEvents: "auto",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))
+          : geoms.map((g) => (
           <div
             key={g.table.id}
             data-testid={`table-drop-${g.table.id}`}
@@ -320,13 +418,23 @@ export default function PlanCanvas({
               })}
             </div>
           </div>
-        ))}
+            ))}
       </div>
     </div>
   );
 }
 
-function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boolean }) {
+function TableShape({
+  geom,
+  overCapacity,
+  draggable = false,
+  onDragEnd,
+}: {
+  geom: TableGeom;
+  overCapacity: boolean;
+  draggable?: boolean;
+  onDragEnd?: (pos: Point) => void;
+}) {
   const { table, shape, displayX, displayY, width, height } = geom;
   const stroke = overCapacity ? "#dc2626" : table.fixed ? "#b45309" : "#111827";
   const strokeWidth = overCapacity ? 3 : table.fixed ? 2.5 : 1.5;
@@ -336,6 +444,10 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
 
   const tableLabel = table.label ?? `#${table.id.slice(0, 6)}`;
   const occupancyLabel = `${table.guests.length}/${table.capacity}`;
+
+  function handleDragEnd(e: KonvaEventObject<DragEvent>) {
+    onDragEnd?.({ x: e.target.x(), y: e.target.y() });
+  }
 
   return (
     <>
@@ -348,6 +460,8 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
+          draggable={draggable}
+          onDragEnd={handleDragEnd}
           dash={dash}
         />
       ) : (
@@ -361,6 +475,8 @@ function TableShape({ geom, overCapacity }: { geom: TableGeom; overCapacity: boo
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
+          draggable={draggable}
+          onDragEnd={handleDragEnd}
           dash={dash}
         />
       )}
