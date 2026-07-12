@@ -51,7 +51,7 @@ export default function VenueLayout({ children }: { children: React.ReactNode })
         style={{
           display: "flex",
           gap: 4,
-          borderBottom: "1px solid #ddd",
+          borderBottom: "1px solid var(--border)",
           marginBottom: 24,
         }}
       >
@@ -62,9 +62,11 @@ export default function VenueLayout({ children }: { children: React.ReactNode })
             style={{
               padding: "8px 16px",
               textDecoration: "none",
-              color: tab.active ? "#111" : "#666",
+              color: tab.active ? "var(--accent)" : "var(--text-muted)",
               fontWeight: tab.active ? 600 : 400,
-              borderBottom: tab.active ? "2px solid #111" : "2px solid transparent",
+              borderBottom: tab.active
+                ? "2px solid var(--accent)"
+                : "2px solid transparent",
               marginBottom: -1,
             }}
           >
