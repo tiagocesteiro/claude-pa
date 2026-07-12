@@ -101,6 +101,11 @@ export interface PlanCanvasProps {
   onAddTableAt?: (at: Point) => void;
   /** Called when a table's remove button is clicked. */
   onRemoveTable?: (tableId: string) => void;
+  /** Read-only render (Vista do casal, Task 15/3): tables + seated guest chips +
+   * colored chairs still show, but nothing is draggable/editable — no guest drag,
+   * no table drag, no fix/lock/remove buttons, no add-table clicks. Overrides
+   * `editMode`/`addTableMode` when true. Default/absent behaves exactly as before. */
+  readOnly?: boolean;
 }
 
 interface TableGeom {
@@ -130,8 +135,14 @@ export default function PlanCanvas({
   onMoveTable,
   onAddTableAt,
   onRemoveTable,
+  readOnly = false,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
+  // readOnly always wins over editMode/addTableMode — a caller passing both would be
+  // a bug, but this keeps the render provably inert either way.
+  const interactive = !readOnly;
+  const effectiveEditMode = editMode && interactive;
+  const effectiveAddTableMode = addTableMode && interactive;
 
   // displayScale maps image-natural pixels -> on-screen (display) pixels, same
   // convention as FloorPlanCanvas (Plan 2). Table x/y here are always natural.
@@ -162,14 +173,14 @@ export default function PlanCanvas({
   // Placing a new table (editMode + addTableMode): a click on empty stage space
   // (not on a table shape) reports its natural-space position to the caller.
   function handleStageClick(e: KonvaEventObject<MouseEvent>) {
-    if (!editMode || !addTableMode) return;
+    if (!effectiveEditMode || !effectiveAddTableMode) return;
     if (e.target !== e.target.getStage()) return;
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
     onAddTableAt?.(toNatural(pos));
   }
 
-  const stageCursor = editMode && addTableMode ? "copy" : "default";
+  const stageCursor = effectiveEditMode && effectiveAddTableMode ? "copy" : "default";
 
   return (
     <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
@@ -202,15 +213,15 @@ export default function PlanCanvas({
             );
           })}
         </Layer>
-        <Layer listening={editMode}>
+        <Layer listening={effectiveEditMode}>
           {geoms.map((g) => (
             <TableShape
               key={g.table.id}
               geom={g}
               overCapacity={overCapacitySet.has(g.table.id)}
-              draggable={editMode}
+              draggable={effectiveEditMode}
               onDragEnd={
-                editMode
+                effectiveEditMode
                   ? (pos) => onMoveTable?.(g.table.id, toNatural(pos))
                   : undefined
               }
@@ -261,7 +272,7 @@ export default function PlanCanvas({
           sits on top of the Stage) never fights Konva's own drag handling for the
           table shape underneath it (see editMode wiring above). */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        {editMode
+        {effectiveEditMode
           ? geoms.map((g) => (
               <div
                 key={g.table.id}
@@ -307,21 +318,26 @@ export default function PlanCanvas({
           <div
             key={g.table.id}
             data-testid={`table-drop-${g.table.id}`}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const guestId = e.dataTransfer.getData("guestId");
-              if (guestId) onAssign(guestId, g.table.id);
-            }}
+            onDragOver={interactive ? (e) => e.preventDefault() : undefined}
+            onDrop={
+              interactive
+                ? (e) => {
+                    e.preventDefault();
+                    const guestId = e.dataTransfer.getData("guestId");
+                    if (guestId) onAssign(guestId, g.table.id);
+                  }
+                : undefined
+            }
             style={{
               position: "absolute",
               left: g.displayX - g.width / 2,
               top: g.displayY - g.height / 2,
               width: g.width,
               height: g.height,
-              pointerEvents: "auto",
+              pointerEvents: interactive ? "auto" : "none",
             }}
           >
+            {interactive && (
             <button
               type="button"
               data-testid={`fix-table-${g.table.id}`}
@@ -345,6 +361,7 @@ export default function PlanCanvas({
             >
               {g.table.fixed ? "🔒" : "🔓"}
             </button>
+            )}
             <div
               style={{
                 position: "absolute",
@@ -362,20 +379,30 @@ export default function PlanCanvas({
                 return (
                 <span
                   key={guest.id}
-                  draggable
+                  draggable={interactive}
                   data-testid={`guest-chip-${guest.id}`}
                   data-color={color ?? ""}
-                  onDragStart={(e) => e.dataTransfer.setData("guestId", guest.id)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const draggedId = e.dataTransfer.getData("guestId");
-                    if (draggedId && draggedId !== guest.id) onSwap(draggedId, guest.id);
-                  }}
+                  onDragStart={
+                    interactive ? (e) => e.dataTransfer.setData("guestId", guest.id) : undefined
+                  }
+                  onDragOver={
+                    interactive
+                      ? (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      : undefined
+                  }
+                  onDrop={
+                    interactive
+                      ? (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const draggedId = e.dataTransfer.getData("guestId");
+                          if (draggedId && draggedId !== guest.id) onSwap(draggedId, guest.id);
+                        }
+                      : undefined
+                  }
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -388,12 +415,13 @@ export default function PlanCanvas({
                     borderLeft: color ? `4px solid ${color}` : undefined,
                     borderRadius: 6,
                     padding: color ? "3px 8px 3px 6px" : "3px 8px",
-                    cursor: "grab",
+                    cursor: interactive ? "grab" : "default",
                     whiteSpace: "nowrap",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
                   }}
                 >
                   {guest.name}
+                  {interactive && (
                   <button
                     type="button"
                     data-testid={`lock-guest-${guest.id}`}
@@ -413,6 +441,7 @@ export default function PlanCanvas({
                   >
                     {guest.locked ? "🔒" : "🔓"}
                   </button>
+                  )}
                 </span>
                 );
               })}
