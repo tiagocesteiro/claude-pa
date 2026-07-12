@@ -15,6 +15,7 @@ model Venue {
   floorPlans FloorPlan[]
   tableTypes TableType[]
   layoutTemplates LayoutTemplate[]
+  weddings  Wedding[]
   createdAt DateTime   @default(now())
 }
 
@@ -60,6 +61,7 @@ model FloorPlan {
   tables    Table[]
   templates LayoutTemplate[]
   weddings  Wedding[]
+  moments   WeddingMoment[]
   createdAt DateTime @default(now())
 }
 
@@ -85,6 +87,16 @@ model Wedding {
   id            String    @id @default(cuid())
   couple        String
   date          DateTime?
+  venueId       String?
+  venue         Venue?     @relation(fields: [venueId], references: [id])
+  partner1      String?
+  partner1Email String?
+  partner1Phone String?
+  partner2      String?
+  partner2Email String?
+  partner2Phone String?
+  guestEstimate Int?
+  notes         String?
   floorPlanId   String?
   floorPlan     FloorPlan? @relation(fields: [floorPlanId], references: [id])
   templateId    String?
@@ -92,7 +104,19 @@ model Wedding {
   guests        Guest[]
   groups        Group[]
   constraints   Constraint[]
+  moments       WeddingMoment[]
   createdAt     DateTime  @default(now())
+}
+
+model WeddingMoment {
+  id          String     @id @default(cuid())
+  weddingId   String
+  wedding     Wedding    @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  kind        String     // "ceremony" | "cocktail" | "dinner" | "dance"
+  floorPlanId String?
+  floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id])
+
+  @@unique([weddingId, kind])
 }
 
 model Group {

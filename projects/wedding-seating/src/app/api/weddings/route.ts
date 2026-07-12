@@ -13,6 +13,15 @@ export async function POST(req: Request) {
   const wedding = await createWedding({
     couple: b.couple,
     date: b.date ? new Date(b.date) : undefined,
+    venueId: b.venueId ?? null,
+    partner1: b.partner1 ?? null,
+    partner1Email: b.partner1Email ?? null,
+    partner1Phone: b.partner1Phone ?? null,
+    partner2: b.partner2 ?? null,
+    partner2Email: b.partner2Email ?? null,
+    partner2Phone: b.partner2Phone ?? null,
+    guestEstimate: typeof b.guestEstimate === "number" ? b.guestEstimate : null,
+    notes: b.notes ?? null,
   });
   return NextResponse.json(wedding, { status: 201 });
 }

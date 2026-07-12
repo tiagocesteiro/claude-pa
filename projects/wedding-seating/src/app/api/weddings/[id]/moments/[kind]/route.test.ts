@@ -1,0 +1,79 @@
+import { describe, it, expect, afterAll } from "vitest";
+import { PUT } from "./route";
+import { createWedding } from "@/lib/db/weddings";
+import { prisma } from "@/lib/db/client";
+
+it("400s on an invalid moment kind", async () => {
+  const w = await createWedding({ couple: "Moment Route Bad Kind" });
+  const res = await PUT(
+    new Request("http://x/moments/brunch", { method: "PUT", body: JSON.stringify({ floorPlanId: null }) }),
+    { params: Promise.resolve({ id: w.id, kind: "brunch" }) }
+  );
+  expect(res.status).toBe(400);
+});
+
+it("400s when the floor plan belongs to a different venue than the wedding", async () => {
+  const venueA = await prisma.venue.create({ data: { name: "Venue A" } });
+  const venueB = await prisma.venue.create({ data: { name: "Venue B" } });
+  const fpB = await prisma.floorPlan.create({
+    data: { venueId: venueB.id, image: "img.png", scale: 50, width: 10, depth: 10 },
+  });
+  const w = await createWedding({ couple: "Moment Route Cross Venue", venueId: venueA.id });
+
+  const res = await PUT(
+    new Request("http://x/moments/ceremony", {
+      method: "PUT",
+      body: JSON.stringify({ floorPlanId: fpB.id }),
+    }),
+    { params: Promise.resolve({ id: w.id, kind: "ceremony" }) }
+  );
+  expect(res.status).toBe(400);
+  const body = await res.json();
+  expect(body.error).toMatch(/quinta/);
+});
+
+it("persists a valid floor plan assignment for a moment", async () => {
+  const venue = await prisma.venue.create({ data: { name: "Venue Valid" } });
+  const fp = await prisma.floorPlan.create({
+    data: { venueId: venue.id, image: "img.png", scale: 50, width: 10, depth: 10 },
+  });
+  const w = await createWedding({ couple: "Moment Route Valid", venueId: venue.id });
+
+  const res = await PUT(
+    new Request("http://x/moments/cocktail", {
+      method: "PUT",
+      body: JSON.stringify({ floorPlanId: fp.id }),
+    }),
+    { params: Promise.resolve({ id: w.id, kind: "cocktail" }) }
+  );
+  expect(res.status).toBe(200);
+  const body = await res.json();
+  expect(body.floorPlanId).toBe(fp.id);
+
+  const moment = await prisma.weddingMoment.findUnique({
+    where: { weddingId_kind: { weddingId: w.id, kind: "cocktail" } },
+  });
+  expect(moment?.floorPlanId).toBe(fp.id);
+});
+
+it("clears a moment's floor plan with floorPlanId: null", async () => {
+  const venue = await prisma.venue.create({ data: { name: "Venue Clear" } });
+  const fp = await prisma.floorPlan.create({
+    data: { venueId: venue.id, image: "img.png", scale: 50, width: 10, depth: 10 },
+  });
+  const w = await createWedding({ couple: "Moment Route Clear", venueId: venue.id });
+
+  await PUT(
+    new Request("http://x/moments/dance", { method: "PUT", body: JSON.stringify({ floorPlanId: fp.id }) }),
+    { params: Promise.resolve({ id: w.id, kind: "dance" }) }
+  );
+  const res = await PUT(
+    new Request("http://x/moments/dance", { method: "PUT", body: JSON.stringify({ floorPlanId: null }) }),
+    { params: Promise.resolve({ id: w.id, kind: "dance" }) }
+  );
+  expect(res.status).toBe(200);
+  const body = await res.json();
+  expect(body.floorPlanId).toBeNull();
+});
+
+afterAll(async () => { await prisma.$disconnect(); });
