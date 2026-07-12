@@ -69,6 +69,8 @@ model Table {
   floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
   templateId  String?
   template    LayoutTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  weddingId   String?
+  wedding     Wedding? @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   shape       String   // "round" | "rect"
   capacity    Int
   width       Float?   // metres
@@ -85,6 +87,8 @@ model Wedding {
   date          DateTime?
   floorPlanId   String?
   floorPlan     FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  templateId    String?
+  tables        Table[]
   guests        Guest[]
   groups        Group[]
   constraints   Constraint[]
