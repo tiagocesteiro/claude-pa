@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text } from "react-konva";
+import { Fragment, useEffect, useState } from "react";
+import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text, Line } from "react-konva";
 import { chairPositions } from "@/lib/floorplan/chairs";
 import { tableRenderSize, type TableShapeKind } from "@/lib/floorplan/tableShape";
+import type { Point } from "@/lib/floorplan/geometry";
+
+// Same per-zone stroke cycling as the editor's FloorPlanCanvas, so a zone reads the
+// same color here as it did while being drawn.
+const ZONE_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c"];
 
 // Chair dots (natural pixels, before displayScale). Occupied chairs with no attribute
 // color selected fall back to CHAIR_NEUTRAL_FILL; empty seats always render CHAIR_EMPTY_FILL.
@@ -60,6 +65,10 @@ export interface PlanCanvasProps {
   /** Floor plan's pixels-per-metre calibration; drives each table's real render size
    * via `tableRenderSize`. 0/absent falls back to `tableRenderSize`'s fixed defaults. */
   scale?: number;
+  /** Read-only zone outlines (rooms/areas) from the applied template's floor plan,
+   * each a closed polygon in image-natural pixel space. Rendered behind the tables,
+   * same translucent style as the editor — no interaction here. */
+  zones?: Point[][];
   /** Table ids currently over capacity — rendered in red. */
   overCapacityIds: string[];
   maxWidth: number;
@@ -91,6 +100,7 @@ export default function PlanCanvas({
   imageUrl,
   tables,
   scale = 0,
+  zones = [],
   overCapacityIds,
   maxWidth,
   maxHeight,
@@ -131,6 +141,24 @@ export default function PlanCanvas({
           {image && (
             <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
           )}
+        </Layer>
+        <Layer listening={false}>
+          {zones.map((zone, zi) => {
+            const color = ZONE_COLORS[zi % ZONE_COLORS.length];
+            return (
+              <Fragment key={zi}>
+                {zone.length >= 2 && (
+                  <Line
+                    points={zone.flatMap((p) => [p.x * displayScale, p.y * displayScale])}
+                    closed
+                    fill="rgba(37, 99, 235, 0.12)"
+                    stroke={color}
+                    strokeWidth={2}
+                  />
+                )}
+              </Fragment>
+            );
+          })}
         </Layer>
         <Layer listening={false}>
           {geoms.map((g) => (

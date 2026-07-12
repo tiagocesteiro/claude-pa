@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import type { Warning } from "@/lib/seating";
@@ -9,6 +9,7 @@ import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
 import type { AttributeKey } from "@/lib/plan/colors";
+import type { Point } from "@/lib/floorplan/geometry";
 
 // "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
 // for "no color") passed to setColorAttr / buildColorMap.
@@ -39,13 +40,6 @@ const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
 // fits inside this box preserving the uploaded image's aspect ratio.
 const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 640;
-
-interface FloorPlanOption {
-  id: string;
-  image: string;
-  scale: number;
-  venue?: { name: string };
-}
 
 function imageUrlFor(image: string): string | undefined {
   if (!image) return undefined;
@@ -79,31 +73,20 @@ export default function PlanPage() {
   const params = useParams<{ id: string }>();
   const weddingId = params.id;
 
-  const [floorPlans, setFloorPlans] = useState<FloorPlanOption[]>([]);
-  const [floorPlanId, setFloorPlanId] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadFloorPlans() {
-      const res = await fetch("/api/floorplans");
-      if (!res.ok) return;
-      const data = (await res.json()) as FloorPlanOption[];
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-      setFloorPlans(data);
-      setFloorPlanId((prev) => prev ?? (data.length > 0 ? data[0].id : null));
-    }
-    loadFloorPlans();
-  }, []);
-
   const {
     guests,
     tables,
     groups,
+    layout,
+    templates,
     loading,
     generating,
+    applying,
     error,
     score,
     warnings,
     generate,
+    applyTemplate,
     assign,
     toggleGuestLock,
     toggleTableFixed,
@@ -112,9 +95,33 @@ export default function PlanPage() {
     colorAttr,
     setColorAttr,
     colorMap,
-  } = usePlan(weddingId, floorPlanId);
+  } = usePlan(weddingId);
 
-  const selectedFloorPlan = floorPlans.find((f) => f.id === floorPlanId);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+
+  const hasTables = tables.length > 0;
+
+  // Zones are stored as a JSON string on the floor plan; parsed once per layout change
+  // for the read-only background layer (same shape the editor works with in-memory).
+  const zones: Point[][] = useMemo(() => {
+    if (!layout?.zones) return [];
+    try {
+      return JSON.parse(layout.zones) as Point[][];
+    } catch {
+      return [];
+    }
+  }, [layout?.zones]);
+
+  async function handleApplyTemplate() {
+    if (!selectedTemplateId) return;
+    if (hasTables) {
+      const confirmed = window.confirm(
+        "Aplicar este template substitui as mesas atuais e limpa os lugares já atribuídos. Continuar?"
+      );
+      if (!confirmed) return;
+    }
+    await applyTemplate(selectedTemplateId);
+  }
 
   // Stable, human labels ("Mesa 1", "Mesa 2", ...) derived from table order — used by the
   // canvas, the warnings list, and the TableList so a table reads the same everywhere
@@ -177,20 +184,31 @@ export default function PlanPage() {
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
         <label>
-          Floor plan:{" "}
+          Template:{" "}
           <select
-            value={floorPlanId ?? ""}
-            onChange={(e) => setFloorPlanId(e.target.value || null)}
+            data-testid="template-select"
+            value={selectedTemplateId}
+            onChange={(e) => setSelectedTemplateId(e.target.value)}
           >
-            {floorPlans.length === 0 && <option value="">Nenhum floor plan disponível</option>}
-            {floorPlans.map((fp) => (
-              <option key={fp.id} value={fp.id}>
-                {fp.venue?.name ?? "?"} — {fp.id.slice(0, 6)}
+            <option value="">
+              {templates.length === 0 ? "Nenhum template disponível" : "Escolhe um template"}
+            </option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.venue?.name ?? "?"} — {t.name} — {t.minGuests}-{t.maxGuests}
               </option>
             ))}
           </select>
         </label>
-        <button type="button" onClick={generate} disabled={!floorPlanId || generating}>
+        <button
+          type="button"
+          data-testid="apply-template-button"
+          onClick={handleApplyTemplate}
+          disabled={!selectedTemplateId || applying}
+        >
+          {applying ? "A aplicar..." : "Usar este template"}
+        </button>
+        <button type="button" onClick={generate} disabled={!hasTables || generating}>
           {generating ? "A gerar..." : "Generate"}
         </button>
         {score !== null && <span data-testid="plan-score">Score: {score.toFixed(2)}</span>}
@@ -213,14 +231,17 @@ export default function PlanPage() {
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
-      {!floorPlanId && <p>Escolhe um floor plan para começar.</p>}
+      {!hasTables && (
+        <p>Escolhe um template acima e clica em &quot;Usar este template&quot; para começar.</p>
+      )}
 
-      {floorPlanId && (
+      {hasTables && (
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           <PlanCanvas
-            imageUrl={imageUrlFor(selectedFloorPlan?.image ?? "")}
+            imageUrl={imageUrlFor(layout?.image ?? "")}
             tables={tableViews}
-            scale={selectedFloorPlan?.scale ?? 0}
+            scale={layout?.scale ?? 0}
+            zones={zones}
             overCapacityIds={violations.overCapacity}
             maxWidth={CANVAS_WIDTH}
             maxHeight={CANVAS_HEIGHT}
@@ -299,7 +320,7 @@ export default function PlanPage() {
         </div>
       )}
 
-      {floorPlanId && (
+      {hasTables && (
         <TableList
           rows={tableListRows}
           unassigned={unassigned.map((g) => ({

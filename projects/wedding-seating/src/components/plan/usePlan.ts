@@ -20,7 +20,7 @@ export interface PlanGuest {
 
 export interface PlanTable {
   id: string;
-  floorPlanId: string;
+  floorPlanId: string | null;
   shape: string;
   capacity: number;
   x: number;
@@ -45,51 +45,115 @@ export interface PlanGroup {
   color: string | null;
 }
 
-export function usePlan(weddingId: string, floorPlanId: string | null) {
+/** The template's floor-plan background (image + scale + zones), attached to the
+ * wedding once a template has been applied. `null` before any template is applied. */
+export interface PlanLayout {
+  floorPlanId: string;
+  image: string;
+  scale: number;
+  zones: string | null;
+}
+
+export interface PlanTemplate {
+  id: string;
+  name: string;
+  minGuests: number;
+  maxGuests: number;
+  venueId: string;
+  venue?: { name: string };
+  floorPlanId: string | null;
+  floorPlan?: { image: string } | null;
+}
+
+export function usePlan(weddingId: string) {
   const [guests, setGuests] = useState<PlanGuest[]>([]);
   const [tables, setTables] = useState<PlanTable[]>([]);
   const [constraints, setConstraints] = useState<PlanConstraint[]>([]);
   const [groups, setGroups] = useState<PlanGroup[]>([]);
+  const [layout, setLayout] = useState<PlanLayout | null>(null);
+  const [templates, setTemplates] = useState<PlanTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState<number | null>(null);
   const [warnings, setWarnings] = useState<Warning[]>([]);
   const [colorAttr, setColorAttr] = useState<AttributeKey | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!floorPlanId) {
-      setGuests([]);
-      setTables([]);
-      setConstraints([]);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/weddings/${weddingId}/plan?floorPlanId=${encodeURIComponent(floorPlanId)}`
-      );
+      const res = await fetch(`/api/weddings/${weddingId}/plan`);
       if (!res.ok) throw new Error("failed to load plan");
       const data = (await res.json()) as {
         guests: PlanGuest[];
         tables: PlanTable[];
         constraints: PlanConstraint[];
+        layout: PlanLayout | null;
       };
       setGuests(data.guests ?? []);
       setTables(data.tables ?? []);
       setConstraints(data.constraints ?? []);
+      setLayout(data.layout ?? null);
     } catch {
       setError("Não foi possível carregar o plano.");
     } finally {
       setLoading(false);
     }
-  }, [weddingId, floorPlanId]);
+  }, [weddingId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load + reload on floor-plan change
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount
     refresh();
   }, [refresh]);
+
+  // Templates are wedding-independent (global catalog); fetched once for the picker.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTemplates() {
+      try {
+        const res = await fetch("/api/templates");
+        if (!res.ok) return;
+        const data = (await res.json()) as PlanTemplate[];
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount
+        if (!cancelled) setTemplates(data ?? []);
+      } catch {
+        // silent — the picker just shows no options
+      }
+    }
+    loadTemplates();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Copies the template's tables onto the wedding (replacing any current wedding
+  // tables + clearing seating, server-side) and attaches its floor plan as the
+  // wedding's layout. Caller is responsible for confirming the replace when the
+  // wedding already has tables/seating — this just applies + refreshes.
+  const applyTemplate = useCallback(
+    async (templateId: string) => {
+      setApplying(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/apply-template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId }),
+        });
+        if (!res.ok) throw new Error("apply template failed");
+        setScore(null);
+        setWarnings([]);
+        await refresh();
+      } catch {
+        setError("Não foi possível aplicar o template.");
+      } finally {
+        setApplying(false);
+      }
+    },
+    [weddingId, refresh]
+  );
 
   // Groups aren't floor-plan scoped; fetched once per wedding, used only to resolve
   // warning names (group-split). Best-effort — a failed fetch just means warnings
@@ -114,26 +178,31 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
   }, [weddingId]);
 
   const generate = useCallback(async () => {
-    if (!floorPlanId) return;
     setGenerating(true);
     setError(null);
     try {
       const res = await fetch(`/api/weddings/${weddingId}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ floorPlanId }),
       });
-      if (!res.ok) throw new Error("generate failed");
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "generate failed");
+      }
       const result = (await res.json()) as { score: number; warnings: Warning[] };
       setScore(result.score);
       setWarnings(result.warnings ?? []);
       await refresh();
-    } catch {
-      setError("Não foi possível gerar o plano de mesas.");
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message === "aplica um template primeiro"
+          ? "Aplica um template primeiro."
+          : "Não foi possível gerar o plano de mesas."
+      );
     } finally {
       setGenerating(false);
     }
-  }, [weddingId, floorPlanId, refresh]);
+  }, [weddingId, refresh]);
 
   // Optimistic local update + persist via PUT; live `violations` (below) picks
   // up the change on next render. Reverts and surfaces an error if the PUT fails.
@@ -283,13 +352,17 @@ export function usePlan(weddingId: string, floorPlanId: string | null) {
     tables,
     constraints,
     groups,
+    layout,
+    templates,
     loading,
     generating,
+    applying,
     error,
     score,
     warnings,
     refresh,
     generate,
+    applyTemplate,
     assign,
     toggleGuestLock,
     toggleTableFixed,
