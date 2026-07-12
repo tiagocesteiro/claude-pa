@@ -1,8 +1,8 @@
 ---
 project: Wedding Seating Planner
-status: active build — MVP core + usability + attributes/colors + multi-group + venue catalog + walls/chairs + wedding-tabs + venue-tabs + layout-templates done
+status: active build — MVP core + usability + attributes/colors + multi-group + venue catalog + walls/chairs + wedding-tabs + venue-tabs + layouts(zones) + realistic shapes + wedding-consumes-template(editable copy) done
 last_updated: 2026-07-12
-branch: feat/wedding-seating-engine (89+ commits ahead of master, NOT merged)
+branch: feat/wedding-seating-engine (94+ commits ahead of master, NOT merged)
 tags: [wedding-seating, product, nextjs, local-first]
 ---
 
@@ -44,7 +44,7 @@ npx prisma migrate dev # if schema changed
 11. **Venue tabs + layout templates** — venue admin uses tabs (Mesas disponíveis [catalog] | Layouts de salas | Templates); `LayoutTemplate` model. (NOTE: the composition-only version from this plan was superseded by Plan 13.)
 12. **Table shapes + realistic dimensions** — catalog: round (diameter), oval (large+small diameter), rectangular (length×width); `TableType.shape` gains "oval"; tables render on both canvases **to real scale** (circle/ellipse/rect via `tableRenderSize`), chairs on the real outline; drag alignment holds (shape + drop-overlay from the same size).
 13. **Layouts (zones) + template-owned tables** — venue re-architecture: the Layouts editor = image + scale + **multiple zones** only (no tables); tables now live on **templates** (positioned): `LayoutTemplate.floorPlanId` (the layout), `Table.templateId` (positioned tables), `FloorPlan.zones` (multi-polygon). The Templates tab is a table mini-editor placing catalog tables on the chosen layout's image+zones background (realistic shapes, spacing + out-of-any-zone warnings), saved to the template. **Table.floorPlanId is now nullable**; the wedding flow still reads floor-plan tables until Plan 14.
-- **PENDING (Plan 14):** wedding consumes a template as an EDITABLE COPY (pick template → copy its tables into the wedding → Generate + manual edits on the copy, rendered on the template's layout). Until then, new weddings have no tables to seat (the seating engine/plan view is unchanged and still reads `listTables(floorPlanId)`).
+14. **Wedding consumes a template (editable copy)** — the wedding plan tab picks a template → `applyTemplateToWedding` COPIES its tables into the wedding (`Table.weddingId`), sets `wedding.floorPlanId` (=template's layout) + `wedding.templateId`, nulls guest seats; plan/generate now operate on the wedding's own tables and render on the template's layout background (image+zones). The couple **edits the copy** (move/add-from-catalog/remove) via `PUT /api/weddings/[id]/tables` → `saveWeddingTables` (ID-DIFF: update-in-place preserves seating, create new, delete-missing + unassign only those guests) **without touching the venue template**. `saveWeddingTables` was rewritten from delete-all+recreate to id-diff (delete-all would mint new ids and orphan every guest seat — `Guest.assignedTableId` has no FK). New data-access: `src/lib/db/weddingTables.ts` (`listWeddingTables`/`saveWeddingTables`/`applyTemplateToWedding`). **The wedding loop is now closed end-to-end.**
 
 ## Current data model (Prisma) — key fields added over time
 - Guest: `groupId` (primary group), `extraGroups` (JSON ordered extras), `assignedTableId`, `locked`, `ageGroup`, `gender`, `dietary`.
@@ -66,4 +66,4 @@ npx prisma migrate dev # if schema changed
 - Accents work correctly in import (an earlier "scrambled groups" report was a corrupted bash-generated sample file, not an app bug).
 
 ## Verification status
-- 114 automated tests green; `tsc --noEmit` + `next build` clean. Every plan's UI was driven end-to-end with Playwright (generate, drag, colors, locks, swap, catalog, spacing, boundary, chairs) with screenshots in `.superpowers/`.
+- 138 automated tests green; `tsc --noEmit` + `next build` clean. Every plan's UI was driven end-to-end with Playwright (generate, drag, colors, locks, swap, catalog, spacing, boundary, chairs, zones, template-apply, wedding table move/add/remove + template-unchanged) with screenshots in `.superpowers/`.
