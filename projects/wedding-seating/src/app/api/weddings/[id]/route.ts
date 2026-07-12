@@ -33,11 +33,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   for (const key of DETAIL_FIELDS) {
     if (!(key in b)) continue;
     if (key === "date") {
-      fields.date = b.date ? new Date(b.date) : null;
+      if (!b.date) {
+        fields.date = null;
+      } else {
+        const d = new Date(b.date);
+        if (Number.isNaN(d.getTime())) {
+          return NextResponse.json({ error: "invalid date" }, { status: 400 });
+        }
+        fields.date = d;
+      }
     } else if (key === "guestEstimate") {
-      fields.guestEstimate = b.guestEstimate === null || b.guestEstimate === undefined
-        ? null
-        : Number(b.guestEstimate);
+      const n =
+        b.guestEstimate === null || b.guestEstimate === undefined || b.guestEstimate === ""
+          ? null
+          : Number(b.guestEstimate);
+      fields.guestEstimate = n !== null && Number.isNaN(n) ? null : n;
     } else {
       fields[key] = b[key];
     }

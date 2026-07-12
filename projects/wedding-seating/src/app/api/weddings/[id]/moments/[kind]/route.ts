@@ -15,10 +15,10 @@ export async function PUT(
   const b = await req.json().catch(() => ({}));
   const floorPlanId: string | null = b?.floorPlanId ?? null;
 
-  if (floorPlanId) {
-    const wedding = await getWedding(id);
-    if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
+  const wedding = await getWedding(id);
+  if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
 
+  if (floorPlanId) {
     const floorPlan = await prisma.floorPlan.findUnique({ where: { id: floorPlanId } });
     if (!floorPlan || floorPlan.venueId !== wedding.venueId) {
       return NextResponse.json({ error: "planta não pertence à quinta" }, { status: 400 });
