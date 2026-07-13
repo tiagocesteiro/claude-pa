@@ -13,6 +13,12 @@ const AGE_OPTIONS: { label: string; value: string }[] = [
 ];
 const AGE_LABELS: Record<string, string> = { adult: "Adulto", child: "Criança", senior: "Idoso" };
 
+const RSVP_OPTIONS: { label: string; value: string }[] = [
+  { label: "Pendente", value: "pending" },
+  { label: "Confirmado", value: "confirmed" },
+  { label: "Recusado", value: "declined" },
+];
+
 const th: React.CSSProperties = {
   textAlign: "left",
   padding: "8px 10px",
@@ -53,7 +59,12 @@ export default function GuestTable({
   ) => Promise<void>;
   updateGuestAttrs: (
     guestId: string,
-    attrs: { ageGroup?: string | null; gender?: string | null; dietary?: string | null }
+    attrs: {
+      ageGroup?: string | null;
+      gender?: string | null;
+      dietary?: string | null;
+      rsvp?: string | null;
+    }
   ) => Promise<void>;
 }) {
   const [newGroupName, setNewGroupName] = useState("");
@@ -97,6 +108,10 @@ export default function GuestTable({
   }
 
   const sorted = [...guests].sort((a, b) => a.name.localeCompare(b.name, "pt"));
+
+  const confirmedCount = guests.filter((g) => (g.rsvp ?? "pending") === "confirmed").length;
+  const declinedCount = guests.filter((g) => (g.rsvp ?? "pending") === "declined").length;
+  const pendingCount = guests.length - confirmedCount - declinedCount;
 
   return (
     <div>
@@ -174,6 +189,13 @@ export default function GuestTable({
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
+      {guests.length > 0 && (
+        <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 8 }}>
+          {confirmedCount} confirmados · {pendingCount} pendentes · {declinedCount} recusados ·{" "}
+          {guests.length} total
+        </p>
+      )}
+
       {guests.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>Sem convidados ainda.</p>
       ) : (
@@ -190,6 +212,7 @@ export default function GuestTable({
             <thead>
               <tr>
                 <th style={th}>Nome</th>
+                <th style={th}>Confirmação</th>
                 <th style={th}>Grupo</th>
                 <th style={th}>Grupos extra</th>
                 <th style={th}>Idade</th>
@@ -201,9 +224,37 @@ export default function GuestTable({
               {sorted.map((guest) => {
                 const extras = extraGroupNames(guest);
                 const isEditing = editingGuestId === guest.id;
+                const rsvp = guest.rsvp ?? "pending";
+                const rowStyle: React.CSSProperties =
+                  rsvp === "confirmed"
+                    ? { background: "rgba(34,197,94,0.08)" }
+                    : rsvp === "declined"
+                      ? { opacity: 0.65 }
+                      : {};
                 return (
-                  <tr key={guest.id} data-testid={`guest-row-${guest.id}`}>
-                    <td style={td}>{guest.name}</td>
+                  <tr key={guest.id} data-testid={`guest-row-${guest.id}`} style={rowStyle}>
+                    <td
+                      style={{
+                        ...td,
+                        textDecoration: rsvp === "declined" ? "line-through" : "none",
+                        color: rsvp === "declined" ? "var(--text-muted)" : undefined,
+                      }}
+                    >
+                      {guest.name}
+                    </td>
+                    <td style={td}>
+                      <select
+                        value={rsvp}
+                        onChange={(e) => updateGuestAttrs(guest.id, { rsvp: e.target.value })}
+                        aria-label={`Confirmação de ${guest.name}`}
+                      >
+                        {RSVP_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
                     <td style={td}>
                       <select
                         value={guest.groupId ?? ""}

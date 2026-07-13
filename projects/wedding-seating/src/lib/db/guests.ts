@@ -33,14 +33,32 @@ export function setGuestLocked(guestId: string, locked: boolean): Promise<Guest>
   return prisma.guest.update({ where: { id: guestId }, data: { locked } });
 }
 
+export const RSVP_VALUES = ["pending", "confirmed", "declined"] as const;
+export type RsvpValue = (typeof RSVP_VALUES)[number];
+
+export function isRsvpValue(value: unknown): value is RsvpValue {
+  return typeof value === "string" && (RSVP_VALUES as readonly string[]).includes(value);
+}
+
 export function updateGuestAttributes(
   guestId: string,
-  attrs: { ageGroup?: string | null; gender?: string | null; dietary?: string | null }
+  attrs: {
+    ageGroup?: string | null;
+    gender?: string | null;
+    dietary?: string | null;
+    rsvp?: string | null;
+  }
 ): Promise<Guest> {
-  const data: { ageGroup?: string | null; gender?: string | null; dietary?: string | null } = {};
+  const data: {
+    ageGroup?: string | null;
+    gender?: string | null;
+    dietary?: string | null;
+    rsvp?: string | null;
+  } = {};
   if ("ageGroup" in attrs) data.ageGroup = attrs.ageGroup ?? null;
   if ("gender" in attrs) data.gender = attrs.gender ?? null;
   if ("dietary" in attrs) data.dietary = attrs.dietary ?? null;
+  if ("rsvp" in attrs && isRsvpValue(attrs.rsvp)) data.rsvp = attrs.rsvp;
   return prisma.guest.update({ where: { id: guestId }, data });
 }
 

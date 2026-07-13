@@ -1,7 +1,14 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { createWedding } from "./weddings";
 import { createGroup } from "./groups";
-import { listGuests, assignGuestGroup, createGuest, setGuestLocked, setGuestGroups } from "./guests";
+import {
+  listGuests,
+  assignGuestGroup,
+  createGuest,
+  setGuestLocked,
+  setGuestGroups,
+  updateGuestAttributes,
+} from "./guests";
 import { prisma } from "./client";
 
 it("lists guests and reassigns a guest's group", async () => {
@@ -43,6 +50,21 @@ it("sets a guest's primary + ordered extra groups", async () => {
   expect(JSON.parse(updated.extraGroups!)).toEqual(["grpFac", "grpTrab"]);
   const cleared = await setGuestGroups(g.id, "grpFam", []);
   expect(cleared.extraGroups).toBeNull();
+});
+
+it("defaults a new guest's rsvp to pending, persists a valid rsvp, and ignores an invalid one", async () => {
+  const w = await createWedding({ couple: "RSVP Round Trip" });
+  const g = await createGuest({ weddingId: w.id, name: "Confirma Lá" });
+  expect(g.rsvp).toBe("pending");
+
+  const confirmed = await updateGuestAttributes(g.id, { rsvp: "confirmed" });
+  expect(confirmed.rsvp).toBe("confirmed");
+
+  const declined = await updateGuestAttributes(g.id, { rsvp: "declined" });
+  expect(declined.rsvp).toBe("declined");
+
+  const ignored = await updateGuestAttributes(g.id, { rsvp: "bogus" });
+  expect(ignored.rsvp).toBe("declined");
 });
 
 afterAll(async () => { await prisma.$disconnect(); });

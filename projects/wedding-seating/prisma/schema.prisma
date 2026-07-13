@@ -141,6 +141,7 @@ model Guest {
   ageGroup        String?
   gender          String?
   dietary         String?
+  rsvp            String?  @default("pending")
 }
 
 model Constraint {

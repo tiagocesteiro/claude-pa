@@ -12,6 +12,7 @@ export interface Guest {
   ageGroup: string | null;
   gender: string | null;
   dietary: string | null;
+  rsvp: string | null;
 }
 
 export interface Group {
@@ -64,7 +65,12 @@ export function useGuestBoard(weddingId: string) {
   const updateGuestAttrs = useCallback(
     async (
       guestId: string,
-      attrs: { ageGroup?: string | null; gender?: string | null; dietary?: string | null }
+      attrs: {
+        ageGroup?: string | null;
+        gender?: string | null;
+        dietary?: string | null;
+        rsvp?: string | null;
+      }
     ) => {
       setError(null);
       try {
