@@ -44,6 +44,7 @@ export default function GuestTable({
   removeGroup,
   setGuestGroups,
   updateGuestAttrs,
+  setPlusOne,
 }: {
   guests: Guest[];
   groups: Group[];
@@ -66,6 +67,7 @@ export default function GuestTable({
       rsvp?: string | null;
     }
   ) => Promise<void>;
+  setPlusOne: (guestId: string, partnerId: string | null) => Promise<void>;
 }) {
   const [newGroupName, setNewGroupName] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -74,6 +76,7 @@ export default function GuestTable({
   const [editingGuestId, setEditingGuestId] = useState<string | null>(null);
 
   const groupName = (id: string | null) => groups.find((g) => g.id === id)?.name ?? null;
+  const guestName = (id: string | null) => guests.find((g) => g.id === id)?.name ?? null;
 
   function extraGroupNames(guest: Guest): string[] {
     if (!guest.extraGroups) return [];
@@ -215,6 +218,7 @@ export default function GuestTable({
                 <th style={th}>Confirmação</th>
                 <th style={th}>Grupo</th>
                 <th style={th}>Grupos extra</th>
+                <th style={th}>Plus one</th>
                 <th style={th}>Idade</th>
                 <th style={th}>Género</th>
                 <th style={th}>Dieta</th>
@@ -287,6 +291,42 @@ export default function GuestTable({
                           setGuestGroups={setGuestGroups}
                           onClose={() => setEditingGuestId(null)}
                         />
+                      )}
+                    </td>
+                    <td style={{ ...td, minWidth: 170 }}>
+                      {guest.plusOneId ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <span>{guestName(guest.plusOneId) ?? "—"}</span>
+                          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                            (cross reference)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setPlusOne(guest.id, null)}
+                            title="Remover acompanhante"
+                            style={{ padding: "0 6px", fontSize: 12, color: "#dc2626" }}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : (
+                        <select
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) setPlusOne(guest.id, e.target.value);
+                          }}
+                          aria-label={`Plus one de ${guest.name}`}
+                        >
+                          <option value="">— (nenhum)</option>
+                          {guests
+                            .filter((g) => g.id !== guest.id && g.plusOneId === null)
+                            .sort((a, b) => a.name.localeCompare(b.name, "pt"))
+                            .map((g) => (
+                              <option key={g.id} value={g.id}>
+                                {g.name}
+                              </option>
+                            ))}
+                        </select>
                       )}
                     </td>
                     <td style={td}>

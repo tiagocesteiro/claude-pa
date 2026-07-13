@@ -13,6 +13,7 @@ export interface Guest {
   gender: string | null;
   dietary: string | null;
   rsvp: string | null;
+  plusOneId: string | null;
 }
 
 export interface Group {
@@ -170,6 +171,24 @@ export function useGuestBoard(weddingId: string) {
     [refresh]
   );
 
+  const setPlusOne = useCallback(
+    async (guestId: string, partnerId: string | null) => {
+      setError(null);
+      try {
+        const res = await fetch(`/api/guests/${guestId}/plus-one`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ partnerId }),
+        });
+        if (!res.ok) setError("Não foi possível definir o acompanhante.");
+      } catch {
+        setError("Não foi possível definir o acompanhante.");
+      }
+      await refresh();
+    },
+    [refresh]
+  );
+
   const removeGroup = useCallback(
     async (id: string) => {
       setError(null);
@@ -208,5 +227,6 @@ export function useGuestBoard(weddingId: string) {
     removeGroup,
     setGuestGroups,
     updateGuestAttrs,
+    setPlusOne,
   };
 }

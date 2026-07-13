@@ -23,6 +23,7 @@ export default function WeddingWorkspacePage() {
     removeGroup,
     setGuestGroups,
     updateGuestAttrs,
+    setPlusOne,
   } = useGuestBoard(weddingId);
 
   return (
@@ -44,6 +45,7 @@ export default function WeddingWorkspacePage() {
           removeGroup={removeGroup}
           setGuestGroups={setGuestGroups}
           updateGuestAttrs={updateGuestAttrs}
+          setPlusOne={setPlusOne}
         />
       )}
     </div>

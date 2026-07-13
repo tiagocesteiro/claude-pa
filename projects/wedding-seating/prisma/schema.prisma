@@ -145,6 +145,9 @@ model Guest {
   gender          String?
   dietary         String?
   rsvp            String?  @default("pending")
+  plusOneId       String?  @unique
+  plusOne         Guest?   @relation("PlusOne", fields: [plusOneId], references: [id], onDelete: SetNull)
+  plusOneOf       Guest?   @relation("PlusOne")
 }
 
 model Constraint {
