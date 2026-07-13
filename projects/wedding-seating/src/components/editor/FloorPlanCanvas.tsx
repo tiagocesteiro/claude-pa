@@ -58,6 +58,9 @@ export interface FloorPlanCanvasProps {
   onSelect: (id: string | null) => void;
   onCalibrateClick?: (at: Point) => void;
   onZoneClick?: (at: Point) => void;
+  /** When provided, each table renders a small "×" remove button (same affordance
+   * as the seating plan's editMode — see PlanCanvas). Omit to render without it. */
+  onDeleteTable?: (id: string) => void;
 }
 
 export default function FloorPlanCanvas({
@@ -76,6 +79,7 @@ export default function FloorPlanCanvas({
   onSelect,
   onCalibrateClick,
   onZoneClick,
+  onDeleteTable,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
@@ -93,6 +97,20 @@ export default function FloorPlanCanvas({
   function toNatural(p: Point): Point {
     return { x: p.x / displayScale, y: p.y / displayScale };
   }
+
+  // Geometry for the HTML remove-button overlay (only rendered when onDeleteTable
+  // is provided) — same displayX/Y/width/height convention TableShape uses below,
+  // duplicated here because the overlay lives outside the Stage/Konva tree.
+  const geoms = tables.map((t) => {
+    const { wPx, hPx } = tableRenderSize(t, scale);
+    return {
+      table: t,
+      displayX: t.x * displayScale,
+      displayY: t.y * displayScale,
+      width: wPx * displayScale,
+      height: hPx * displayScale,
+    };
+  });
 
   function handleStageClick(e: KonvaEventObject<MouseEvent>) {
     if (e.target !== e.target.getStage()) return;
@@ -118,6 +136,7 @@ export default function FloorPlanCanvas({
     mode === "add-table" ? "copy" : mode === "calibrate" || mode === "draw-zone" ? "crosshair" : "default";
 
   return (
+    <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
     <Stage
       ref={stageRef}
       width={stageWidth}
@@ -186,6 +205,40 @@ export default function FloorPlanCanvas({
         ))}
       </Layer>
     </Stage>
+    {onDeleteTable && (
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {geoms.map((g) => (
+          <button
+            key={g.table.id}
+            type="button"
+            data-testid={`delete-table-${g.table.id}`}
+            onClick={() => onDeleteTable(g.table.id)}
+            title="Remover mesa"
+            style={{
+              position: "absolute",
+              left: g.displayX + g.width / 2 - 10,
+              top: g.displayY - g.height / 2 - 10,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              border: "1px solid #dc2626",
+              background: "#fef2f2",
+              color: "#dc2626",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 700,
+              lineHeight: 1,
+              padding: 0,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+              pointerEvents: "auto",
+            }}
+          >
+            ×
+          </button>
+        ))}
+      </div>
+    )}
+    </div>
   );
 }
 

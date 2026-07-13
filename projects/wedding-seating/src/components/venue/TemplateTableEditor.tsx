@@ -38,6 +38,7 @@ interface FloorPlanRecord {
   id: string;
   venueId: string;
   image: string;
+  name: string | null;
   scale: number;
   width: number;
   depth: number;
@@ -74,6 +75,9 @@ export interface TemplateTableEditorProps {
   templateId: string;
   venueId: string;
   floorPlanId: string;
+  /** Display label for the chosen layout ("Planta N" fallback already resolved by the
+   * caller, which knows the venue's full floor-plan list/order — Plan 18 Task 2). */
+  layoutLabel?: string;
   /** Optional close affordance; the parent decides what "closing" means (e.g. collapse inline). */
   onClose?: () => void;
 }
@@ -82,6 +86,7 @@ export default function TemplateTableEditor({
   templateId,
   venueId,
   floorPlanId,
+  layoutLabel,
   onClose,
 }: TemplateTableEditorProps) {
   const [state, dispatch] = useReducer(editorReducer, undefined, initialEditorState);
@@ -124,6 +129,19 @@ export default function TemplateTableEditor({
 
   const zones = useMemo(() => parseZones(floorPlan), [floorPlan]);
 
+  // Only real catalog table types can be placed (Plan 18 Task 2 — the old generic
+  // round/8-seat default is gone). Once the catalog loads, default the picker to
+  // the first type so `presetTypeId` is never a dangling/empty selection.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the picker to the loaded catalog
+    setPresetTypeId((prev) => {
+      if (tableTypes.length === 0) return "";
+      return tableTypes.some((t) => t.id === prev) ? prev : tableTypes[0].id;
+    });
+  }, [tableTypes]);
+
+  const hasTableTypes = tableTypes.length > 0;
+
   function presetFor(typeId: string): TablePreset | undefined {
     const t = tableTypes.find((tt) => tt.id === typeId);
     if (!t) return undefined;
@@ -142,6 +160,10 @@ export default function TemplateTableEditor({
 
   function handleMoveTable(id: string, to: Point) {
     dispatch({ type: "move-table", id, to });
+  }
+
+  function handleDeleteTable(id: string) {
+    dispatch({ type: "delete-table", id });
   }
 
   // Spacing: reuses the floor-plan spacing check against this layout's
@@ -201,7 +223,10 @@ export default function TemplateTableEditor({
   return (
     <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginTop: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <strong>Editor de mesas do template</strong>
+        <strong>
+          Editor de mesas do template
+          {(layoutLabel || floorPlan?.name) && ` — ${layoutLabel || floorPlan?.name}`}
+        </strong>
         {onClose && (
           <button type="button" onClick={onClose}>
             Fechar
@@ -217,8 +242,11 @@ export default function TemplateTableEditor({
           <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0", flexWrap: "wrap" }}>
             <label>
               Tipo de mesa{" "}
-              <select value={presetTypeId} onChange={(e) => setPresetTypeId(e.target.value)}>
-                <option value="">Genérica (redonda, 8 lugares)</option>
+              <select
+                value={presetTypeId}
+                onChange={(e) => setPresetTypeId(e.target.value)}
+                disabled={!hasTableTypes}
+              >
                 {tableTypes.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -229,6 +257,7 @@ export default function TemplateTableEditor({
             <button
               type="button"
               onClick={() => setMode((m) => (m === "add-table" ? "select" : "add-table"))}
+              disabled={!hasTableTypes}
               style={{ fontWeight: mode === "add-table" ? 700 : 400 }}
             >
               {mode === "add-table" ? "A adicionar — clique no mapa" : "Adicionar do catálogo"}
@@ -238,6 +267,12 @@ export default function TemplateTableEditor({
             </button>
             {savedAt !== null && <span style={{ color: "#059669" }}>Guardado.</span>}
           </div>
+
+          {!hasTableTypes && (
+            <p style={{ color: "#dc2626" }}>
+              Cria tipos de mesa na aba &quot;Mesas disponíveis&quot; primeiro.
+            </p>
+          )}
 
           {saveError && <p style={{ color: "#dc2626" }}>{saveError}</p>}
 
@@ -273,6 +308,7 @@ export default function TemplateTableEditor({
             onAddTable={handleAddTable}
             onMoveTable={handleMoveTable}
             onSelect={(id) => dispatch({ type: "select", id })}
+            onDeleteTable={handleDeleteTable}
           />
         </>
       )}

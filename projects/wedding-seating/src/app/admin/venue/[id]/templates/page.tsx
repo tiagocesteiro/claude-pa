@@ -18,6 +18,7 @@ interface FloorPlanOption {
   id: string;
   venueId: string;
   image: string;
+  name: string | null;
   createdAt: string;
 }
 
@@ -82,11 +83,17 @@ export default function VenueTemplatesPage() {
     load();
   }, [load]);
 
+  /** "Planta N" is only a fallback for layouts the venue never named — a named
+   * floor plan is shown by its name everywhere it's referenced (Plan 18 Task 2). */
+  function floorPlanLabel(fp: FloorPlanOption, index: number): string {
+    return fp.name?.trim() ? fp.name : `Planta ${index + 1}`;
+  }
+
   function layoutLabel(floorPlanId: string | null): string {
     if (!floorPlanId) return "sem planta";
     const index = floorPlans.findIndex((fp) => fp.id === floorPlanId);
     if (index === -1) return "(planta removida)";
-    return `Planta ${index + 1}`;
+    return floorPlanLabel(floorPlans[index], index);
   }
 
   function validate(values: FormValues): string | null {
@@ -212,7 +219,7 @@ export default function VenueTemplatesPage() {
           <option value="">Selecionar planta</option>
           {floorPlans.map((fp, i) => (
             <option key={fp.id} value={fp.id}>
-              Planta {i + 1}
+              {floorPlanLabel(fp, i)}
               {!fp.image ? " (sem imagem)" : ""}
             </option>
           ))}
@@ -315,6 +322,7 @@ export default function VenueTemplatesPage() {
                         templateId={t.id}
                         venueId={venueId}
                         floorPlanId={t.floorPlanId}
+                        layoutLabel={layoutLabel(t.floorPlanId)}
                         onClose={() => setOpenEditorId(null)}
                       />
                     )}
