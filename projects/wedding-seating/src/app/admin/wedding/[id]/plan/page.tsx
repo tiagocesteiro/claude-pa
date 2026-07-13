@@ -4,18 +4,12 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import type { Warning } from "@/lib/seating";
-import { usePlan, type PlanGroup, type PlanGuest, type TablePlacementPreset } from "@/components/plan/usePlan";
+import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePlan";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
 import type { AttributeKey } from "@/lib/plan/colors";
 import type { Point } from "@/lib/floorplan/geometry";
-import { pointInPolygon } from "@/lib/floorplan/boundary";
-import { spacingViolations } from "@/lib/floorplan/spacing";
-
-function normalizeShape(shape: string): "round" | "oval" | "rect" {
-  return shape === "oval" || shape === "rect" ? shape : "round";
-}
 
 // "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
 // for "no color") passed to setColorAttr / buildColorMap.
@@ -85,11 +79,9 @@ export default function PlanPage() {
     groups,
     layout,
     templates,
-    venueTableTypes,
     loading,
     generating,
     applying,
-    savingTables,
     error,
     score,
     warnings,
@@ -99,9 +91,6 @@ export default function PlanPage() {
     toggleGuestLock,
     toggleTableFixed,
     swap,
-    moveTable,
-    addTable,
-    removeTable,
     violations,
     colorAttr,
     setColorAttr,
@@ -109,9 +98,6 @@ export default function PlanPage() {
   } = usePlan(weddingId);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
-  const [editMode, setEditMode] = useState(false);
-  const [addTableMode, setAddTableMode] = useState(false);
-  const [presetTypeId, setPresetTypeId] = useState("");
 
   const hasTables = tables.length > 0;
 
@@ -135,47 +121,6 @@ export default function PlanPage() {
       if (!confirmed) return;
     }
     await applyTemplate(selectedTemplateId);
-  }
-
-  // Out-of-zone: a table is flagged when its center falls inside NONE of the applied
-  // template's zones (same "outside every zone" rule the template editor uses).
-  const outOfZoneIds = useMemo(() => {
-    if (zones.length === 0) return [] as string[];
-    return tables.filter((t) => !zones.some((zone) => pointInPolygon({ x: t.x, y: t.y }, zone))).map((t) => t.id);
-  }, [tables, zones]);
-
-  // Spacing: reuses the same check as the template editor. minSpacing isn't part of
-  // the wedding's layout payload (only floorPlanId/image/scale/zones), so this falls
-  // back to 0 — spacingViolations then only ever flags literally overlapping tables,
-  // never a false positive.
-  const spacingIssues = useMemo(
-    () => spacingViolations(tables, 0, layout?.scale || 1),
-    [tables, layout?.scale]
-  );
-  const spacingWarnIds = useMemo(
-    () => new Set(spacingIssues.flatMap((v) => [v.a, v.b])),
-    [spacingIssues]
-  );
-
-  function presetFor(typeId: string): TablePlacementPreset | undefined {
-    const t = venueTableTypes.find((tt) => tt.id === typeId);
-    if (!t) return undefined;
-    return {
-      shape: normalizeShape(t.shape),
-      capacity: t.maxSeats,
-      minCapacity: t.minSeats,
-      width: t.width,
-      depth: t.depth,
-    };
-  }
-
-  function handleAddTableAt(at: Point) {
-    addTable(presetFor(presetTypeId) ?? {}, at);
-  }
-
-  function handleToggleEditMode() {
-    setEditMode((m) => !m);
-    setAddTableMode(false);
   }
 
   // Stable, human labels ("Mesa 1", "Mesa 2", ...) derived from table order — used by the
@@ -282,76 +227,7 @@ export default function PlanPage() {
             ))}
           </select>
         </label>
-        {hasTables && (
-          <button
-            type="button"
-            data-testid="edit-tables-toggle"
-            onClick={handleToggleEditMode}
-            style={{ fontWeight: editMode ? 700 : 400 }}
-          >
-            {editMode ? "Concluir edição de mesas" : "Editar mesas"}
-          </button>
-        )}
-        {savingTables && <span style={{ color: "#666" }}>A guardar mesas...</span>}
       </div>
-
-      {editMode && (
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-            marginBottom: 16,
-            flexWrap: "wrap",
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            padding: 12,
-            background: "#f9fafb",
-          }}
-        >
-          <strong>A editar as mesas deste casamento — o template da venue não é alterado.</strong>
-          <label>
-            Tipo de mesa:{" "}
-            <select
-              data-testid="table-type-select"
-              value={presetTypeId}
-              onChange={(e) => setPresetTypeId(e.target.value)}
-            >
-              <option value="">Genérica (redonda, 8 lugares)</option>
-              {venueTableTypes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            data-testid="add-table-mode-toggle"
-            onClick={() => setAddTableMode((m) => !m)}
-            style={{ fontWeight: addTableMode ? 700 : 400 }}
-          >
-            {addTableMode ? "A adicionar — clica no mapa" : "Adicionar do catálogo"}
-          </button>
-          <span style={{ fontSize: 13, color: "#666" }}>
-            Arrasta uma mesa para a mover; usa o × para a remover (os convidados sentados ficam por atribuir).
-          </span>
-          {(spacingWarnIds.size > 0 || outOfZoneIds.length > 0) && (
-            <span style={{ fontSize: 13 }}>
-              {spacingWarnIds.size > 0 && (
-                <span data-testid="edit-spacing-warning" style={{ color: "#f59e0b", marginRight: 8 }}>
-                  {spacingWarnIds.size} mesa(s) demasiado próximas.
-                </span>
-              )}
-              {outOfZoneIds.length > 0 && (
-                <span data-testid="edit-zone-warning" style={{ color: "#dc2626" }}>
-                  {outOfZoneIds.length} mesa(s) fora de qualquer zona.
-                </span>
-              )}
-            </span>
-          )}
-        </div>
-      )}
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
@@ -374,11 +250,6 @@ export default function PlanPage() {
             onToggleTableFixed={toggleTableFixed}
             onSwap={swap}
             colorByGuest={colorMap.colorByGuest}
-            editMode={editMode}
-            addTableMode={addTableMode}
-            onMoveTable={moveTable}
-            onAddTableAt={handleAddTableAt}
-            onRemoveTable={removeTable}
           />
 
           <div style={{ minWidth: 260, flex: "0 0 260px", display: "flex", flexDirection: "column", gap: 16 }}>
