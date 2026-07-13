@@ -12,13 +12,24 @@ export const PALETTE: string[] = [
   "#A9C266", // olive
 ];
 
-export type AttributeKey = "ageGroup" | "gender" | "dietary";
+// "group" colors by the guest's primary group (groupId), not a literal AttrGuest field —
+// resolved via attrValue below so callers with no group concept (e.g. legacy tests) don't
+// need to add a "group" property to satisfy the AttrGuest shape.
+export type AttributeKey = "ageGroup" | "gender" | "dietary" | "group";
 
 export interface AttrGuest {
   id: string;
   ageGroup: string | null;
   gender: string | null;
   dietary: string | null;
+  /** Primary group id, used only when attr === "group". Optional/absent guests
+   * (or guests with no group) are skipped, same as a null ageGroup/gender/dietary. */
+  groupId?: string | null;
+}
+
+function attrValue(g: AttrGuest, attr: AttributeKey): string | null {
+  if (attr === "group") return g.groupId ?? null;
+  return g[attr];
 }
 
 export function buildColorMap(
@@ -28,7 +39,7 @@ export function buildColorMap(
   const order: string[] = [];
   const colorOfValue = new Map<string, string>();
   for (const g of guests) {
-    const v = g[attr];
+    const v = attrValue(g, attr);
     if (v == null || v === "") continue;
     if (!colorOfValue.has(v)) {
       colorOfValue.set(v, PALETTE[order.length % PALETTE.length]);
@@ -37,7 +48,7 @@ export function buildColorMap(
   }
   const colorByGuest: Record<string, string> = {};
   for (const g of guests) {
-    const v = g[attr];
+    const v = attrValue(g, attr);
     if (v != null && v !== "" && colorOfValue.has(v)) colorByGuest[g.id] = colorOfValue.get(v)!;
   }
   return { legend: order.map((value) => ({ value, color: colorOfValue.get(value)! })), colorByGuest };

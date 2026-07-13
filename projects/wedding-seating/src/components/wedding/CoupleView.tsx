@@ -191,7 +191,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
   // Couple view is arrangement-only: show the table layout with NO seated guests
   // (empty chairs, no name chips) for every moment, dinner included. The actual
-  // seating (who sits where) lives on the couple's Plano de mesas tab.
+  // seating (who sits where) lives on the couple's Seating plan tab.
   const tableViews: PlanTableView[] = useMemo(
     () =>
       tables.map((t) => ({
@@ -209,8 +209,12 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     [tables, tableLabels]
   );
 
-  const dinnerZones = useMemo(() => parseZones(layout?.zones), [layout?.zones]);
   const hasDinnerPlan = Boolean(layout) && tables.length > 0;
+
+  // Guest summary header (Task 1, Plan 18): counts over the plan's guest list, which
+  // already carries each guest's rsvp from /api/weddings/[id]/plan.
+  const guestCount = plan?.guests.length ?? 0;
+  const confirmedCount = plan?.guests.filter((g) => g.rsvp === "confirmed").length ?? 0;
 
   if (loading) return <p>A carregar...</p>;
   if (error || !wedding) return <p style={{ color: "#dc2626" }}>{error ?? "Casamento não encontrado."}</p>;
@@ -219,6 +223,10 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
   return (
     <div>
+      <p style={{ color: "var(--text-muted)", marginTop: 0, marginBottom: 20 }}>
+        {guestCount} convidados · {confirmedCount} confirmados
+      </p>
+
       {DISPLAY_ORDER.map((kind) => (
         <section key={kind} style={sectionStyle()}>
           <h2 style={{ marginTop: 0, color: "var(--heading)" }}>{MOMENT_LABELS[kind]}</h2>
@@ -229,7 +237,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                 imageUrl={imageUrlFor(layout?.image)}
                 tables={tableViews}
                 scale={layout?.scale ?? 0}
-                zones={dinnerZones}
+                zones={[]}
                 overCapacityIds={[]}
                 maxWidth={CANVAS_WIDTH}
                 maxHeight={CANVAS_HEIGHT}

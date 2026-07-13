@@ -16,6 +16,9 @@ export interface PlanGuest {
   ageGroup: string | null;
   gender: string | null;
   dietary: string | null;
+  /** Used only by the couple overview's "N convidados · M confirmados" summary
+   * (Task 1); harmless elsewhere since it's just carried through from the API. */
+  rsvp?: string | null;
 }
 
 export interface PlanTable {

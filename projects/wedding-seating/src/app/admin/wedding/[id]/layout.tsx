@@ -44,8 +44,8 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
     { label: "Detalhes", href: detailsHref, active: isDetailsActive },
     { label: "Convidados & Grupos", href: guestsHref, active: isGuestsActive },
     { label: "Restrições", href: constraintsHref, active: isConstraintsActive },
-    { label: "Plano de mesas", href: planHref, active: isPlanActive },
-    { label: "Vista do casal", href: coupleHref, active: isCoupleActive },
+    { label: "Seating plan", href: planHref, active: isPlanActive },
+    { label: "Visão geral", href: coupleHref, active: isCoupleActive },
   ];
 
   return (

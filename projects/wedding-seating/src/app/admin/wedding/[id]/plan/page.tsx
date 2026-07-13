@@ -9,7 +9,6 @@ import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
 import type { AttributeKey } from "@/lib/plan/colors";
-import type { Point } from "@/lib/floorplan/geometry";
 
 // "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
 // for "no color") passed to setColorAttr / buildColorMap.
@@ -18,6 +17,7 @@ const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
   { label: "Faixa etária", value: "ageGroup" },
   { label: "Género", value: "gender" },
   { label: "Alimentar", value: "dietary" },
+  { label: "Grupo", value: "group" },
 ];
 
 // Same "adult"/"child"/"senior" -> Portuguese mapping as TableList, used for the legend's
@@ -28,8 +28,13 @@ const AGE_GROUP_LABELS: Record<string, string> = {
   senior: "idoso",
 };
 
-function legendLabel(attr: AttributeKey, value: string): string {
-  return attr === "ageGroup" ? (AGE_GROUP_LABELS[value] ?? value) : value;
+// "group" legend values are groupIds — resolved to the group's name; falls back to the
+// raw id if the group was deleted since the plan was generated (same defensive pattern
+// as resolveWarningText below).
+function legendLabel(attr: AttributeKey, value: string, groups: PlanGroup[]): string {
+  if (attr === "ageGroup") return AGE_GROUP_LABELS[value] ?? value;
+  if (attr === "group") return groups.find((g) => g.id === value)?.name ?? value;
+  return value;
 }
 
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
@@ -101,17 +106,6 @@ export default function PlanPage() {
 
   const hasTables = tables.length > 0;
 
-  // Zones are stored as a JSON string on the floor plan; parsed once per layout change
-  // for the read-only background layer (same shape the editor works with in-memory).
-  const zones: Point[][] = useMemo(() => {
-    if (!layout?.zones) return [];
-    try {
-      return JSON.parse(layout.zones) as Point[][];
-    } catch {
-      return [];
-    }
-  }, [layout?.zones]);
-
   async function handleApplyTemplate() {
     if (!selectedTemplateId) return;
     if (hasTables) {
@@ -180,7 +174,7 @@ export default function PlanPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <h1>Plano de mesas</h1>
+      <h1>Seating plan</h1>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
         <label>
@@ -241,7 +235,7 @@ export default function PlanPage() {
             imageUrl={imageUrlFor(layout?.image ?? "")}
             tables={tableViews}
             scale={layout?.scale ?? 0}
-            zones={zones}
+            zones={[]}
             overCapacityIds={violations.overCapacity}
             maxWidth={CANVAS_WIDTH}
             maxHeight={CANVAS_HEIGHT}
@@ -273,7 +267,7 @@ export default function PlanPage() {
                           flexShrink: 0,
                         }}
                       />
-                      {legendLabel(colorAttr, entry.value)}
+                      {legendLabel(colorAttr, entry.value, groups)}
                     </li>
                   ))}
                 </ul>
