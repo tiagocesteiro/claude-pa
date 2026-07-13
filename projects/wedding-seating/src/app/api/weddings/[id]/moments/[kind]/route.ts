@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { getWedding } from "@/lib/db/weddings";
-import { isMomentKind, setMomentFloorPlan } from "@/lib/db/moments";
+import { isMomentKind, setMomentFloorPlan, setMomentTemplate } from "@/lib/db/moments";
 
 export async function PUT(
   req: Request,
@@ -13,10 +13,29 @@ export async function PUT(
   }
 
   const b = await req.json().catch(() => ({}));
-  const floorPlanId: string | null = b?.floorPlanId ?? null;
 
   const wedding = await getWedding(id);
   if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
+
+  // Two independent assignment paths: a venue "template" (arrangement with tables — the
+  // normal case for ceremony/cocktail/dance) or a legacy bare "floorPlanId" (room-only,
+  // backward compat). `templateId` in the body takes that branch; otherwise fall back to
+  // the floorPlanId branch (present or not — absent means "clear/no-op with null").
+  if ("templateId" in b) {
+    const templateId: string | null = b.templateId ?? null;
+
+    if (templateId) {
+      const template = await prisma.layoutTemplate.findUnique({ where: { id: templateId } });
+      if (!template || template.venueId !== wedding.venueId) {
+        return NextResponse.json({ error: "arranjo não pertence à quinta" }, { status: 400 });
+      }
+    }
+
+    const moment = await setMomentTemplate(id, kind, templateId);
+    return NextResponse.json(moment);
+  }
+
+  const floorPlanId: string | null = b?.floorPlanId ?? null;
 
   if (floorPlanId) {
     const floorPlan = await prisma.floorPlan.findUnique({ where: { id: floorPlanId } });

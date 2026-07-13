@@ -22,16 +22,19 @@ interface Venue {
   createdAt: string;
 }
 
-interface FloorPlan {
+interface Template {
   id: string;
+  name: string;
+  minGuests: number;
+  maxGuests: number;
   venueId: string;
-  createdAt: string;
 }
 
 interface Moment {
   id: string;
   kind: MomentKind;
   floorPlanId: string | null;
+  templateId: string | null;
 }
 
 interface WeddingDetail {
@@ -66,7 +69,7 @@ function toDateInputValue(iso: string | null): string {
 export default function WeddingDetails({ weddingId }: { weddingId: string }) {
   const [wedding, setWedding] = useState<WeddingDetail | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -113,10 +116,10 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     setVenues((await res.json()) as Venue[]);
   }
 
-  async function loadFloorPlans() {
-    const res = await fetch("/api/floorplans");
+  async function loadTemplates() {
+    const res = await fetch("/api/templates");
     if (!res.ok) return;
-    setFloorPlans((await res.json()) as FloorPlan[]);
+    setTemplates((await res.json()) as Template[]);
   }
 
   useEffect(() => {
@@ -125,7 +128,7 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadVenues();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-    loadFloorPlans();
+    loadTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- weddingId is stable per mount
   }, [weddingId]);
 
@@ -164,14 +167,14 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     }
   }
 
-  async function setMomentPlan(kind: MomentKind, floorPlanId: string | null) {
+  async function setMomentTemplateChoice(kind: MomentKind, templateId: string | null) {
     const res = await fetch(`/api/weddings/${weddingId}/moments/${kind}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ floorPlanId }),
+      body: JSON.stringify({ templateId }),
     });
     if (!res.ok) {
-      setError("Falha ao guardar a planta do momento.");
+      setError("Falha ao guardar o arranjo do momento.");
       return;
     }
     await loadWedding();
@@ -180,14 +183,16 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
   if (loading) return <p>A carregar...</p>;
   if (!wedding) return <p style={{ color: "#dc2626" }}>{error ?? "Casamento não encontrado."}</p>;
 
-  const venuePlans = venueId
-    ? floorPlans
-        .filter((fp) => fp.venueId === venueId)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    : [];
+  const venueTemplates = venueId ? templates.filter((t) => t.venueId === venueId) : [];
 
   const moments = MOMENT_KINDS.map(
-    (kind) => wedding.moments.find((m) => m.kind === kind) ?? { id: kind, kind, floorPlanId: null }
+    (kind) =>
+      wedding.moments.find((m) => m.kind === kind) ?? {
+        id: kind,
+        kind,
+        floorPlanId: null,
+        templateId: null,
+      }
   );
 
   return (
@@ -283,7 +288,7 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
         </div>
       </form>
 
-      <h2>Momentos &amp; plantas</h2>
+      <h2>Momentos &amp; arranjos</h2>
       {!venueId && (
         <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Escolhe primeiro a quinta.</p>
       )}
@@ -311,15 +316,15 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
               </span>
             ) : (
               <select
-                value={moment.floorPlanId ?? ""}
+                value={moment.templateId ?? ""}
                 disabled={!venueId}
-                onChange={(e) => setMomentPlan(moment.kind, e.target.value || null)}
-                aria-label={`Planta de ${MOMENT_LABELS[moment.kind]}`}
+                onChange={(e) => setMomentTemplateChoice(moment.kind, e.target.value || null)}
+                aria-label={`Arranjo de ${MOMENT_LABELS[moment.kind]}`}
               >
-                <option value="">— (nenhuma)</option>
-                {venuePlans.map((fp, i) => (
-                  <option key={fp.id} value={fp.id}>
-                    Planta {i + 1}
+                <option value="">— (nenhum)</option>
+                {venueTemplates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} — {t.minGuests}-{t.maxGuests}
                   </option>
                 ))}
               </select>

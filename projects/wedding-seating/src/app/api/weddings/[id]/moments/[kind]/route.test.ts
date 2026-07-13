@@ -76,4 +76,68 @@ it("clears a moment's floor plan with floorPlanId: null", async () => {
   expect(body.floorPlanId).toBeNull();
 });
 
+it("400s when the template belongs to a different venue than the wedding", async () => {
+  const venueA = await prisma.venue.create({ data: { name: "Tpl Venue A" } });
+  const venueB = await prisma.venue.create({ data: { name: "Tpl Venue B" } });
+  const templateB = await prisma.layoutTemplate.create({
+    data: { venueId: venueB.id, name: "B Arrangement", minGuests: 10, maxGuests: 50 },
+  });
+  const w = await createWedding({ couple: "Moment Route Tpl Cross Venue", venueId: venueA.id });
+
+  const res = await PUT(
+    new Request("http://x/moments/cocktail", {
+      method: "PUT",
+      body: JSON.stringify({ templateId: templateB.id }),
+    }),
+    { params: Promise.resolve({ id: w.id, kind: "cocktail" }) }
+  );
+  expect(res.status).toBe(400);
+  const body = await res.json();
+  expect(body.error).toMatch(/quinta/);
+});
+
+it("persists a valid template assignment for a moment", async () => {
+  const venue = await prisma.venue.create({ data: { name: "Tpl Venue Valid" } });
+  const template = await prisma.layoutTemplate.create({
+    data: { venueId: venue.id, name: "Valid Arrangement", minGuests: 10, maxGuests: 50 },
+  });
+  const w = await createWedding({ couple: "Moment Route Tpl Valid", venueId: venue.id });
+
+  const res = await PUT(
+    new Request("http://x/moments/dance", {
+      method: "PUT",
+      body: JSON.stringify({ templateId: template.id }),
+    }),
+    { params: Promise.resolve({ id: w.id, kind: "dance" }) }
+  );
+  expect(res.status).toBe(200);
+  const body = await res.json();
+  expect(body.templateId).toBe(template.id);
+
+  const moment = await prisma.weddingMoment.findUnique({
+    where: { weddingId_kind: { weddingId: w.id, kind: "dance" } },
+  });
+  expect(moment?.templateId).toBe(template.id);
+});
+
+it("clears a moment's template with templateId: null", async () => {
+  const venue = await prisma.venue.create({ data: { name: "Tpl Venue Clear" } });
+  const template = await prisma.layoutTemplate.create({
+    data: { venueId: venue.id, name: "Clear Arrangement", minGuests: 10, maxGuests: 50 },
+  });
+  const w = await createWedding({ couple: "Moment Route Tpl Clear", venueId: venue.id });
+
+  await PUT(
+    new Request("http://x/moments/ceremony", { method: "PUT", body: JSON.stringify({ templateId: template.id }) }),
+    { params: Promise.resolve({ id: w.id, kind: "ceremony" }) }
+  );
+  const res = await PUT(
+    new Request("http://x/moments/ceremony", { method: "PUT", body: JSON.stringify({ templateId: null }) }),
+    { params: Promise.resolve({ id: w.id, kind: "ceremony" }) }
+  );
+  expect(res.status).toBe(200);
+  const body = await res.json();
+  expect(body.templateId).toBeNull();
+});
+
 afterAll(async () => { await prisma.$disconnect(); });

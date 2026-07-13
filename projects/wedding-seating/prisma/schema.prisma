@@ -44,6 +44,7 @@ model LayoutTemplate {
   maxGuests   Int
   lines       String?    // JSON: { tableTypeId: string; quantity: number }[] (legacy/optional)
   tables      Table[]
+  moments     WeddingMoment[]
   createdAt   DateTime   @default(now())
 }
 
@@ -115,6 +116,8 @@ model WeddingMoment {
   kind        String     // "ceremony" | "cocktail" | "dinner" | "dance"
   floorPlanId String?
   floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  templateId  String?
+  template    LayoutTemplate? @relation(fields: [templateId], references: [id])
 
   @@unique([weddingId, kind])
 }

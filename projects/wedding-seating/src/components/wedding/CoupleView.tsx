@@ -28,11 +28,32 @@ interface FloorPlanRecord {
   zones: string | null;
 }
 
+interface TemplateRecord {
+  id: string;
+  floorPlanId: string | null;
+  floorPlan: FloorPlanRecord | null;
+}
+
 interface Moment {
   id: string;
   kind: MomentKind;
   floorPlanId: string | null;
   floorPlan: FloorPlanRecord | null;
+  templateId: string | null;
+  template: TemplateRecord | null;
+}
+
+/** Raw row shape returned by GET /api/templates/[id]/tables (Prisma Table) — mapped
+ * below into PlanTableView (no seated guests: an arrangement, not a seating plan). */
+interface TemplateTableRow {
+  id: string;
+  shape: string;
+  capacity: number;
+  x: number;
+  y: number;
+  fixed: boolean;
+  width: number | null;
+  depth: number | null;
 }
 
 interface WeddingDetail {
@@ -96,6 +117,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [templateTables, setTemplateTables] = useState<Record<string, TemplateTableRow[]>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +148,37 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
       cancelled = true;
     };
   }, [weddingId]);
+
+  // Each non-dinner moment that has a venue arrangement (templateId) needs that
+  // template's positioned tables to render read-only — fetched once per distinct
+  // template id whenever the wedding's moments change.
+  useEffect(() => {
+    const templateIds = Array.from(
+      new Set((wedding?.moments ?? []).map((m) => m.templateId).filter((id): id is string => Boolean(id)))
+    );
+    if (templateIds.length === 0) return;
+    let cancelled = false;
+    async function loadTemplateTables() {
+      const entries = await Promise.all(
+        templateIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/templates/${id}/tables`);
+            if (!res.ok) return [id, []] as const;
+            return [id, (await res.json()) as TemplateTableRow[]] as const;
+          } catch {
+            return [id, []] as const;
+          }
+        })
+      );
+      if (cancelled) return;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- data load triggered by moments change
+      setTemplateTables((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    }
+    loadTemplateTables();
+    return () => {
+      cancelled = true;
+    };
+  }, [wedding?.moments]);
 
   const tables = plan?.tables ?? [];
   const guests = plan?.guests ?? [];
@@ -192,8 +245,49 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
           ) : (
             (() => {
               const moment = momentByKind.get(kind);
+              const template = moment?.template ?? null;
+
+              // Preferred path: a venue-designed table arrangement — its own floor plan
+              // (image/scale/zones) with that template's positioned tables rendered
+              // read-only, no seated guests (an arrangement, not a seating plan).
+              if (template) {
+                const templateFloorPlan = template.floorPlan;
+                if (!templateFloorPlan) return <Placeholder text="Arranjo sem planta associada." />;
+                const rows = templateTables[template.id] ?? [];
+                const views: PlanTableView[] = rows.map((t, i) => ({
+                  id: t.id,
+                  shape: t.shape,
+                  capacity: t.capacity,
+                  x: t.x,
+                  y: t.y,
+                  label: `Mesa ${i + 1}`,
+                  fixed: t.fixed,
+                  width: t.width,
+                  depth: t.depth,
+                  guests: [],
+                }));
+                return (
+                  <PlanCanvas
+                    imageUrl={imageUrlFor(templateFloorPlan.image)}
+                    tables={views}
+                    scale={templateFloorPlan.scale}
+                    zones={parseZones(templateFloorPlan.zones)}
+                    overCapacityIds={[]}
+                    maxWidth={CANVAS_WIDTH}
+                    maxHeight={CANVAS_HEIGHT}
+                    onAssign={noop}
+                    onToggleGuestLock={noop}
+                    onToggleTableFixed={noop}
+                    onSwap={noop}
+                    readOnly
+                  />
+                );
+              }
+
+              // Legacy path: a bare floor plan (room only, no tables) assigned before
+              // templates existed for this moment.
               const floorPlan = moment?.floorPlan ?? null;
-              if (!floorPlan) return <Placeholder text="Planta por definir." />;
+              if (!floorPlan) return <Placeholder text="Arranjo por definir." />;
               return (
                 <FloorPlanCanvas
                   imageUrl={imageUrlFor(floorPlan.image)}

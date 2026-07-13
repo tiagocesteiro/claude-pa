@@ -22,3 +22,20 @@ export function setMomentFloorPlan(
     update: { floorPlanId },
   });
 }
+
+/** Upserts a moment's venue-designed table arrangement (LayoutTemplate) by (weddingId, kind).
+ * Returns null if kind is invalid (callers — typically API routes — should treat that as a 400).
+ * Only touches templateId — an existing legacy floorPlanId (room-only moment) is left as-is,
+ * since a template already carries its own floorPlan for rendering (see getWeddingDetail). */
+export function setMomentTemplate(
+  weddingId: string,
+  kind: string,
+  templateId: string | null
+): Promise<WeddingMoment> | null {
+  if (!isMomentKind(kind)) return null;
+  return prisma.weddingMoment.upsert({
+    where: { weddingId_kind: { weddingId, kind } },
+    create: { weddingId, kind, templateId },
+    update: { templateId },
+  });
+}

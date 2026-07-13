@@ -48,7 +48,7 @@ export function getWeddingDetail(id: string) {
     where: { id },
     include: {
       venue: true,
-      moments: { include: { floorPlan: true } },
+      moments: { include: { floorPlan: true, template: { include: { floorPlan: true } } } },
     },
   });
 }
