@@ -32,7 +32,7 @@ export default function WeddingWorkspacePage() {
 
       <AddGuestForm groups={groups} addGuest={addGuest} />
 
-      {loading ? (
+      {loading && guests.length === 0 ? (
         <p>Loading guests...</p>
       ) : (
         <GuestTable

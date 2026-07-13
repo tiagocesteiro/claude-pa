@@ -28,11 +28,22 @@ const th: React.CSSProperties = {
   fontWeight: 600,
   whiteSpace: "nowrap",
 };
+const thSortable: React.CSSProperties = {
+  ...th,
+  cursor: "pointer",
+  userSelect: "none",
+};
 const td: React.CSSProperties = {
   padding: "6px 10px",
   borderBottom: "1px solid var(--border)",
   verticalAlign: "middle",
 };
+
+type SortKey = "name" | "rsvp" | "group" | "age" | "gender";
+type SortDir = "asc" | "desc";
+
+const RSVP_ORDER: Record<string, number> = { pending: 0, confirmed: 1, declined: 2 };
+const AGE_ORDER: Record<string, number> = { adult: 0, child: 1, senior: 2 };
 
 export default function GuestTable({
   guests,
@@ -74,6 +85,11 @@ export default function GuestTable({
   const [renameValue, setRenameValue] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [editingGuestId, setEditingGuestId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [filterGroup, setFilterGroup] = useState<string>("");
+  const [filterRsvp, setFilterRsvp] = useState<string>("");
+  const [filterName, setFilterName] = useState<string>("");
 
   const groupName = (id: string | null) => groups.find((g) => g.id === id)?.name ?? null;
   const guestName = (id: string | null) => guests.find((g) => g.id === id)?.name ?? null;
@@ -110,7 +126,55 @@ export default function GuestTable({
     }
   }
 
-  const sorted = [...guests].sort((a, b) => a.name.localeCompare(b.name, "pt"));
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  function sortIndicator(key: SortKey) {
+    if (sortKey !== key) return null;
+    return <span style={{ fontSize: 10 }}>{sortDir === "asc" ? " ▲" : " ▼"}</span>;
+  }
+
+  const filtered = guests.filter((g) => {
+    if (filterGroup === "__none__" && g.groupId !== null) return false;
+    if (filterGroup && filterGroup !== "__none__" && g.groupId !== filterGroup) return false;
+    if (filterRsvp && (g.rsvp ?? "pending") !== filterRsvp) return false;
+    if (filterName.trim() && !g.name.toLowerCase().includes(filterName.trim().toLowerCase()))
+      return false;
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "name":
+        cmp = a.name.localeCompare(b.name, "pt");
+        break;
+      case "rsvp":
+        cmp =
+          (RSVP_ORDER[a.rsvp ?? "pending"] ?? 0) - (RSVP_ORDER[b.rsvp ?? "pending"] ?? 0);
+        break;
+      case "group": {
+        const an = groupName(a.groupId) ?? "";
+        const bn = groupName(b.groupId) ?? "";
+        cmp = an.localeCompare(bn, "pt");
+        break;
+      }
+      case "age":
+        cmp = (AGE_ORDER[a.ageGroup ?? ""] ?? 99) - (AGE_ORDER[b.ageGroup ?? ""] ?? 99);
+        break;
+      case "gender":
+        cmp = (a.gender ?? "").localeCompare(b.gender ?? "", "pt");
+        break;
+    }
+    if (cmp === 0) cmp = a.name.localeCompare(b.name, "pt");
+    return sortDir === "asc" ? cmp : -cmp;
+  });
 
   const confirmedCount = guests.filter((g) => (g.rsvp ?? "pending") === "confirmed").length;
   const declinedCount = guests.filter((g) => (g.rsvp ?? "pending") === "declined").length;
@@ -202,7 +266,61 @@ export default function GuestTable({
       {guests.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>Sem convidados ainda.</p>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 10,
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <label style={{ display: "flex", flexDirection: "column", fontSize: 12, gap: 2 }}>
+              Grupo
+              <select
+                value={filterGroup}
+                onChange={(e) => setFilterGroup(e.target.value)}
+                aria-label="Filtrar por grupo"
+              >
+                <option value="">— todos —</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+                <option value="__none__">Sem grupo</option>
+              </select>
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", fontSize: 12, gap: 2 }}>
+              Confirmação
+              <select
+                value={filterRsvp}
+                onChange={(e) => setFilterRsvp(e.target.value)}
+                aria-label="Filtrar por confirmação"
+              >
+                <option value="">— todas —</option>
+                {RSVP_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", fontSize: 12, gap: 2 }}>
+              Nome
+              <input
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                placeholder="Procurar por nome"
+                aria-label="Procurar por nome"
+              />
+            </label>
+            <span style={{ color: "var(--text-muted)", fontSize: 13, alignSelf: "flex-end" }}>
+              a mostrar {sorted.length} de {guests.length}
+            </span>
+          </div>
+          <div style={{ overflowX: "auto" }}>
           <table
             style={{
               borderCollapse: "collapse",
@@ -214,13 +332,23 @@ export default function GuestTable({
           >
             <thead>
               <tr>
-                <th style={th}>Nome</th>
-                <th style={th}>Confirmação</th>
-                <th style={th}>Grupo</th>
+                <th style={thSortable} onClick={() => toggleSort("name")}>
+                  Nome{sortIndicator("name")}
+                </th>
+                <th style={thSortable} onClick={() => toggleSort("rsvp")}>
+                  Confirmação{sortIndicator("rsvp")}
+                </th>
+                <th style={thSortable} onClick={() => toggleSort("group")}>
+                  Grupo{sortIndicator("group")}
+                </th>
                 <th style={th}>Grupos extra</th>
                 <th style={th}>Plus one</th>
-                <th style={th}>Idade</th>
-                <th style={th}>Género</th>
+                <th style={thSortable} onClick={() => toggleSort("age")}>
+                  Idade{sortIndicator("age")}
+                </th>
+                <th style={thSortable} onClick={() => toggleSort("gender")}>
+                  Género{sortIndicator("gender")}
+                </th>
                 <th style={th}>Dieta</th>
               </tr>
             </thead>
@@ -375,7 +503,8 @@ export default function GuestTable({
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
