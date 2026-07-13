@@ -181,7 +181,6 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
   }, [wedding?.moments]);
 
   const tables = plan?.tables ?? [];
-  const guests = plan?.guests ?? [];
   const layout = plan?.layout ?? null;
 
   const tableLabels = useMemo(() => {
@@ -190,6 +189,9 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     return map;
   }, [tables]);
 
+  // Couple view is arrangement-only: show the table layout with NO seated guests
+  // (empty chairs, no name chips) for every moment, dinner included. The actual
+  // seating (who sits where) lives on the couple's Plano de mesas tab.
   const tableViews: PlanTableView[] = useMemo(
     () =>
       tables.map((t) => ({
@@ -202,11 +204,9 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         fixed: t.fixed,
         width: t.width,
         depth: t.depth,
-        guests: guests
-          .filter((g) => g.assignedTableId === t.id)
-          .map((g) => ({ id: g.id, name: g.name, locked: g.locked })),
+        guests: [],
       })),
-    [tables, guests, tableLabels]
+    [tables, tableLabels]
   );
 
   const dinnerZones = useMemo(() => parseZones(layout?.zones), [layout?.zones]);
