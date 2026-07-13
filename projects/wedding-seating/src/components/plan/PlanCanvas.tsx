@@ -144,6 +144,12 @@ export default function PlanCanvas({
   const effectiveEditMode = editMode && interactive;
   const effectiveAddTableMode = addTableMode && interactive;
 
+  // Plan 17/Task 3: tables show only their colored chair dots by default; a table's
+  // seated guests' name chips appear only for the one table the user clicked. Toggled
+  // by clicking that table's HTML drop-overlay (see below); irrelevant in readOnly
+  // (Task 2 already renders no guests there) and harmless (never read) in editMode.
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+
   // displayScale maps image-natural pixels -> on-screen (display) pixels, same
   // convention as FloorPlanCanvas (Plan 2). Table x/y here are always natural.
   const naturalWidth = image?.naturalWidth || maxWidth;
@@ -219,6 +225,7 @@ export default function PlanCanvas({
               key={g.table.id}
               geom={g}
               overCapacity={overCapacitySet.has(g.table.id)}
+              selected={interactive && selectedTableId === g.table.id}
               draggable={effectiveEditMode}
               onDragEnd={
                 effectiveEditMode
@@ -328,6 +335,17 @@ export default function PlanCanvas({
                   }
                 : undefined
             }
+            onClick={
+              interactive
+                ? (e) => {
+                    // Only toggle when the click lands on this div itself — not on the
+                    // fix button or a guest chip/lock button bubbling up (those stop
+                    // propagation / are checked separately below).
+                    if (e.target !== e.currentTarget) return;
+                    setSelectedTableId((prev) => (prev === g.table.id ? null : g.table.id));
+                  }
+                : undefined
+            }
             style={{
               position: "absolute",
               left: g.displayX - g.width / 2,
@@ -335,13 +353,17 @@ export default function PlanCanvas({
               width: g.width,
               height: g.height,
               pointerEvents: interactive ? "auto" : "none",
+              cursor: interactive ? "pointer" : undefined,
             }}
           >
             {interactive && (
             <button
               type="button"
               data-testid={`fix-table-${g.table.id}`}
-              onClick={() => onToggleTableFixed(g.table.id, !g.table.fixed)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleTableFixed(g.table.id, !g.table.fixed);
+              }}
               title={g.table.fixed ? "Desbloquear mesa" : "Fixar mesa (ignorada pelo Generate)"}
               style={{
                 position: "absolute",
@@ -362,7 +384,9 @@ export default function PlanCanvas({
               {g.table.fixed ? "🔒" : "🔓"}
             </button>
             )}
+            {interactive && selectedTableId === g.table.id && (
             <div
+              onClick={(e) => e.stopPropagation()}
               style={{
                 position: "absolute",
                 top: g.height + 6,
@@ -446,6 +470,7 @@ export default function PlanCanvas({
                 );
               })}
             </div>
+            )}
           </div>
             ))}
       </div>
@@ -456,17 +481,21 @@ export default function PlanCanvas({
 function TableShape({
   geom,
   overCapacity,
+  selected = false,
   draggable = false,
   onDragEnd,
 }: {
   geom: TableGeom;
   overCapacity: boolean;
+  /** Task 3 (Plan 17): this is the table whose name chips are currently expanded —
+   * a subtle highlight so the user can tell which table is showing names. */
+  selected?: boolean;
   draggable?: boolean;
   onDragEnd?: (pos: Point) => void;
 }) {
   const { table, shape, displayX, displayY, width, height } = geom;
-  const stroke = overCapacity ? "#dc2626" : table.fixed ? "#b45309" : "#111827";
-  const strokeWidth = overCapacity ? 3 : table.fixed ? 2.5 : 1.5;
+  const stroke = overCapacity ? "#dc2626" : selected ? "#2563eb" : table.fixed ? "#b45309" : "#111827";
+  const strokeWidth = overCapacity ? 3 : selected ? 3 : table.fixed ? 2.5 : 1.5;
   const fill = overCapacity ? "#fee2e2" : "#fef3c7";
   const dash = !overCapacity && table.fixed ? [6, 3] : undefined;
   const labelWidth = 150;
