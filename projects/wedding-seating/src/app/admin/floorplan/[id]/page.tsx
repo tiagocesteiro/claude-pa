@@ -101,7 +101,8 @@ export default function FloorPlanEditorPage() {
       body: form,
     });
     if (!res.ok) {
-      setUploadError("Failed to upload image");
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      setUploadError(body?.error ?? "Não foi possível carregar a imagem.");
       return;
     }
     const { image } = (await res.json()) as { image: string };
