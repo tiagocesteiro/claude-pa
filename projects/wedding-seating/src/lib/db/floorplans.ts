@@ -7,12 +7,27 @@ export function createFloorPlan(input: {
   scale: number;
   width: number;
   depth: number;
+  name?: string | null;
 }): Promise<FloorPlan> {
   return prisma.floorPlan.create({ data: input });
 }
 
 export function getFloorPlan(id: string): Promise<FloorPlan | null> {
   return prisma.floorPlan.findUnique({ where: { id } });
+}
+
+export function updateFloorPlanName(id: string, name: string | null): Promise<FloorPlan> {
+  return prisma.floorPlan.update({ where: { id }, data: { name } });
+}
+
+/** Deletes a layout and everything built on it: its tables + any LayoutTemplates
+ * positioned on it (which cascade their own tables). Wedding moments / weddings that
+ * referenced this plan or those templates have their references nulled (SetNull). */
+export function deleteFloorPlan(id: string): Promise<unknown> {
+  return prisma.$transaction([
+    prisma.layoutTemplate.deleteMany({ where: { floorPlanId: id } }),
+    prisma.floorPlan.delete({ where: { id } }),
+  ]);
 }
 
 export function updateFloorPlanScale(id: string, scale: number): Promise<FloorPlan> {

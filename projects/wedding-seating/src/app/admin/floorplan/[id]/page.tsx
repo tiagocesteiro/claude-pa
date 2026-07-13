@@ -22,6 +22,7 @@ const CANVAS_HEIGHT = 640;
 interface FloorPlanRecord {
   id: string;
   venueId: string;
+  name: string | null;
   image: string;
   scale: number;
   width: number;
@@ -55,12 +56,16 @@ export default function FloorPlanEditorPage() {
   const [minSpacingInput, setMinSpacingInput] = useState("");
   const [spacingSaved, setSpacingSaved] = useState(false);
 
+  const [nameInput, setNameInput] = useState("");
+  const [nameSaved, setNameSaved] = useState(false);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     const fpRes = await fetch(`/api/floorplans/${floorPlanId}`);
     if (fpRes.ok) {
       const fp = (await fpRes.json()) as FloorPlanRecord;
       setFloorPlan(fp);
+      setNameInput(fp.name ?? "");
       setMinSpacingInput(fp.minSpacing != null ? String(fp.minSpacing) : "");
       // Migrate a legacy single `boundary` polygon into zones[0] when this
       // floor plan predates multi-zone support (no `zones` saved yet).
@@ -178,6 +183,21 @@ export default function FloorPlanEditorPage() {
     await persistZones([]);
   }
 
+  async function saveName() {
+    const name = nameInput.trim() || null;
+    if (name === (floorPlan?.name ?? null)) return;
+    const res = await fetch(`/api/floorplans/${floorPlanId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      setFloorPlan((prev) => (prev ? { ...prev, name } : prev));
+      setNameSaved(true);
+      setTimeout(() => setNameSaved(false), 1500);
+    }
+  }
+
   async function saveMinSpacing() {
     const raw = minSpacingInput.trim();
     const val = raw === "" ? null : Number(raw);
@@ -213,6 +233,20 @@ export default function FloorPlanEditorPage() {
 
       {!loading && (
         <>
+          <div style={{ marginBottom: 12, display: "flex", gap: 8, alignItems: "center" }}>
+            <label>
+              Nome da planta:{" "}
+              <input
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onBlur={saveName}
+                placeholder="ex: Salão principal"
+                style={{ minWidth: 240 }}
+              />
+            </label>
+            {nameSaved && <span style={{ color: "#16a34a" }}>Guardado.</span>}
+          </div>
+
           <div style={{ marginBottom: 12 }}>
             <label>
               Upload room image:{" "}

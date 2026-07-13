@@ -52,6 +52,7 @@ model FloorPlan {
   id        String   @id @default(cuid())
   venueId   String
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name      String?  // human label for the layout (e.g. "Salão principal")
   image     String   // local file path
   scale     Float    // pixels per metre
   width     Float    // metres

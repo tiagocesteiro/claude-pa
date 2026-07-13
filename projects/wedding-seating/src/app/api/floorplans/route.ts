@@ -19,6 +19,7 @@ export async function POST(req: Request) {
     scale: b.scale ?? 0,
     width: b.width ?? 0,
     depth: b.depth ?? 0,
+    name: typeof b.name === "string" ? b.name : null,
   });
   return NextResponse.json(fp, { status: 201 });
 }
