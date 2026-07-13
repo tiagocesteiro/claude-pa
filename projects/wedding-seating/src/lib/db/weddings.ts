@@ -57,6 +57,12 @@ export function listWeddings(): Promise<Wedding[]> {
   return prisma.wedding.findMany({ orderBy: { createdAt: "desc" } });
 }
 
+/** Deletes a wedding and all of its data (guests, groups, constraints, moments,
+ * and its copied tables) — all those relations are onDelete: Cascade. */
+export function deleteWedding(id: string): Promise<Wedding> {
+  return prisma.wedding.delete({ where: { id } });
+}
+
 /** Whitelisted update of wedding "detail" fields only — never touches
  * tables/guests/templateId (those are owned by the seating/template-apply flow). */
 export function updateWedding(id: string, fields: WeddingDetailFields): Promise<Wedding> {

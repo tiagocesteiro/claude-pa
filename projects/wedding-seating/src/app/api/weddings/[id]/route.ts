@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getWeddingDetail, updateWedding, type WeddingDetailFields } from "@/lib/db/weddings";
+import { deleteWedding, getWeddingDetail, updateWedding, type WeddingDetailFields } from "@/lib/db/weddings";
 
 const DETAIL_FIELDS = [
   "couple",
@@ -20,6 +20,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const wedding = await getWeddingDetail(id);
   if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
   return NextResponse.json(wedding);
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const existing = await getWeddingDetail(id);
+  if (!existing) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
+  await deleteWedding(id);
+  return NextResponse.json({ ok: true });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -79,6 +79,26 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDeleteWedding(w: Wedding) {
+    if (!window.confirm(`Apagar o casamento "${w.couple}" e todos os seus dados (convidados, grupos, mesas)? Esta ação é irreversível.`)) return;
+    const res = await fetch(`/api/weddings/${w.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setWeddingError("Não foi possível apagar o casamento.");
+      return;
+    }
+    await loadWeddings();
+  }
+
+  async function handleDeleteVenue(v: Venue) {
+    if (!window.confirm(`Apagar a quinta "${v.name}" e as suas plantas/mesas/templates? Os casamentos associados ficam sem quinta. Esta ação é irreversível.`)) return;
+    const res = await fetch(`/api/venues/${v.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setError("Não foi possível apagar a quinta.");
+      return;
+    }
+    await loadVenues();
+  }
+
   async function handleCreateVenue(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -143,12 +163,31 @@ export default function AdminPage() {
         {weddings.map((w) => (
           <li
             key={w.id}
-            style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
           >
-            <Link href={`/admin/wedding/${w.id}`}>
-              <strong>{w.couple}</strong>
-            </Link>
-            {w.date && <span> — {new Date(w.date).toLocaleDateString()}</span>}
+            <span>
+              <Link href={`/admin/wedding/${w.id}`}>
+                <strong>{w.couple}</strong>
+              </Link>
+              {w.date && <span> — {new Date(w.date).toLocaleDateString()}</span>}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleDeleteWedding(w)}
+              title="Apagar casamento"
+              style={{ color: "#dc2626", flexShrink: 0 }}
+            >
+              Apagar
+            </button>
           </li>
         ))}
       </ul>
@@ -181,8 +220,20 @@ export default function AdminPage() {
             key={v.id}
             style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
           >
-            <strong>{v.name}</strong>
-            {v.location && <span> — {v.location}</span>}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <span>
+                <strong>{v.name}</strong>
+                {v.location && <span> — {v.location}</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleDeleteVenue(v)}
+                title="Apagar quinta"
+                style={{ color: "#dc2626", flexShrink: 0 }}
+              >
+                Apagar
+              </button>
+            </div>
             <div style={{ marginTop: 8 }}>
               <Link href={`/admin/venue/${v.id}`}>Abrir quinta</Link>
             </div>

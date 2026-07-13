@@ -12,3 +12,11 @@ export function listVenues(): Promise<Venue[]> {
 export function getVenue(id: string): Promise<Venue | null> {
   return prisma.venue.findUnique({ where: { id } });
 }
+
+/** Deletes a venue and everything it owns (floor plans, table types, templates,
+ * and — via cascade — those templates'/plans' tables). Weddings that referenced
+ * this venue keep existing but have their venueId/floorPlanId/templateId nulled
+ * (the relations are optional → SetNull). */
+export function deleteVenue(id: string): Promise<Venue> {
+  return prisma.venue.delete({ where: { id } });
+}
