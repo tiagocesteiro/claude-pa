@@ -41,6 +41,7 @@ interface Moment {
   floorPlan: FloorPlanRecord | null;
   templateId: string | null;
   template: TemplateRecord | null;
+  notes: string | null;
 }
 
 /** Raw row shape returned by GET /api/templates/[id]/tables (Prisma Table) — mapped
@@ -230,6 +231,11 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
       {DISPLAY_ORDER.map((kind) => (
         <section key={kind} style={sectionStyle()}>
           <h2 style={{ marginTop: 0, color: "var(--heading)" }}>{MOMENT_LABELS[kind]}</h2>
+          {momentByKind.get(kind)?.notes && (
+            <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>
+              {momentByKind.get(kind)?.notes}
+            </p>
+          )}
 
           {kind === "dinner" ? (
             hasDinnerPlan ? (

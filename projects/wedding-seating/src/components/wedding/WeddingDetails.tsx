@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 // Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
 // client component doesn't pull the server-only Prisma module into the browser bundle.
@@ -30,11 +29,18 @@ interface Template {
   venueId: string;
 }
 
+interface MomentTemplate {
+  id: string;
+  floorPlan: { image: string } | null;
+}
+
 interface Moment {
   id: string;
   kind: MomentKind;
   floorPlanId: string | null;
   templateId: string | null;
+  template: MomentTemplate | null;
+  notes: string | null;
 }
 
 interface WeddingDetail {
@@ -66,6 +72,15 @@ function toDateInputValue(iso: string | null): string {
   return iso.slice(0, 10);
 }
 
+// Same rel-path convention used by the plan/couple-overview canvases: the DB stores
+// image paths like "data/uploads/<file>" — strip that prefix so the browser hits the
+// /api/uploads/<file> route instead.
+function imageUrlFor(image: string | null | undefined): string | undefined {
+  if (!image) return undefined;
+  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
+  return `/api/uploads/${rel}`;
+}
+
 export default function WeddingDetails({ weddingId }: { weddingId: string }) {
   const [wedding, setWedding] = useState<WeddingDetail | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -87,6 +102,22 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
   const [guestEstimate, setGuestEstimate] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Per-moment notes drafts (Task 6) — one controlled textarea per moment, saved
+  // independently on blur via PUT .../moments/[kind] { notes }.
+  const [momentNotesDraft, setMomentNotesDraft] = useState<Record<MomentKind, string>>({
+    ceremony: "",
+    cocktail: "",
+    dinner: "",
+    dance: "",
+  });
+  const [notesSavedKind, setNotesSavedKind] = useState<MomentKind | null>(null);
+
+  // Number of tables already copied onto the wedding's dinner arrangement — used to
+  // decide whether picking a new dinner template needs a destructive-replace confirm
+  // (mirrors the old Seating-plan template picker's behavior, now triggered from here).
+  const [dinnerTableCount, setDinnerTableCount] = useState(0);
+  const [applyingDinnerTemplate, setApplyingDinnerTemplate] = useState(false);
+
   async function loadWedding() {
     const res = await fetch(`/api/weddings/${weddingId}`);
     if (!res.ok) {
@@ -107,6 +138,12 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     setPartner2Phone(data.partner2Phone ?? "");
     setGuestEstimate(data.guestEstimate === null || data.guestEstimate === undefined ? "" : String(data.guestEstimate));
     setNotes(data.notes ?? "");
+    setMomentNotesDraft({
+      ceremony: data.moments.find((m) => m.kind === "ceremony")?.notes ?? "",
+      cocktail: data.moments.find((m) => m.kind === "cocktail")?.notes ?? "",
+      dinner: data.moments.find((m) => m.kind === "dinner")?.notes ?? "",
+      dance: data.moments.find((m) => m.kind === "dance")?.notes ?? "",
+    });
     setLoading(false);
   }
 
@@ -122,6 +159,13 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     setTemplates((await res.json()) as Template[]);
   }
 
+  async function loadDinnerTableCount() {
+    const res = await fetch(`/api/weddings/${weddingId}/plan`);
+    if (!res.ok) return;
+    const data = (await res.json()) as { tables?: unknown[] };
+    setDinnerTableCount(data.tables?.length ?? 0);
+  }
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadWedding();
@@ -129,6 +173,8 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     loadVenues();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadTemplates();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+    loadDinnerTableCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- weddingId is stable per mount
   }, [weddingId]);
 
@@ -180,6 +226,62 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     await loadWedding();
   }
 
+  // Dinner is the one moment whose template choice also seats real guests: picking a
+  // template here must (1) copy that template's tables onto the wedding (the same
+  // apply-template flow the Seating plan used to trigger itself) and (2) record the
+  // choice on the dinner moment so the couple overview/thumbnail render it like any
+  // other moment. Clearing the choice (back to "— (nenhum)") only clears the moment
+  // record — it does not delete the copied tables, same as the other moments.
+  async function handleDinnerTemplateChoice(templateId: string | null) {
+    setError(null);
+    if (templateId && dinnerTableCount > 0) {
+      const confirmed = window.confirm(
+        "Aplicar este arranjo substitui as mesas do jantar atuais e limpa os lugares já atribuídos. Continuar?"
+      );
+      if (!confirmed) return;
+    }
+    setApplyingDinnerTemplate(true);
+    try {
+      if (templateId) {
+        const applyRes = await fetch(`/api/weddings/${weddingId}/apply-template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId }),
+        });
+        if (!applyRes.ok) {
+          setError("Não foi possível aplicar o arranjo ao jantar.");
+          return;
+        }
+      }
+      await setMomentTemplateChoice("dinner", templateId);
+      await loadDinnerTableCount();
+    } finally {
+      setApplyingDinnerTemplate(false);
+    }
+  }
+
+  function handleMomentNotesChange(kind: MomentKind, value: string) {
+    setMomentNotesDraft((prev) => ({ ...prev, [kind]: value }));
+  }
+
+  async function handleMomentNotesBlur(kind: MomentKind) {
+    const value = momentNotesDraft[kind] ?? "";
+    const original = wedding?.moments.find((m) => m.kind === kind)?.notes ?? "";
+    if (value === original) return;
+    const res = await fetch(`/api/weddings/${weddingId}/moments/${kind}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: value === "" ? null : value }),
+    });
+    if (!res.ok) {
+      setError("Falha ao guardar as notas do momento.");
+      return;
+    }
+    await loadWedding();
+    setNotesSavedKind(kind);
+    setTimeout(() => setNotesSavedKind((k) => (k === kind ? null : k)), 2000);
+  }
+
   if (loading) return <p>A carregar...</p>;
   if (!wedding) return <p style={{ color: "#dc2626" }}>{error ?? "Casamento não encontrado."}</p>;
 
@@ -192,6 +294,8 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
         kind,
         floorPlanId: null,
         templateId: null,
+        template: null,
+        notes: null,
       }
   );
 
@@ -298,9 +402,8 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
             key={moment.kind}
             style={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
+              flexDirection: "column",
+              gap: 8,
               border: "1px solid var(--border)",
               borderRadius: "var(--radius)",
               padding: "10px 14px",
@@ -308,17 +411,19 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
               background: "var(--surface)",
             }}
           >
-            <strong style={{ color: "var(--heading)" }}>{MOMENT_LABELS[moment.kind]}</strong>
-            {moment.kind === "dinner" ? (
-              <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
-                Definido pelo template no separador{" "}
-                <Link href={`/admin/wedding/${weddingId}/plan`}>Plano de mesas</Link>
-              </span>
-            ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <strong style={{ color: "var(--heading)" }}>{MOMENT_LABELS[moment.kind]}</strong>
               <select
                 value={moment.templateId ?? ""}
-                disabled={!venueId}
-                onChange={(e) => setMomentTemplateChoice(moment.kind, e.target.value || null)}
+                disabled={!venueId || (moment.kind === "dinner" && applyingDinnerTemplate)}
+                onChange={(e) => {
+                  const value = e.target.value || null;
+                  if (moment.kind === "dinner") {
+                    void handleDinnerTemplateChoice(value);
+                  } else {
+                    void setMomentTemplateChoice(moment.kind, value);
+                  }
+                }}
                 aria-label={`Arranjo de ${MOMENT_LABELS[moment.kind]}`}
               >
                 <option value="">— (nenhum)</option>
@@ -328,6 +433,45 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {moment.kind === "dinner" && applyingDinnerTemplate && (
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>A aplicar arranjo...</span>
+            )}
+
+            {moment.template &&
+              (moment.template.floorPlan?.image ? (
+                <img
+                  src={imageUrlFor(moment.template.floorPlan.image)}
+                  alt={`Miniatura do arranjo de ${MOMENT_LABELS[moment.kind]}`}
+                  style={{
+                    maxWidth: 160,
+                    maxHeight: 120,
+                    objectFit: "contain",
+                    border: "1px solid var(--border)",
+                    borderRadius: 4,
+                    background: "#fff",
+                  }}
+                />
+              ) : (
+                <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
+                  sem imagem
+                </span>
+              ))}
+
+            <label style={{ ...label, gap: 4 }}>
+              Notas
+              <textarea
+                rows={2}
+                value={momentNotesDraft[moment.kind] ?? ""}
+                onChange={(e) => handleMomentNotesChange(moment.kind, e.target.value)}
+                onBlur={() => handleMomentNotesBlur(moment.kind)}
+                style={{ resize: "vertical" }}
+                aria-label={`Notas de ${MOMENT_LABELS[moment.kind]}`}
+              />
+            </label>
+            {notesSavedKind === moment.kind && (
+              <span style={{ color: "var(--accent)", fontSize: 12 }}>Guardado.</span>
             )}
           </li>
         ))}

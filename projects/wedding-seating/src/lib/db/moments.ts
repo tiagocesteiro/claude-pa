@@ -39,3 +39,20 @@ export function setMomentTemplate(
     update: { templateId },
   });
 }
+
+/** Upserts a moment's free-text notes by (weddingId, kind). Returns null if kind is
+ * invalid (callers — typically API routes — should treat that as a 400). Independent
+ * of floorPlanId/templateId — set separately so a notes save never touches the
+ * moment's arrangement fields. */
+export function setMomentNotes(
+  weddingId: string,
+  kind: string,
+  notes: string | null
+): Promise<WeddingMoment> | null {
+  if (!isMomentKind(kind)) return null;
+  return prisma.weddingMoment.upsert({
+    where: { weddingId_kind: { weddingId, kind } },
+    create: { weddingId, kind, notes },
+    update: { notes },
+  });
+}

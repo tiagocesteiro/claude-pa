@@ -119,6 +119,7 @@ model WeddingMoment {
   floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id])
   templateId  String?
   template    LayoutTemplate? @relation(fields: [templateId], references: [id])
+  notes       String?
 
   @@unique([weddingId, kind])
 }

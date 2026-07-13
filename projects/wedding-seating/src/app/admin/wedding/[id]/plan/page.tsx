@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { Warning } from "@/lib/seating";
 import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePlan";
@@ -83,15 +84,12 @@ export default function PlanPage() {
     tables,
     groups,
     layout,
-    templates,
     loading,
     generating,
-    applying,
     error,
     score,
     warnings,
     generate,
-    applyTemplate,
     assign,
     toggleGuestLock,
     toggleTableFixed,
@@ -102,20 +100,7 @@ export default function PlanPage() {
     colorMap,
   } = usePlan(weddingId);
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
-
   const hasTables = tables.length > 0;
-
-  async function handleApplyTemplate() {
-    if (!selectedTemplateId) return;
-    if (hasTables) {
-      const confirmed = window.confirm(
-        "Aplicar este template substitui as mesas atuais e limpa os lugares já atribuídos. Continuar?"
-      );
-      if (!confirmed) return;
-    }
-    await applyTemplate(selectedTemplateId);
-  }
 
   // Stable, human labels ("Mesa 1", "Mesa 2", ...) derived from table order — used by the
   // canvas, the warnings list, and the TableList so a table reads the same everywhere
@@ -177,31 +162,6 @@ export default function PlanPage() {
       <h1>Seating plan</h1>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
-        <label>
-          Template:{" "}
-          <select
-            data-testid="template-select"
-            value={selectedTemplateId}
-            onChange={(e) => setSelectedTemplateId(e.target.value)}
-          >
-            <option value="">
-              {templates.length === 0 ? "Nenhum template disponível" : "Escolhe um template"}
-            </option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.venue?.name ?? "?"} — {t.name} — {t.minGuests}-{t.maxGuests}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          data-testid="apply-template-button"
-          onClick={handleApplyTemplate}
-          disabled={!selectedTemplateId || applying}
-        >
-          {applying ? "A aplicar..." : "Usar este template"}
-        </button>
         <button type="button" onClick={generate} disabled={!hasTables || generating}>
           {generating ? "A gerar..." : "Generate"}
         </button>
@@ -226,7 +186,10 @@ export default function PlanPage() {
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
       {!hasTables && (
-        <p>Escolhe um template acima e clica em &quot;Usar este template&quot; para começar.</p>
+        <p>
+          Define o arranjo do jantar no separador{" "}
+          <Link href={`/admin/wedding/${weddingId}/details`}>Detalhes</Link>.
+        </p>
       )}
 
       {hasTables && (

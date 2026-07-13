@@ -140,4 +140,41 @@ it("clears a moment's template with templateId: null", async () => {
   expect(body.templateId).toBeNull();
 });
 
+it("persists a moment's notes independently of its templateId", async () => {
+  const venue = await prisma.venue.create({ data: { name: "Notes Venue" } });
+  const template = await prisma.layoutTemplate.create({
+    data: { venueId: venue.id, name: "Notes Arrangement", minGuests: 10, maxGuests: 50 },
+  });
+  const w = await createWedding({ couple: "Moment Route Notes", venueId: venue.id });
+
+  await PUT(
+    new Request("http://x/moments/cocktail", {
+      method: "PUT",
+      body: JSON.stringify({ templateId: template.id }),
+    }),
+    { params: Promise.resolve({ id: w.id, kind: "cocktail" }) }
+  );
+
+  const res = await PUT(
+    new Request("http://x/moments/cocktail", {
+      method: "PUT",
+      body: JSON.stringify({ notes: "Confirmar flores brancas." }),
+    }),
+    { params: Promise.resolve({ id: w.id, kind: "cocktail" }) }
+  );
+  expect(res.status).toBe(200);
+  const body = await res.json();
+  expect(body.notes).toBe("Confirmar flores brancas.");
+  // the templateId set moments earlier is untouched by the notes-only PUT
+  expect(body.templateId).toBe(template.id);
+
+  const cleared = await PUT(
+    new Request("http://x/moments/cocktail", { method: "PUT", body: JSON.stringify({ notes: null }) }),
+    { params: Promise.resolve({ id: w.id, kind: "cocktail" }) }
+  );
+  expect(cleared.status).toBe(200);
+  const clearedBody = await cleared.json();
+  expect(clearedBody.notes).toBeNull();
+});
+
 afterAll(async () => { await prisma.$disconnect(); });

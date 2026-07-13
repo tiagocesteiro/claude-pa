@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { getWedding } from "@/lib/db/weddings";
-import { isMomentKind, setMomentFloorPlan, setMomentTemplate } from "@/lib/db/moments";
+import { isMomentKind, setMomentFloorPlan, setMomentNotes, setMomentTemplate } from "@/lib/db/moments";
 
 export async function PUT(
   req: Request,
@@ -16,6 +16,15 @@ export async function PUT(
 
   const wedding = await getWedding(id);
   if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
+
+  // Notes are independent of the arrangement fields below — a plain-text save that
+  // never touches floorPlanId/templateId. Checked first so a `{ notes }`-only body
+  // (the common case, from the Detalhes notes textarea) short-circuits here.
+  if ("notes" in b) {
+    const notes: string | null = b.notes ?? null;
+    const moment = await setMomentNotes(id, kind, notes);
+    return NextResponse.json(moment);
+  }
 
   // Two independent assignment paths: a venue "template" (arrangement with tables — the
   // normal case for ceremony/cocktail/dance) or a legacy bare "floorPlanId" (room-only,
