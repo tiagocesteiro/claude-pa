@@ -72,4 +72,6 @@ npx prisma migrate dev # if schema changed
 - Accents work correctly in import (an earlier "scrambled groups" report was a corrupted bash-generated sample file, not an app bug).
 
 ## Verification status
-- 169 automated tests green; `tsc --noEmit` + `next build` clean. Every plan's UI was driven end-to-end with Playwright (generate, drag, colors, locks, swap, catalog, spacing, boundary, chairs, zones, template-apply, wedding table move/add/remove + template-unchanged) with screenshots in `.superpowers/`.
+- 172 automated tests green; `tsc --noEmit` + `next build` clean.
+- Admin can **delete** weddings and venues (cascade) via "Apagar" buttons on `/admin` (`DELETE /api/weddings/[id]` + `DELETE /api/venues/[id]`; deleting a wedding cascades guests/groups/constraints/moments/tables; deleting a venue cascades floor plans/table types/templates and nulls referencing weddings' venueId).
+- The dev DB (`prisma/dev.db`) was wiped clean of all QA/test data on 2026-07-13 — starts empty. (Note: orphaned uploaded images may remain under `data/uploads/`.) Every plan's UI was driven end-to-end with Playwright (generate, drag, colors, locks, swap, catalog, spacing, boundary, chairs, zones, template-apply, wedding table move/add/remove + template-unchanged) with screenshots in `.superpowers/`.
