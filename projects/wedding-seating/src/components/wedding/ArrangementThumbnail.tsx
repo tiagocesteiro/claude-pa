@@ -65,9 +65,11 @@ function Placeholder() {
 /**
  * Small rendered arrangement (tables placed on the room) for a moment's chosen
  * template — used as the Detalhes moment thumbnail instead of the bare floor-plan
- * photo. Deliberately renders with `zones={[]}` (no zone shading) and no seated
- * guests (an arrangement, not a seating plan) — same read-only pattern CoupleView
- * uses for the full-size render, just boxed down to thumbnail size.
+ * photo. Deliberately renders with `zones={[]}` (no zone shading), no room
+ * `elements` (nothing passed — defaults to `[]`), no seated guests (`guests: []`),
+ * and (Task 18 Part B) `showLabels={false}` `showChairs={false}` — the mini render
+ * shows ONLY the table shapes (round/oval/rect) in position, nothing else: no
+ * chairs, no "Mesa N" label, no occupancy count text.
  */
 export default function ArrangementThumbnail({ template }: { template: ArrangementThumbnailTemplate }) {
   const [tables, setTables] = useState<TemplateTableRow[] | null>(null);
@@ -136,6 +138,8 @@ export default function ArrangementThumbnail({ template }: { template: Arrangeme
         onToggleTableFixed={noop}
         onSwap={noop}
         readOnly
+        showLabels={false}
+        showChairs={false}
       />
     </div>
   );

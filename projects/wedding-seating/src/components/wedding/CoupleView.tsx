@@ -5,9 +5,37 @@ import dynamic from "next/dynamic";
 import type Konva from "konva";
 import type { Point } from "@/lib/floorplan/geometry";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
-import type { PlanGuest, PlanTable, PlanLayout } from "@/components/plan/usePlan";
+import type { PlanGuest, PlanTable, PlanLayout, PlanGroup } from "@/components/plan/usePlan";
 import { parseElements } from "@/lib/floorplan/elements";
 import { buildPdfFilename, groupGuestsByTable } from "@/lib/plan/pdfExport";
+import { buildColorMap, type AttributeKey } from "@/lib/plan/colors";
+
+// "Pintar por" control options — same set + labels as the seating plan's (Plan 18
+// Task 4), reused here for the overview's dinner render. Label shown to the user
+// vs. the AttributeKey (or "" for "no color") passed to setColorAttr / buildColorMap.
+const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
+  { label: "Nenhum", value: "" },
+  { label: "Faixa etária", value: "ageGroup" },
+  { label: "Género", value: "gender" },
+  { label: "Alimentar", value: "dietary" },
+  { label: "Grupo", value: "group" },
+];
+
+// Same "adult"/"child"/"senior" -> Portuguese mapping as the seating plan page, used
+// for the legend's value labels when coloring by ageGroup.
+const AGE_GROUP_LABELS: Record<string, string> = {
+  adult: "adulto",
+  child: "criança",
+  senior: "idoso",
+};
+
+// "group" legend values are groupIds — resolved to the group's name; falls back to
+// the raw id if the group was deleted since the plan was generated.
+function legendLabel(attr: AttributeKey, value: string, groups: PlanGroup[]): string {
+  if (attr === "ageGroup") return AGE_GROUP_LABELS[value] ?? value;
+  if (attr === "group") return groups.find((g) => g.id === value)?.name ?? value;
+  return value;
+}
 
 // Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
 // client component doesn't pull the server-only Prisma module into the browser bundle.
@@ -135,6 +163,10 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templateTables, setTemplateTables] = useState<Record<string, TemplateTableRow[]>>({});
+  const [groups, setGroups] = useState<PlanGroup[]>([]);
+  // "Pintar por" — colors the DINNER's seated guests only (Task 18 Part C); the
+  // other moments stay arrangement-only regardless of this selection.
+  const [colorAttr, setColorAttr] = useState<AttributeKey | null>(null);
   // Per-moment Konva stage instances (Plan 18 Task 10 — "Exportar PDF"), populated via
   // each canvas's onStageReady as it mounts/unmounts. A ref (not state) because the
   // stage instance itself never needs to trigger a re-render — it's read on demand
@@ -208,6 +240,28 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     };
   }, [wedding?.moments]);
 
+  // Groups aren't floor-plan scoped; fetched once per wedding, used only to resolve
+  // the "Pintar por: Grupo" legend's group names (same pattern as usePlan.ts).
+  // Best-effort — a failed fetch just falls back to raw group ids in the legend.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGroups() {
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/groups`);
+        if (!res.ok) return;
+        const data = (await res.json()) as PlanGroup[];
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount/wedding change
+        if (!cancelled) setGroups(data ?? []);
+      } catch {
+        // silent — see comment above
+      }
+    }
+    loadGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, [weddingId]);
+
   const tables = plan?.tables ?? [];
   const layout = plan?.layout ?? null;
 
@@ -217,10 +271,14 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     return map;
   }, [tables]);
 
-  // Couple view is arrangement-only: show the table layout with NO seated guests
-  // (empty chairs, no name chips) for every moment, dinner included. The actual
-  // seating (who sits where) lives on the couple's Seating plan tab.
-  const tableViews: PlanTableView[] = useMemo(
+  // Non-dinner moments stay arrangement-only (their own `views` built inline below,
+  // guests: []). The DINNER, however, shows its actually seated guests (Task 18
+  // Part C) — mapped the same way the seating plan page does (guests filtered by
+  // assignedTableId) — so occupancy chairs render (Part A) and can be colored by
+  // the "Pintar por" selection below; read-only + no names (readOnly already hides
+  // the name-chip overlay), so this only ever shows colored dots, never text.
+  const dinnerGuests = plan?.guests ?? [];
+  const dinnerTableViews: PlanTableView[] = useMemo(
     () =>
       tables.map((t) => ({
         id: t.id,
@@ -234,9 +292,20 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         fixed: t.fixed,
         width: t.width,
         depth: t.depth,
-        guests: [],
+        guests: dinnerGuests
+          .filter((g) => g.assignedTableId === t.id)
+          .map((g) => ({ id: g.id, name: g.name, locked: g.locked })),
       })),
-    [tables, tableLabels]
+    [tables, dinnerGuests, tableLabels]
+  );
+
+  // Derived color map for the dinner's seated guests, keyed by the "Pintar por"
+  // selection — same pattern as usePlan.ts's colorMap. `null` (Nenhum) yields empty
+  // maps, which PlanCanvas treats as "no tinting" (neutral occupied fill) and the
+  // legend treats as "nothing to render".
+  const colorMap = useMemo(
+    () => (colorAttr ? buildColorMap(dinnerGuests, colorAttr) : { legend: [], colorByGuest: {} }),
+    [dinnerGuests, colorAttr]
   );
 
   const hasDinnerPlan = Boolean(layout) && tables.length > 0;
@@ -330,9 +399,70 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
   return (
     <div>
-      <p style={{ color: "var(--text-muted)", marginTop: 0, marginBottom: 20 }}>
-        {guestCount} convidados · {confirmedCount} confirmados
-      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: hasDinnerPlan ? 8 : 20,
+        }}
+      >
+        <p style={{ color: "var(--text-muted)", margin: 0 }}>
+          {guestCount} convidados · {confirmedCount} confirmados
+        </p>
+        {hasDinnerPlan && (
+          <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            Pintar por:{" "}
+            <select
+              data-testid="couple-color-attr-select"
+              value={colorAttr ?? ""}
+              onChange={(e) => setColorAttr((e.target.value || null) as AttributeKey | null)}
+              style={{
+                padding: "4px 8px",
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+                color: "var(--heading)",
+              }}
+            >
+              {COLOR_ATTR_OPTIONS.map((o) => (
+                <option key={o.label} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
+      {hasDinnerPlan && colorAttr && colorMap.legend.length > 0 && (
+        <div
+          data-testid="couple-color-legend"
+          style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}
+        >
+          {colorMap.legend.map((entry) => (
+            <span
+              key={entry.value}
+              data-testid={`couple-legend-entry-${entry.value}`}
+              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}
+            >
+              <span
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 3,
+                  background: entry.color,
+                  display: "inline-block",
+                  flexShrink: 0,
+                }}
+              />
+              {legendLabel(colorAttr, entry.value, groups)}
+            </span>
+          ))}
+        </div>
+      )}
 
       {DISPLAY_ORDER.map((kind) => (
         <section key={kind} style={sectionStyle()}>
@@ -369,7 +499,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
             hasDinnerPlan ? (
               <PlanCanvas
                 imageUrl={imageUrlFor(layout?.image)}
-                tables={tableViews}
+                tables={dinnerTableViews}
                 scale={layout?.scale ?? 0}
                 roomWidth={layout?.width ?? 0}
                 roomDepth={layout?.depth ?? 0}
@@ -382,6 +512,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                 onToggleGuestLock={noop}
                 onToggleTableFixed={noop}
                 onSwap={noop}
+                colorByGuest={colorMap.colorByGuest}
                 readOnly
                 onStageReady={(stage) => {
                   stageRefs.current.dinner = stage;

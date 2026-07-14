@@ -135,6 +135,15 @@ export interface PlanCanvasProps {
    * PDF", Plan 18 Task 10) capture `stage.toDataURL()` on demand without this
    * component knowing anything about PDF export. */
   onStageReady?: (stage: Konva.Stage | null) => void;
+  /** Task 18 Part B: when false, suppresses each table's name/label AND its
+   * occupancy count text (the two Konva `Text` nodes drawn over the shape) —
+   * used by the Detalhes moment thumbnail so it shows bare table shapes only.
+   * Default true (today's behavior). */
+  showLabels?: boolean;
+  /** Task 18 Part B: when false, no chairs are drawn at all — belt-and-braces
+   * alongside Part A (an empty `guests` array already yields zero chairs) for
+   * the Detalhes thumbnail. Default true (today's behavior). */
+  showChairs?: boolean;
 }
 
 interface TableGeom {
@@ -170,6 +179,8 @@ export default function PlanCanvas({
   onRenameTable,
   readOnly = false,
   onStageReady,
+  showLabels = true,
+  showChairs = true,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
   // readOnly always wins over editMode/addTableMode — a caller passing both would be
@@ -357,6 +368,7 @@ export default function PlanCanvas({
               overCapacity={overCapacitySet.has(g.table.id)}
               selected={interactive && selectedTableId === g.table.id}
               draggable={effectiveEditMode}
+              showLabel={showLabels}
               onDragEnd={
                 effectiveEditMode
                   ? (pos) => onMoveTable?.(g.table.id, toNatural(pos))
@@ -366,15 +378,25 @@ export default function PlanCanvas({
           ))}
         </Layer>
         {/* Decorative chair layer — non-listening so it never intercepts the HTML
-            drag/drop overlay below. Occupied chairs (first `occupancy` seats, in the
-            table's seated-guest order) take colorByGuest; the rest render neutral/empty. */}
+            drag/drop overlay below. Task 18 Part A: exactly `occupancy` (seated
+            guest count) chairs are drawn per table, symmetrically distributed
+            around the whole table (chairPositions is called with `capacity` set
+            to occupancy, not the table's real capacity) — an empty table shows no
+            chairs at all, and a partially-filled one shows only its occupied
+            seats, spread evenly. Every chair drawn corresponds to a seated guest,
+            so it's always colored (colorByGuest, falling back to the neutral
+            occupied fill) — CHAIR_EMPTY_FILL is unreachable here but kept as a
+            defensive fallback. Suppressed entirely when `showChairs` is false
+            (Task 18 Part B). */}
+        {showChairs && (
         <Layer listening={false}>
-          {geoms.map((g) =>
-            chairPositions(
+          {geoms.map((g) => {
+            const occupancy = g.table.guests.length;
+            return chairPositions(
               {
                 x: g.table.x,
                 y: g.table.y,
-                capacity: g.table.capacity,
+                capacity: occupancy,
                 shape: g.table.shape,
                 width: g.table.width,
                 depth: g.table.depth,
@@ -396,9 +418,10 @@ export default function PlanCanvas({
                   listening={false}
                 />
               );
-            })
-          )}
+            });
+          })}
         </Layer>
+        )}
       </Stage>
 
       {/* HTML drop-target overlay: Konva shapes don't receive native HTML drag events,
@@ -622,6 +645,7 @@ function TableShape({
   overCapacity,
   selected = false,
   draggable = false,
+  showLabel = true,
   onDragEnd,
 }: {
   geom: TableGeom;
@@ -630,6 +654,9 @@ function TableShape({
    * a subtle highlight so the user can tell which table is showing names. */
   selected?: boolean;
   draggable?: boolean;
+  /** Task 18 Part B: suppresses the name/label + occupancy count `Text` nodes
+   * below (the table shape itself always renders). Default true. */
+  showLabel?: boolean;
   onDragEnd?: (pos: Point) => void;
 }) {
   const { table, shape, displayX, displayY, width, height } = geom;
@@ -678,25 +705,29 @@ function TableShape({
           dash={dash}
         />
       )}
-      <Text
-        x={displayX - labelWidth / 2}
-        y={displayY - 16}
-        width={labelWidth}
-        align="center"
-        text={table.fixed ? `🔒 ${tableLabel}` : tableLabel}
-        fontSize={13}
-        fill="#374151"
-      />
-      <Text
-        x={displayX - labelWidth / 2}
-        y={displayY + 1}
-        width={labelWidth}
-        align="center"
-        text={occupancyLabel}
-        fontSize={18}
-        fontStyle="bold"
-        fill={overCapacity ? "#dc2626" : "#111827"}
-      />
+      {showLabel && (
+        <>
+          <Text
+            x={displayX - labelWidth / 2}
+            y={displayY - 16}
+            width={labelWidth}
+            align="center"
+            text={table.fixed ? `🔒 ${tableLabel}` : tableLabel}
+            fontSize={13}
+            fill="#374151"
+          />
+          <Text
+            x={displayX - labelWidth / 2}
+            y={displayY + 1}
+            width={labelWidth}
+            align="center"
+            text={occupancyLabel}
+            fontSize={18}
+            fontStyle="bold"
+            fill={overCapacity ? "#dc2626" : "#111827"}
+          />
+        </>
+      )}
     </>
   );
 }
