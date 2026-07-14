@@ -136,6 +136,28 @@ describe("heads (cabeceiras) — rect tables only", () => {
     // -halfH/halfH — impossible here since every point's y is exactly +/-halfH).
   });
 
+  it("distributes long-side chairs ALONG the length, never past the table ends", () => {
+    // wPx=120 (length) → halfLen=60. Side chairs (y at +/-halfH) must stay within
+    // the length, i.e. |x| <= halfLen — never floating out past the ends/corners.
+    const halfLen = 120 / 2;
+    const pts = chairPositions(
+      { x: 0, y: 0, capacity: 10, shape: "rect", width: 2.4, depth: 1.0, heads: false },
+      50
+    );
+    expect(pts).toHaveLength(10);
+    for (const p of pts) {
+      expect(Math.abs(p.x)).toBeLessThanOrEqual(halfLen + 1e-6); // within the length
+      expect(Math.abs(Math.abs(p.y) - halfH)).toBeLessThan(1e-6); // on a long edge
+    }
+    // Only the head seats (heads:true) may sit beyond the ends:
+    const withHeads = chairPositions(
+      { x: 0, y: 0, capacity: 10, shape: "rect", width: 2.4, depth: 1.0, heads: true },
+      50
+    );
+    const beyondEnds = withHeads.filter((p) => Math.abs(p.x) > halfLen + 1e-6);
+    expect(beyondEnds).toHaveLength(2); // exactly the two cabeceiras
+  });
+
   it("heads:false is ignored for round/oval tables (unaffected by the flag)", () => {
     const withHeadsFalse = chairPositions(
       { x: 0, y: 0, capacity: 8, shape: "round", width: 1.5, depth: 1.5, heads: false },

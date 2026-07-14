@@ -56,65 +56,35 @@ export function chairPositions(table: ChairTableInput, scale: number): ChairPoin
     return points;
   }
 
-  // Rectangular: distribute chairs by arc length around the four edges of a
-  // slightly larger rectangle (table size + chair offset).
-  const halfW = wPx / 2 + CHAIR_OFFSET;
-  const halfH = hPx / 2 + CHAIR_OFFSET;
+  // Rectangular: seats run ALONG the table's length (the long axis, wPx) and stay
+  // WITHIN it — never floating past the ends/corners. The two long edges (top/
+  // bottom) hold the bulk of the seats, each spread evenly across the length; the
+  // two short ends ("cabeceiras") each get one seat ONLY when `heads` is on (that
+  // seat is the person at the head of the table, sitting just beyond the end).
+  // wPx/hPx come from tableRenderSize (width = long side = length, depth = short).
+  const halfLen = wPx / 2; // half the table length (long axis)
+  const sideOffset = hPx / 2 + CHAIR_OFFSET; // perpendicular gap beside the long edges
+  const endOffset = wPx / 2 + CHAIR_OFFSET; // gap beyond a short end (head seat)
 
-  // "Cabeceiras" off: no chairs on the two SHORT ends — just the top/bottom
-  // (long) edges. wPx/hPx come from tableRenderSize, where width is always the
-  // long side (length) and depth the short side, so the short ends are the
-  // left/right edges (length halfH*2) and the long edges are top/bottom
-  // (length halfW*2) — walked here instead of the full-perimeter helper below.
-  if (table.heads === false) {
-    const points: ChairPoint[] = [];
-    for (let i = 0; i < n; i++) {
-      const dist = (4 * halfW * i) / n;
-      const rel = pointOnRectLongSides(halfW, halfH, dist);
-      points.push({ x: table.x + rel.x, y: table.y + rel.y });
-    }
-    return points;
-  }
+  const withHeads = table.heads !== false;
+  const nHeads = withHeads ? Math.min(2, n) : 0;
+  const nSides = n - nHeads;
+  const nTop = Math.ceil(nSides / 2);
+  const nBottom = nSides - nTop;
 
-  const perimeter = 4 * halfW + 4 * halfH;
+  // Evenly space `count` seats across the length, each centred in its slot so no
+  // seat ever sits outside [-halfLen, halfLen] (i.e. never past the table ends).
+  const alongX = (i: number, count: number): number =>
+    count <= 0 ? 0 : -halfLen + ((i + 0.5) * (2 * halfLen)) / count;
+
   const points: ChairPoint[] = [];
-  for (let i = 0; i < n; i++) {
-    const dist = (perimeter * i) / n;
-    const rel = pointOnRectPerimeter(halfW, halfH, dist);
-    points.push({ x: table.x + rel.x, y: table.y + rel.y });
+  for (let i = 0; i < nTop; i++) {
+    points.push({ x: table.x + alongX(i, nTop), y: table.y - sideOffset });
   }
+  for (let i = 0; i < nBottom; i++) {
+    points.push({ x: table.x + alongX(i, nBottom), y: table.y + sideOffset });
+  }
+  if (nHeads >= 1) points.push({ x: table.x - endOffset, y: table.y }); // left head
+  if (nHeads >= 2) points.push({ x: table.x + endOffset, y: table.y }); // right head
   return points;
-}
-
-/** Walks clockwise from the top-left corner of a `2*halfW x 2*halfH` rectangle
- * centered on the origin, returning the point `dist` natural pixels along the
- * perimeter (wrapping via modulo so any `dist` is valid). */
-function pointOnRectPerimeter(halfW: number, halfH: number, dist: number): ChairPoint {
-  const topLen = 2 * halfW;
-  const rightLen = 2 * halfH;
-  const bottomLen = 2 * halfW;
-  const perimeter = 2 * topLen + 2 * rightLen;
-  let d = ((dist % perimeter) + perimeter) % perimeter;
-
-  if (d < topLen) return { x: -halfW + d, y: -halfH };
-  d -= topLen;
-  if (d < rightLen) return { x: halfW, y: -halfH + d };
-  d -= rightLen;
-  if (d < bottomLen) return { x: halfW - d, y: halfH };
-  d -= bottomLen;
-  return { x: -halfW, y: halfH - d };
-}
-
-/** Same idea as `pointOnRectPerimeter`, but walking only the top and bottom
- * (long) edges — used when a rect table has no chairs on its short ends
- * ("cabeceiras" off). `dist` wraps over `4 * halfW` (top edge + bottom edge,
- * each `2 * halfW` long). */
-function pointOnRectLongSides(halfW: number, halfH: number, dist: number): ChairPoint {
-  const edgeLen = 2 * halfW;
-  const total = 2 * edgeLen;
-  let d = ((dist % total) + total) % total;
-
-  if (d < edgeLen) return { x: -halfW + d, y: -halfH };
-  d -= edgeLen;
-  return { x: halfW - d, y: halfH };
 }
