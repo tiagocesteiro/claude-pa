@@ -42,7 +42,7 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
 
   const tabs = [
     { label: "Detalhes", href: detailsHref, active: isDetailsActive },
-    { label: "Convidados & Grupos", href: guestsHref, active: isGuestsActive },
+    { label: "Convidados", href: guestsHref, active: isGuestsActive },
     { label: "Restrições", href: constraintsHref, active: isConstraintsActive },
     { label: "Seating plan", href: planHref, active: isPlanActive },
     { label: "Visão geral", href: coupleHref, active: isCoupleActive },
