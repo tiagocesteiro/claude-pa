@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import type Konva from "konva";
 import type { Point } from "@/lib/floorplan/geometry";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import type { PlanGuest, PlanTable, PlanLayout } from "@/components/plan/usePlan";
 import { parseElements } from "@/lib/floorplan/elements";
+import { buildPdfFilename, groupGuestsByTable } from "@/lib/plan/pdfExport";
 
 // Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
 // client component doesn't pull the server-only Prisma module into the browser bundle.
@@ -65,9 +67,15 @@ interface TemplateTableRow {
   heads: boolean | null;
 }
 
+interface VenueRecord {
+  id: string;
+  name: string;
+}
+
 interface WeddingDetail {
   id: string;
   couple: string;
+  venue?: VenueRecord | null;
   moments: Moment[];
 }
 
@@ -127,6 +135,17 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templateTables, setTemplateTables] = useState<Record<string, TemplateTableRow[]>>({});
+  // Per-moment Konva stage instances (Plan 18 Task 10 — "Exportar PDF"), populated via
+  // each canvas's onStageReady as it mounts/unmounts. A ref (not state) because the
+  // stage instance itself never needs to trigger a re-render — it's read on demand
+  // when the export button is clicked.
+  const stageRefs = useRef<Record<MomentKind, Konva.Stage | null>>({
+    ceremony: null,
+    cocktail: null,
+    dinner: null,
+    dance: null,
+  });
+  const [exportingKind, setExportingKind] = useState<MomentKind | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -232,6 +251,83 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
   const momentByKind = new Map(wedding.moments.map((m) => [m.kind, m]));
 
+  // Mirrors the Placeholder-vs-canvas branching below (dinner/template/legacy-floor-
+  // plan) without duplicating the JSX — used only to enable/disable each section's
+  // "Exportar PDF" button.
+  function momentHasPlan(kind: MomentKind): boolean {
+    if (kind === "dinner") return hasDinnerPlan;
+    const moment = momentByKind.get(kind);
+    const template = moment?.template ?? null;
+    if (template) return Boolean(template.floorPlan);
+    return Boolean(moment?.floorPlan);
+  }
+
+  // Exports the given moment's rendered plan as a PDF: a header (couple + moment +
+  // venue), the room's Konva stage captured as a PNG, and — dinner only — a
+  // per-table seated-guest name list. Client-side and self-contained: jsPDF is
+  // bundled (no CDN) and imported dynamically so it never enters the SSR bundle.
+  async function handleExportPdf(kind: MomentKind) {
+    const stage = stageRefs.current[kind];
+    if (!stage || !wedding) return;
+    setExportingKind(kind);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 40;
+
+      doc.setFontSize(16);
+      doc.text(`${wedding.couple} — ${MOMENT_LABELS[kind]}`, margin, margin);
+      let y = margin;
+      if (wedding.venue?.name) {
+        doc.setFontSize(11);
+        doc.text(wedding.venue.name, margin, y + 18);
+        y += 18;
+      }
+
+      // Fit the captured stage image to the page width, preserving aspect ratio;
+      // shrink further only if that would overflow the remaining page height.
+      const dataUrl = stage.toDataURL({ pixelRatio: 2 });
+      const stageWidth = stage.width();
+      const stageHeight = stage.height();
+      const imgTop = y + 24;
+      let imgWidth = pageWidth - margin * 2;
+      let imgHeight = imgWidth * (stageHeight / stageWidth);
+      const availableHeight = pageHeight - imgTop - margin;
+      if (imgHeight > availableHeight) {
+        const shrink = availableHeight / imgHeight;
+        imgWidth *= shrink;
+        imgHeight *= shrink;
+      }
+      doc.addImage(dataUrl, "PNG", margin, imgTop, imgWidth, imgHeight);
+
+      if (kind === "dinner" && plan) {
+        const groups = groupGuestsByTable(plan.guests, plan.tables);
+        if (groups.length > 0) {
+          let textY = imgTop + imgHeight + 24;
+          doc.setFontSize(11);
+          const maxTextWidth = pageWidth - margin * 2;
+          for (const g of groups) {
+            const lines = doc.splitTextToSize(`${g.label}: ${g.names.join(", ")}`, maxTextWidth) as string[];
+            for (const line of lines) {
+              if (textY > pageHeight - margin) {
+                doc.addPage();
+                textY = margin;
+              }
+              doc.text(line, margin, textY);
+              textY += 14;
+            }
+          }
+        }
+      }
+
+      doc.save(buildPdfFilename(wedding.couple, MOMENT_LABELS[kind]));
+    } finally {
+      setExportingKind(null);
+    }
+  }
+
   return (
     <div>
       <p style={{ color: "var(--text-muted)", marginTop: 0, marginBottom: 20 }}>
@@ -240,7 +336,29 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
       {DISPLAY_ORDER.map((kind) => (
         <section key={kind} style={sectionStyle()}>
-          <h2 style={{ marginTop: 0, color: "var(--heading)" }}>{MOMENT_LABELS[kind]}</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <h2 style={{ marginTop: 0, marginBottom: 0, color: "var(--heading)" }}>{MOMENT_LABELS[kind]}</h2>
+            {momentHasPlan(kind) && (
+              <button
+                type="button"
+                onClick={() => handleExportPdf(kind)}
+                disabled={exportingKind === kind}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  color: "var(--heading)",
+                  cursor: exportingKind === kind ? "default" : "pointer",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  opacity: exportingKind === kind ? 0.6 : 1,
+                }}
+              >
+                {exportingKind === kind ? "A exportar..." : "Exportar PDF"}
+              </button>
+            )}
+          </div>
           {momentByKind.get(kind)?.notes && (
             <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>
               {momentByKind.get(kind)?.notes}
@@ -265,6 +383,9 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                 onToggleTableFixed={noop}
                 onSwap={noop}
                 readOnly
+                onStageReady={(stage) => {
+                  stageRefs.current.dinner = stage;
+                }}
               />
             ) : (
               <Placeholder text="Plano de mesas por definir." />
@@ -312,6 +433,9 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                     onToggleTableFixed={noop}
                     onSwap={noop}
                     readOnly
+                    onStageReady={(stage) => {
+                      stageRefs.current[kind] = stage;
+                    }}
                   />
                 );
               }
@@ -336,6 +460,9 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                   onAddTable={noop}
                   onMoveTable={noop}
                   onSelect={noop}
+                  onStageReady={(stage) => {
+                    stageRefs.current[kind] = stage;
+                  }}
                 />
               );
             })()

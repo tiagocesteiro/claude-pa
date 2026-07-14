@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text, Line } from "react-konva";
+import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { chairPositions } from "@/lib/floorplan/chairs";
 import { tableRenderSize, type TableShapeKind } from "@/lib/floorplan/tableShape";
@@ -129,6 +130,11 @@ export interface PlanCanvasProps {
    * no table drag, no fix/lock/remove buttons, no add-table clicks. Overrides
    * `editMode`/`addTableMode` when true. Default/absent behaves exactly as before. */
   readOnly?: boolean;
+  /** Called with the underlying Konva stage instance once it mounts (and with
+   * `null` on unmount) — lets a read-only caller (the couple overview's "Exportar
+   * PDF", Plan 18 Task 10) capture `stage.toDataURL()` on demand without this
+   * component knowing anything about PDF export. */
+  onStageReady?: (stage: Konva.Stage | null) => void;
 }
 
 interface TableGeom {
@@ -163,6 +169,7 @@ export default function PlanCanvas({
   onRemoveTable,
   onRenameTable,
   readOnly = false,
+  onStageReady,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
   // readOnly always wins over editMode/addTableMode — a caller passing both would be
@@ -265,6 +272,7 @@ export default function PlanCanvas({
   return (
     <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
       <Stage
+        ref={onStageReady}
         width={stageWidth}
         height={stageHeight}
         onClick={handleStageClick}

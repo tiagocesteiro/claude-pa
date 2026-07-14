@@ -110,6 +110,10 @@ export interface FloorPlanCanvasProps {
    * editor — which pass a no-op `onMoveTable` — are unaffected; only the venue
    * template editor (`TemplateTableEditor`) turns this on. */
   enableSnap?: boolean;
+  /** Called with the underlying Konva stage instance once it mounts (and with
+   * `null` on unmount) — lets a read-only caller (the couple overview's "Exportar
+   * PDF", Plan 18 Task 10) capture `stage.toDataURL()` on demand. */
+  onStageReady?: (stage: Konva.Stage | null) => void;
 }
 
 export default function FloorPlanCanvas({
@@ -139,9 +143,15 @@ export default function FloorPlanCanvas({
   onAddElement,
   onDeleteElement,
   enableSnap = false,
+  onStageReady,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
+
+  function handleStageRef(node: Konva.Stage | null) {
+    stageRef.current = node;
+    onStageReady?.(node);
+  }
 
   // Active alignment guide lines while a table is mid-drag (Plan 18 Task 9), in
   // natural-pixel space — same convention as calibrationPoints/zones — so they
@@ -259,7 +269,7 @@ export default function FloorPlanCanvas({
   return (
     <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
     <Stage
-      ref={stageRef}
+      ref={handleStageRef}
       width={stageWidth}
       height={stageHeight}
       onClick={handleStageClick}
