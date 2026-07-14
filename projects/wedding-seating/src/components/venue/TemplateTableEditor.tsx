@@ -189,35 +189,64 @@ export default function TemplateTableEditor({
     [spacingIds, outOfZoneIds]
   );
 
-  async function handleSave() {
-    setSaving(true);
-    setSaveError(null);
-    setSavedAt(null);
-    try {
-      const tables: TableInput[] = state.tables.map(({ id, width, depth, minCapacity, ...rest }) => {
-        void id;
-        return {
-          ...rest,
-          width: width ?? undefined,
-          depth: depth ?? undefined,
-          minCapacity: minCapacity ?? undefined,
-        };
-      });
-      const res = await fetch(`/api/templates/${templateId}/tables`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tables }),
-      });
-      if (!res.ok) throw new Error("failed to save template tables");
-      const getRes = await fetch(`/api/templates/${templateId}/tables`);
-      const saved = (await getRes.json()) as EditorTable[];
-      dispatch({ type: "load", tables: saved });
-      setSavedAt(Date.now());
-    } catch {
-      setSaveError("Failed to save changes");
-    } finally {
-      setSaving(false);
-    }
+  const selectedTable = useMemo(
+    () => state.tables.find((t) => t.id === state.selectedId),
+    [state.tables, state.selectedId]
+  );
+
+  // Shared persist step: PUTs a given table set (saveTemplateTables deletes +
+  // recreates every row, so this is always a full replace — there's no partial
+  // "just this field" path). Used by both the "Guardar" button (persists
+  // whatever's in `state.tables`) and double-click rename (Plan 18 Task 4),
+  // which computes its own `next` array up front rather than reading
+  // `state.tables` right after dispatching — a reducer dispatch doesn't update
+  // `state` synchronously, so reading it back immediately would still see the
+  // pre-rename value.
+  const persistTables = useCallback(
+    async (tablesToSave: EditorTable[]) => {
+      setSaving(true);
+      setSaveError(null);
+      setSavedAt(null);
+      try {
+        const tables: TableInput[] = tablesToSave.map(({ id, width, depth, minCapacity, ...rest }) => {
+          void id;
+          return {
+            ...rest,
+            width: width ?? undefined,
+            depth: depth ?? undefined,
+            minCapacity: minCapacity ?? undefined,
+          };
+        });
+        const res = await fetch(`/api/templates/${templateId}/tables`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tables }),
+        });
+        if (!res.ok) throw new Error("failed to save template tables");
+        const getRes = await fetch(`/api/templates/${templateId}/tables`);
+        const saved = (await getRes.json()) as EditorTable[];
+        dispatch({ type: "load", tables: saved });
+        setSavedAt(Date.now());
+      } catch {
+        setSaveError("Failed to save changes");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [templateId]
+  );
+
+  function handleSave() {
+    return persistTables(state.tables);
+  }
+
+  // Double-click rename (Plan 18 Task 4): update local state immediately (snappy
+  // feedback) and persist right away — unlike shape/capacity/position edits, a
+  // rename shouldn't silently wait on the user remembering to click "Guardar".
+  function handleRenameTable(id: string, name: string | null) {
+    dispatch({ type: "update-table", id, patch: { name } });
+    const next = state.tables.map((t) => (t.id === id ? { ...t, name } : t));
+    void persistTables(next);
   }
 
   return (
@@ -309,7 +338,30 @@ export default function TemplateTableEditor({
             onMoveTable={handleMoveTable}
             onSelect={(id) => dispatch({ type: "select", id })}
             onDeleteTable={handleDeleteTable}
+            onRenameTable={handleRenameTable}
           />
+
+          {/* Selected-table controls (Plan 18 Task 5): "cabeceiras" only applies to
+              rect tables — round/oval always seat all the way around, so the
+              toggle is hidden for them rather than shown disabled. */}
+          {selectedTable && selectedTable.shape === "rect" && (
+            <div style={{ marginTop: 8 }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selectedTable.heads !== false}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "update-table",
+                      id: selectedTable.id,
+                      patch: { heads: e.target.checked },
+                    })
+                  }
+                />{" "}
+                Com cabeceiras (assentos nos topos curtos)
+              </label>
+            </div>
+          )}
         </>
       )}
     </div>

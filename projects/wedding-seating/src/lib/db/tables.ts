@@ -10,6 +10,10 @@ export interface TableInput {
   width?: number;
   depth?: number;
   minCapacity?: number;
+  /** Optional human label ("Mesa dos noivos"); falls back to "Mesa N" when unset. */
+  name?: string | null;
+  /** Rect tables only ("cabeceiras"): seats on the two short ends. Defaults to true. */
+  heads?: boolean | null;
 }
 
 export async function saveTables(floorPlanId: string, tables: TableInput[]): Promise<void> {

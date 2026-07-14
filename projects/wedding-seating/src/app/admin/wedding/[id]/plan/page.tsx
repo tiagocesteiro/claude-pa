@@ -93,6 +93,7 @@ export default function PlanPage() {
     assign,
     toggleGuestLock,
     toggleTableFixed,
+    renameTable,
     swap,
     violations,
     colorAttr,
@@ -120,6 +121,8 @@ export default function PlanPage() {
         x: t.x,
         y: t.y,
         label: tableLabels.get(t.id),
+        name: t.name,
+        heads: t.heads,
         fixed: t.fixed,
         width: t.width,
         depth: t.depth,
@@ -206,6 +209,7 @@ export default function PlanPage() {
             onToggleGuestLock={toggleGuestLock}
             onToggleTableFixed={toggleTableFixed}
             onSwap={swap}
+            onRenameTable={renameTable}
             colorByGuest={colorMap.colorByGuest}
           />
 

@@ -9,6 +9,9 @@ export interface ChairTableInput {
    * same default natural-pixel dimensions PlanCanvas uses for the table shape itself. */
   width?: number | null;
   depth?: number | null;
+  /** Rect tables only ("cabeceiras"): whether the two SHORT ends get chairs. Defaults
+   * to true (today's behavior) when unset/null. Ignored for round/oval tables. */
+  heads?: boolean | null;
 }
 
 export interface ChairPoint {
@@ -57,8 +60,23 @@ export function chairPositions(table: ChairTableInput, scale: number): ChairPoin
   // slightly larger rectangle (table size + chair offset).
   const halfW = wPx / 2 + CHAIR_OFFSET;
   const halfH = hPx / 2 + CHAIR_OFFSET;
-  const perimeter = 4 * halfW + 4 * halfH;
 
+  // "Cabeceiras" off: no chairs on the two SHORT ends — just the top/bottom
+  // (long) edges. wPx/hPx come from tableRenderSize, where width is always the
+  // long side (length) and depth the short side, so the short ends are the
+  // left/right edges (length halfH*2) and the long edges are top/bottom
+  // (length halfW*2) — walked here instead of the full-perimeter helper below.
+  if (table.heads === false) {
+    const points: ChairPoint[] = [];
+    for (let i = 0; i < n; i++) {
+      const dist = (4 * halfW * i) / n;
+      const rel = pointOnRectLongSides(halfW, halfH, dist);
+      points.push({ x: table.x + rel.x, y: table.y + rel.y });
+    }
+    return points;
+  }
+
+  const perimeter = 4 * halfW + 4 * halfH;
   const points: ChairPoint[] = [];
   for (let i = 0; i < n; i++) {
     const dist = (perimeter * i) / n;
@@ -85,4 +103,18 @@ function pointOnRectPerimeter(halfW: number, halfH: number, dist: number): Chair
   if (d < bottomLen) return { x: halfW - d, y: halfH };
   d -= bottomLen;
   return { x: -halfW, y: halfH - d };
+}
+
+/** Same idea as `pointOnRectPerimeter`, but walking only the top and bottom
+ * (long) edges — used when a rect table has no chairs on its short ends
+ * ("cabeceiras" off). `dist` wraps over `4 * halfW` (top edge + bottom edge,
+ * each `2 * halfW` long). */
+function pointOnRectLongSides(halfW: number, halfH: number, dist: number): ChairPoint {
+  const edgeLen = 2 * halfW;
+  const total = 2 * edgeLen;
+  let d = ((dist % total) + total) % total;
+
+  if (d < edgeLen) return { x: -halfW + d, y: -halfH };
+  d -= edgeLen;
+  return { x: halfW - d, y: halfH };
 }

@@ -83,6 +83,8 @@ model Table {
   x           Float
   y           Float
   fixed       Boolean  @default(false)
+  name        String?  // optional human label ("Mesa dos noivos"); falls back to "Mesa N" when unset
+  heads       Boolean? @default(true) // rect tables only: seats on the two short ends ("cabeceiras")
 }
 
 model Wedding {

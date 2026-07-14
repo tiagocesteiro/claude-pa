@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Table" ADD COLUMN "heads" BOOLEAN DEFAULT true;
+ALTER TABLE "Table" ADD COLUMN "name" TEXT;

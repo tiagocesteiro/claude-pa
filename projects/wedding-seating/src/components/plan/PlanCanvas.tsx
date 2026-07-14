@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Circle, Ellipse, Rect, Text, Line } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { chairPositions } from "@/lib/floorplan/chairs";
@@ -58,6 +58,12 @@ export interface PlanTableView {
   /** Metres — same convention as the Prisma Table model; feeds `tableRenderSize`. */
   width?: number | null;
   depth?: number | null;
+  /** Custom table name (Plan 18 Task 4 — double-click to rename). When set, shown
+   * instead of `label` ("Mesa N") everywhere the table's name is rendered. */
+  name?: string | null;
+  /** Rect tables only ("cabeceiras"): seats on the two short ends. Defaults to true
+   * (today's behavior) when unset — feeds `chairPositions`. */
+  heads?: boolean | null;
 }
 
 export interface PlanCanvasProps {
@@ -101,6 +107,10 @@ export interface PlanCanvasProps {
   onAddTableAt?: (at: Point) => void;
   /** Called when a table's remove button is clicked. */
   onRemoveTable?: (tableId: string) => void;
+  /** Called (double-click on a table, Plan 18 Task 4) with the new name — `null`
+   * clears it back to the "Mesa N" fallback. Only wired in the non-editMode,
+   * interactive branch (see `handleTableDoubleClick` for the single-click guard). */
+  onRenameTable?: (tableId: string, name: string | null) => void;
   /** Read-only render (Vista do casal, Task 15/3): tables + seated guest chips +
    * colored chairs still show, but nothing is draggable/editable — no guest drag,
    * no table drag, no fix/lock/remove buttons, no add-table clicks. Overrides
@@ -135,6 +145,7 @@ export default function PlanCanvas({
   onMoveTable,
   onAddTableAt,
   onRemoveTable,
+  onRenameTable,
   readOnly = false,
 }: PlanCanvasProps) {
   const image = useImageElement(imageUrl);
@@ -149,6 +160,45 @@ export default function PlanCanvas({
   // by clicking that table's HTML drop-overlay (see below); irrelevant in readOnly
   // (Task 2 already renders no guests there) and harmless (never read) in editMode.
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+
+  // Single-click (toggle name reveal) vs double-click (rename) guard: a real
+  // double-click fires click, click, dblclick in quick succession. Debounce the
+  // single-click toggle behind a short timer, keyed per table — a second click
+  // arriving before it fires cancels the pending toggle (so it never flickers
+  // open/closed), leaving the dblclick handler as the sole action.
+  const clickTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  useEffect(() => {
+    const timers = clickTimers.current;
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
+
+  function handleTableClick(tableId: string) {
+    const pending = clickTimers.current.get(tableId);
+    if (pending) {
+      clearTimeout(pending);
+      clickTimers.current.delete(tableId);
+      return;
+    }
+    const timer = setTimeout(() => {
+      clickTimers.current.delete(tableId);
+      setSelectedTableId((prev) => (prev === tableId ? null : tableId));
+    }, 250);
+    clickTimers.current.set(tableId, timer);
+  }
+
+  function handleTableDoubleClick(tableId: string, currentName: string | null | undefined) {
+    const pending = clickTimers.current.get(tableId);
+    if (pending) {
+      clearTimeout(pending);
+      clickTimers.current.delete(tableId);
+    }
+    const next = window.prompt("Nome da mesa:", currentName ?? "");
+    if (next === null) return; // cancelled
+    onRenameTable?.(tableId, next.trim() || null);
+  }
 
   // displayScale maps image-natural pixels -> on-screen (display) pixels, same
   // convention as FloorPlanCanvas (Plan 2). Table x/y here are always natural.
@@ -248,6 +298,7 @@ export default function PlanCanvas({
                 shape: g.table.shape,
                 width: g.table.width,
                 depth: g.table.depth,
+                heads: g.table.heads,
               },
               scale
             ).map((chair, i) => {
@@ -342,7 +393,15 @@ export default function PlanCanvas({
                     // fix button or a guest chip/lock button bubbling up (those stop
                     // propagation / are checked separately below).
                     if (e.target !== e.currentTarget) return;
-                    setSelectedTableId((prev) => (prev === g.table.id ? null : g.table.id));
+                    handleTableClick(g.table.id);
+                  }
+                : undefined
+            }
+            onDoubleClick={
+              interactive
+                ? (e) => {
+                    if (e.target !== e.currentTarget) return;
+                    handleTableDoubleClick(g.table.id, g.table.name);
                   }
                 : undefined
             }
@@ -500,7 +559,8 @@ function TableShape({
   const dash = !overCapacity && table.fixed ? [6, 3] : undefined;
   const labelWidth = 150;
 
-  const tableLabel = table.label ?? `#${table.id.slice(0, 6)}`;
+  // A custom name (Task 4) always wins over the "Mesa N" label when set.
+  const tableLabel = (table.name?.trim() ? table.name : undefined) ?? table.label ?? `#${table.id.slice(0, 6)}`;
   const occupancyLabel = `${table.guests.length}/${table.capacity}`;
 
   function handleDragEnd(e: KonvaEventObject<DragEvent>) {

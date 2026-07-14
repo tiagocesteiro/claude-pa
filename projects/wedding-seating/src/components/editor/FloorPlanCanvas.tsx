@@ -7,6 +7,12 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import type { EditorTable } from "@/lib/floorplan/editorState";
 import type { Point } from "@/lib/floorplan/geometry";
 import { tableRenderSize } from "@/lib/floorplan/tableShape";
+import { chairPositions } from "@/lib/floorplan/chairs";
+
+// Decorative chair dots — same convention as the seating plan's PlanCanvas, but
+// always neutral (the editor has no seated guests to tint by).
+const CHAIR_RADIUS = 6;
+const CHAIR_FILL = "#e5e7eb";
 
 function useImageElement(src: string | undefined): HTMLImageElement | undefined {
   const [image, setImage] = useState<HTMLImageElement | undefined>(undefined);
@@ -61,6 +67,10 @@ export interface FloorPlanCanvasProps {
   /** When provided, each table renders a small "×" remove button (same affordance
    * as the seating plan's editMode — see PlanCanvas). Omit to render without it. */
   onDeleteTable?: (id: string) => void;
+  /** Called on double-click of a table (Plan 18 Task 4) with the new name — `null`
+   * clears it back to the "Mesa N" fallback. The prompt itself lives here (this
+   * component already knows the table's current name); omit to disable renaming. */
+  onRenameTable?: (id: string, name: string | null) => void;
 }
 
 export default function FloorPlanCanvas({
@@ -80,6 +90,7 @@ export default function FloorPlanCanvas({
   onCalibrateClick,
   onZoneClick,
   onDeleteTable,
+  onRenameTable,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
@@ -171,10 +182,11 @@ export default function FloorPlanCanvas({
         })}
       </Layer>
       <Layer>
-        {tables.map((t) => (
+        {tables.map((t, i) => (
           <TableShape
             key={t.id}
             table={t}
+            index={i}
             displayScale={displayScale}
             scale={scale}
             isSelected={t.id === selectedId}
@@ -183,8 +195,39 @@ export default function FloorPlanCanvas({
             onDragEnd={(e) =>
               onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }))
             }
+            onRename={
+              onRenameTable
+                ? () => {
+                    const next = window.prompt("Nome da mesa:", t.name ?? "");
+                    if (next === null) return; // cancelled
+                    onRenameTable(t.id, next.trim() || null);
+                  }
+                : undefined
+            }
           />
         ))}
+      </Layer>
+      {/* Decorative chair layer — non-listening so it never intercepts table
+          drag/select/delete. Neutral dots only (no seated-guest data here);
+          rect tables respect `heads` (Plan 18 Task 5 — "cabeceiras" toggle). */}
+      <Layer listening={false}>
+        {tables.map((t) =>
+          chairPositions(
+            { x: t.x, y: t.y, capacity: t.capacity, shape: t.shape, width: t.width, depth: t.depth, heads: t.heads },
+            scale
+          ).map((chair, i) => (
+            <Circle
+              key={`${t.id}-chair-${i}`}
+              x={chair.x * displayScale}
+              y={chair.y * displayScale}
+              radius={CHAIR_RADIUS * displayScale}
+              fill={CHAIR_FILL}
+              stroke="#9ca3af"
+              strokeWidth={1}
+              listening={false}
+            />
+          ))
+        )}
       </Layer>
       <Layer listening={false}>
         {calibrationPoints.length === 2 && (
@@ -244,20 +287,27 @@ export default function FloorPlanCanvas({
 
 function TableShape({
   table,
+  index,
   displayScale,
   scale,
   isSelected,
   hasWarning,
   onSelect,
   onDragEnd,
+  onRename,
 }: {
   table: EditorTable;
+  /** Position within the current tables array — feeds the "Mesa N" fallback label
+   * when the table has no custom name (Plan 18 Task 4). */
+  index: number;
   displayScale: number;
   scale: number;
   isSelected: boolean;
   hasWarning?: boolean;
   onSelect: () => void;
   onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
+  /** Double-click to rename (Plan 18 Task 4). Omit to disable. */
+  onRename?: () => void;
 }) {
   const stroke = isSelected ? "#2563eb" : hasWarning ? "#f59e0b" : table.fixed ? "#dc2626" : "#111827";
   const strokeWidth = isSelected || hasWarning ? 3 : 1.5;
@@ -275,6 +325,9 @@ function TableShape({
   const height = hPx * displayScale;
   const labelWidth = Math.max(width, 60 * displayScale);
 
+  // A custom name always wins over the "Mesa N" fallback (same convention as PlanCanvas).
+  const tableLabel = table.name?.trim() ? table.name : `Mesa ${index + 1}`;
+
   return (
     <>
       {shape === "round" || shape === "oval" ? (
@@ -290,6 +343,8 @@ function TableShape({
           onClick={onSelect}
           onTap={onSelect}
           onDragEnd={onDragEnd}
+          onDblClick={onRename}
+          onDblTap={onRename}
         />
       ) : (
         <Rect
@@ -306,8 +361,20 @@ function TableShape({
           onClick={onSelect}
           onTap={onSelect}
           onDragEnd={onDragEnd}
+          onDblClick={onRename}
+          onDblTap={onRename}
         />
       )}
+      <Text
+        x={displayX - labelWidth / 2}
+        y={displayY - 22}
+        width={labelWidth}
+        align="center"
+        text={tableLabel}
+        fontSize={13}
+        fill="#374151"
+        listening={false}
+      />
       <Text
         x={displayX - labelWidth / 2}
         y={displayY - 8}

@@ -41,6 +41,8 @@ export async function saveWeddingTables(weddingId: string, tables: WeddingTableI
           width: t.width ?? null,
           depth: t.depth ?? null,
           minCapacity: t.minCapacity ?? null,
+          name: t.name ?? null,
+          heads: t.heads ?? null,
         },
       })
     ),
@@ -84,6 +86,8 @@ export async function applyTemplateToWedding(
     x: t.x,
     y: t.y,
     fixed: t.fixed,
+    name: t.name,
+    heads: t.heads,
     weddingId,
   }));
 

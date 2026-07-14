@@ -10,6 +10,10 @@ export interface EditorTable {
   width?: number | null;
   depth?: number | null;
   minCapacity?: number | null;
+  /** Optional human label ("Mesa dos noivos"); falls back to "Mesa N" when unset. */
+  name?: string | null;
+  /** Rect tables only ("cabeceiras"): seats on the two short ends. Defaults to true. */
+  heads?: boolean | null;
 }
 
 export interface EditorState {

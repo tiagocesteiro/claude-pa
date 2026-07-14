@@ -32,6 +32,10 @@ export interface PlanTable {
   width?: number | null;
   depth?: number | null;
   minCapacity?: number | null;
+  /** Optional human label ("Mesa dos noivos"); falls back to "Mesa N" when unset. */
+  name?: string | null;
+  /** Rect tables only ("cabeceiras"): seats on the two short ends. Defaults to true. */
+  heads?: boolean | null;
 }
 
 export interface PlanConstraint {
@@ -348,6 +352,34 @@ export function usePlan(weddingId: string) {
     []
   );
 
+  // Same optimistic PATCH pattern as toggleTableFixed, for a table's name (Plan 18
+  // Task 4 — double-click rename on the seating plan). `null`/empty clears the
+  // custom name, falling back to the "Mesa N" label everywhere it's displayed.
+  const renameTable = useCallback(
+    async (tableId: string, name: string | null) => {
+      let previous: string | null | undefined = null;
+      setTables((prev) =>
+        prev.map((t) => {
+          if (t.id !== tableId) return t;
+          previous = t.name ?? null;
+          return { ...t, name };
+        })
+      );
+      try {
+        const res = await fetch(`/api/tables/${tableId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) throw new Error("rename failed");
+      } catch {
+        setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, name: previous ?? null } : t)));
+        setError("Não foi possível guardar o nome da mesa.");
+      }
+    },
+    []
+  );
+
   // Exchanges guestA's and guestB's assignedTableId in one optimistic update + single
   // PUT (both entries), so a partial failure can't leave the pair half-swapped server-side.
   // Reads current table ids from `guests` state synchronously (not from inside the
@@ -421,6 +453,12 @@ export function usePlan(weddingId: string) {
               width: t.width ?? undefined,
               depth: t.depth ?? undefined,
               minCapacity: t.minCapacity ?? undefined,
+              // Carried through as-is (not just for newly-added tables) so an
+              // unrelated move/add/remove round-trip never blanks out a table's
+              // existing name/heads — the server's update path (saveWeddingTables)
+              // writes exactly what's sent here.
+              name: t.name ?? null,
+              heads: t.heads ?? null,
             })),
           }),
         });
@@ -521,6 +559,7 @@ export function usePlan(weddingId: string) {
     assign,
     toggleGuestLock,
     toggleTableFixed,
+    renameTable,
     swap,
     moveTable,
     addTable,

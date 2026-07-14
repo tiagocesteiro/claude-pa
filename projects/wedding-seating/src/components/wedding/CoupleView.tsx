@@ -55,6 +55,8 @@ interface TemplateTableRow {
   fixed: boolean;
   width: number | null;
   depth: number | null;
+  name: string | null;
+  heads: boolean | null;
 }
 
 interface WeddingDetail {
@@ -202,6 +204,8 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         x: t.x,
         y: t.y,
         label: tableLabels.get(t.id),
+        name: t.name,
+        heads: t.heads,
         fixed: t.fixed,
         width: t.width,
         depth: t.depth,
@@ -275,6 +279,8 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                   x: t.x,
                   y: t.y,
                   label: `Mesa ${i + 1}`,
+                  name: t.name,
+                  heads: t.heads,
                   fixed: t.fixed,
                   width: t.width,
                   depth: t.depth,
