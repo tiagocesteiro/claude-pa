@@ -11,8 +11,7 @@ import {
 } from "@/lib/floorplan/editorState";
 import type { Point } from "@/lib/floorplan/geometry";
 import { pointInPolygon } from "@/lib/floorplan/boundary";
-import { spacingViolations } from "@/lib/floorplan/spacing";
-import { spacingHalfExtents, resolveNoOverlap, type SpacingBox } from "@/lib/floorplan/spacingGeom";
+import { spacingHalfExtents, resolveNoOverlap, boxesOverlap, type SpacingBox } from "@/lib/floorplan/spacingGeom";
 import type { ShapeTable } from "@/lib/floorplan/tableShape";
 import { parseElements, serializeElements, type RoomElement } from "@/lib/floorplan/elements";
 import type { TableInput } from "@/lib/db/tables";
@@ -310,14 +309,35 @@ export default function TemplateTableEditor({
     void persistElements(next);
   }
 
-  // Spacing: reuses the floor-plan spacing check against this layout's
-  // minSpacing/scale (0 when uncalibrated — spacingViolations then only ever
-  // flags literally overlapping tables, never a false positive).
-  const violations = useMemo(
-    () => spacingViolations(state.tables, floorPlan?.minSpacing ?? 0, floorPlan?.scale || 1),
-    [state.tables, floorPlan]
-  );
-  const spacingIds = useMemo(() => new Set(violations.flatMap((v) => [v.a, v.b])), [violations]);
+  // Spacing warning: uses the SAME shape-aware box metric as the drag barrier /
+  // add-outside-limit (Plan 18 Task 11), so the warning never contradicts the
+  // barrier. Two tables are flagged when their spacing boxes (render size +
+  // minSpacing/2 each side) overlap — which the barrier prevents during
+  // interaction, so this only ever fires for pre-existing/looser layouts (e.g.
+  // after minSpacing is increased). No warning when minSpacing is 0/uncalibrated.
+  const spacingIds = useMemo(() => {
+    const scale = floorPlan?.scale ?? 0;
+    const minSpacing = floorPlan?.minSpacing ?? 0;
+    const ids = new Set<string>();
+    if (minSpacing <= 0 || scale <= 0) return ids;
+    const boxes: SpacingBox[] = state.tables.map((t) => ({
+      id: t.id,
+      cx: t.x,
+      cy: t.y,
+      ...spacingHalfExtents(t, scale, minSpacing),
+    }));
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i];
+        const b = boxes[j];
+        if (a.id && b.id && boxesOverlap(a, b)) {
+          ids.add(a.id);
+          ids.add(b.id);
+        }
+      }
+    }
+    return ids;
+  }, [state.tables, floorPlan]);
 
   // Out-of-zone: a table is flagged when its center falls inside NONE of the
   // layout's zones. No zones drawn yet = nothing to flag against.
