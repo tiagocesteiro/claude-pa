@@ -12,6 +12,8 @@ import {
 import type { Point } from "@/lib/floorplan/geometry";
 import { pointInPolygon } from "@/lib/floorplan/boundary";
 import { spacingViolations } from "@/lib/floorplan/spacing";
+import { spacingHalfExtents, resolveNoOverlap, type SpacingBox } from "@/lib/floorplan/spacingGeom";
+import type { ShapeTable } from "@/lib/floorplan/tableShape";
 import { parseElements, serializeElements, type RoomElement } from "@/lib/floorplan/elements";
 import type { TableInput } from "@/lib/db/tables";
 
@@ -186,8 +188,32 @@ export default function TemplateTableEditor({
     };
   }
 
+  // Add-outside-limit (Plan 18 Task 11): if the clicked point would put the new
+  // table inside/overlapping an existing table's spacing boundary, place it at
+  // the nearest valid position instead (same `resolveNoOverlap` the drag
+  // barrier uses). Elements are exempt — only tables constrain table placement.
+  // The synthetic `shapeTable` mirrors the same defaults `editorReducer`'s
+  // "add-table" action falls back to (round / capacity 8) so the box used to
+  // resolve the position matches the table that's actually about to be added.
   function handleAddTable(at: Point) {
-    dispatch({ type: "add-table", at, preset: presetFor(presetTypeId) });
+    const preset = presetFor(presetTypeId);
+    const scale = floorPlan?.scale ?? 0;
+    const minSpacing = floorPlan?.minSpacing ?? 0;
+    const shapeTable: ShapeTable = {
+      shape: preset?.shape ?? "round",
+      width: preset?.width,
+      depth: preset?.depth,
+      capacity: preset?.capacity ?? 8,
+    };
+    const self = spacingHalfExtents(shapeTable, scale, minSpacing);
+    const others: SpacingBox[] = state.tables.map((t) => ({
+      id: t.id,
+      cx: t.x,
+      cy: t.y,
+      ...spacingHalfExtents(t, scale, minSpacing),
+    }));
+    const resolvedAt = resolveNoOverlap(at, self, others);
+    dispatch({ type: "add-table", at: resolvedAt, preset });
   }
 
   function handleMoveTable(id: string, to: Point) {
@@ -482,6 +508,8 @@ export default function TemplateTableEditor({
             onAddElement={handleAddElement}
             onDeleteElement={handleDeleteElement}
             enableSnap
+            showSpacing
+            minSpacing={floorPlan?.minSpacing ?? 0}
           />
 
           {/* Selected-table controls (Plan 18 Task 5): "cabeceiras" only applies to

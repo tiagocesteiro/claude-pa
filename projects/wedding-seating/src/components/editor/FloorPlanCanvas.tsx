@@ -10,6 +10,7 @@ import { tableRenderSize } from "@/lib/floorplan/tableShape";
 import { chairPositions } from "@/lib/floorplan/chairs";
 import type { RoomElement } from "@/lib/floorplan/elements";
 import { computeSnap, type SnapGuides } from "@/lib/floorplan/snap";
+import { spacingHalfExtents, resolveNoOverlap, type SpacingBox } from "@/lib/floorplan/spacingGeom";
 
 // Alignment-guide snap (Plan 18 Task 9): the on-screen "magnetism" distance, in
 // display (screen) pixels, converted to natural pixels via displayScale before
@@ -114,6 +115,17 @@ export interface FloorPlanCanvasProps {
    * `null` on unmount) — lets a read-only caller (the couple overview's "Exportar
    * PDF", Plan 18 Task 10) capture `stage.toDataURL()` on demand. */
   onStageReady?: (stage: Konva.Stage | null) => void;
+  /** Draws each table's spacing boundary (Plan 18 Task 11) — a dashed outline,
+   * shape-appropriate (rect -> rectangle, round/oval -> ellipse), expanded by
+   * `minSpacing/2` on every side. Also activates the drag barrier (a dragged
+   * table's boundary is kept from overlapping any other table's boundary) and
+   * is read by the template editor's add-table placement. Opt-in like
+   * `enableSnap` — off by default so read-only views are unaffected. */
+  showSpacing?: boolean;
+  /** Minimum required gap between table edges, in METRES (matches the floor
+   * plan's `minSpacing` field). 0/absent draws no boundary and disables the
+   * drag barrier (only literal overlaps are still prevented, via a 0 margin). */
+  minSpacing?: number;
 }
 
 export default function FloorPlanCanvas({
@@ -144,6 +156,8 @@ export default function FloorPlanCanvas({
   onDeleteElement,
   enableSnap = false,
   onStageReady,
+  showSpacing = false,
+  minSpacing = 0,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
@@ -194,19 +208,45 @@ export default function FloorPlanCanvas({
   // visibly "stick" mid-drag — onDragEnd then reads that same (already-snapped)
   // node position via the existing toNatural(...) conversion, so no separate
   // "commit the snapped value" step is needed.
+  // Spacing barrier (Plan 18 Task 11): keeps the dragged table's spacing
+  // boundary from ever overlapping another table's — applied AFTER snap so the
+  // barrier always wins (a snapped-but-overlapping position gets pushed back
+  // out). Resolving every onDragMove (not just onDragEnd) is what makes the
+  // table visibly "slide along" the barrier instead of snapping back after the
+  // fact. Pure `resolveNoOverlap` does the math; this just feeds it natural-
+  // pixel boxes built from each table's real render size (`spacingHalfExtents`).
+  function applySpacingBarrier(tableId: string, at: Point): Point {
+    if (!showSpacing) return at;
+    const dragged = tables.find((t) => t.id === tableId);
+    if (!dragged) return at;
+    const self = spacingHalfExtents(dragged, scale, minSpacing);
+    const others: SpacingBox[] = tables
+      .filter((t) => t.id !== tableId)
+      .map((t) => ({ id: t.id, cx: t.x, cy: t.y, ...spacingHalfExtents(t, scale, minSpacing) }));
+    return resolveNoOverlap(at, self, others);
+  }
+
   function handleTableDragMove(tableId: string, e: KonvaEventObject<DragEvent>) {
-    if (!enableSnap) return;
     const node = e.target;
-    const draggedNatural = toNatural({ x: node.x(), y: node.y() });
-    const others = tables.filter((t) => t.id !== tableId).map((t) => ({ x: t.x, y: t.y }));
-    const snapped = computeSnap(draggedNatural, others, snapThresholdNatural);
-    node.x(snapped.x * displayScale);
-    node.y(snapped.y * displayScale);
-    setSnapGuides(snapped.guides);
+    let natural = toNatural({ x: node.x(), y: node.y() });
+    let guides: SnapGuides = {};
+
+    if (enableSnap) {
+      const others = tables.filter((t) => t.id !== tableId).map((t) => ({ x: t.x, y: t.y }));
+      const snapped = computeSnap(natural, others, snapThresholdNatural);
+      natural = { x: snapped.x, y: snapped.y };
+      guides = snapped.guides;
+    }
+
+    natural = applySpacingBarrier(tableId, natural);
+
+    node.x(natural.x * displayScale);
+    node.y(natural.y * displayScale);
+    setSnapGuides(guides);
   }
 
   function clearSnapGuides() {
-    if (enableSnap) setSnapGuides({});
+    if (enableSnap || showSpacing) setSnapGuides({});
   }
 
   // Geometry for the HTML remove-button overlay (only rendered when onDeleteTable
@@ -357,6 +397,50 @@ export default function FloorPlanCanvas({
           );
         })}
       </Layer>
+      {/* Spacing boundaries (Plan 18 Task 11) — a dashed, shape-appropriate outline
+          around each table's real render size expanded by minSpacing/2 on every
+          side (rect -> rectangle, round/oval -> ellipse). Non-listening: purely
+          visual, drawn behind the tables layer. Two boundaries just touching means
+          exactly `minSpacing` of edge-to-edge gap (each contributes half). */}
+      {showSpacing && minSpacing > 0 && (
+        <Layer listening={false}>
+          {tables.map((t) => {
+            const { halfW, halfH } = spacingHalfExtents(t, scale, minSpacing);
+            const displayX = t.x * displayScale;
+            const displayY = t.y * displayScale;
+            const boundaryW = halfW * 2 * displayScale;
+            const boundaryH = halfH * 2 * displayScale;
+            const isRect = t.shape !== "round" && t.shape !== "oval";
+            return isRect ? (
+              <Rect
+                key={`spacing-${t.id}`}
+                x={displayX}
+                y={displayY}
+                offsetX={boundaryW / 2}
+                offsetY={boundaryH / 2}
+                width={boundaryW}
+                height={boundaryH}
+                stroke="#9ca3af"
+                strokeWidth={1}
+                dash={[5, 4]}
+                listening={false}
+              />
+            ) : (
+              <Ellipse
+                key={`spacing-${t.id}`}
+                x={displayX}
+                y={displayY}
+                radiusX={boundaryW / 2}
+                radiusY={boundaryH / 2}
+                stroke="#9ca3af"
+                strokeWidth={1}
+                dash={[5, 4]}
+                listening={false}
+              />
+            );
+          })}
+        </Layer>
+      )}
       <Layer>
         {tables.map((t, i) => (
           <TableShape
@@ -368,7 +452,7 @@ export default function FloorPlanCanvas({
             isSelected={t.id === selectedId}
             hasWarning={warningTableIds.includes(t.id)}
             onSelect={() => onSelect(t.id)}
-            onDragMove={enableSnap ? (e) => handleTableDragMove(t.id, e) : undefined}
+            onDragMove={enableSnap || showSpacing ? (e) => handleTableDragMove(t.id, e) : undefined}
             onDragEnd={(e) => {
               onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }));
               clearSnapGuides();
