@@ -25,6 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         width: fp.width,
         depth: fp.depth,
         zones: fp.zones,
+        elements: fp.elements,
       };
     }
   }

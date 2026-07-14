@@ -6,6 +6,7 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import { chairPositions } from "@/lib/floorplan/chairs";
 import { tableRenderSize, type TableShapeKind } from "@/lib/floorplan/tableShape";
 import type { Point } from "@/lib/floorplan/geometry";
+import type { RoomElement } from "@/lib/floorplan/elements";
 
 // Same per-zone stroke cycling as the editor's FloorPlanCanvas, so a zone reads the
 // same color here as it did while being drawn.
@@ -82,6 +83,12 @@ export interface PlanCanvasProps {
    * each a closed polygon in image-natural pixel space. Rendered behind the tables,
    * same translucent style as the editor — no interaction here. */
   zones?: Point[][];
+  /** Decorative room elements (dance floor, bar, ... — Plan 18 Task 8), each a
+   * labelled/colored rectangle in image-natural pixel space. Rendered behind the
+   * tables, always read-only here (the seating plan/couple view never edit them —
+   * that only happens in the venue's template editor). NOT fed into any
+   * spacing/capacity/zone check — they're decorative fixtures, not tables. */
+  elements?: RoomElement[];
   /** Table ids currently over capacity — rendered in red. */
   overCapacityIds: string[];
   maxWidth: number;
@@ -140,6 +147,7 @@ export default function PlanCanvas({
   roomWidth = 0,
   roomDepth = 0,
   zones = [],
+  elements = [],
   overCapacityIds,
   maxWidth,
   maxHeight,
@@ -293,6 +301,42 @@ export default function PlanCanvas({
                     strokeWidth={2}
                   />
                 )}
+              </Fragment>
+            );
+          })}
+        </Layer>
+        {/* Room elements (Plan 18 Task 8 — dance floor, bar, ...): always read-only
+            here, drawn behind the tables with a semi-transparent fill in their chosen
+            color and a centered label. */}
+        <Layer listening={false}>
+          {elements.map((el) => {
+            const displayX = el.x * displayScale;
+            const displayY = el.y * displayScale;
+            const width = el.w * displayScale;
+            const height = el.h * displayScale;
+            return (
+              <Fragment key={el.id}>
+                <Rect
+                  x={displayX}
+                  y={displayY}
+                  width={width}
+                  height={height}
+                  fill={`${el.color}b3`}
+                  stroke={el.color}
+                  strokeWidth={1.5}
+                />
+                <Text
+                  x={displayX}
+                  y={displayY}
+                  width={width}
+                  height={height}
+                  align="center"
+                  verticalAlign="middle"
+                  text={el.label}
+                  fontSize={14}
+                  fontStyle="bold"
+                  fill="#111827"
+                />
               </Fragment>
             );
           })}

@@ -60,6 +60,7 @@ model FloorPlan {
   minSpacing Float?  // metres, minimum clearance between tables
   boundary  String?  // JSON array of {x,y} points, natural pixels
   zones     String?  // JSON, zone definitions
+  elements  String?  // JSON array of {id,x,y,w,h,label,color} decorative room fixtures (dance floor, bar, ...)
   tables    Table[]
   templates LayoutTemplate[]
   weddings  Wedding[]

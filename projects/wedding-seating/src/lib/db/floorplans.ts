@@ -55,3 +55,9 @@ export function updateFloorPlanBoundary(id: string, boundary: string | null): Pr
 export function updateFloorPlanZones(id: string, zones: string | null): Promise<FloorPlan> {
   return prisma.floorPlan.update({ where: { id }, data: { zones } });
 }
+
+/** Plan 18 Task 8: persists the floor plan's decorative room elements (dance floor,
+ * bar, ...) — a JSON list, same "replace the whole column" convention as zones. */
+export function updateFloorPlanElements(id: string, elements: string | null): Promise<FloorPlan> {
+  return prisma.floorPlan.update({ where: { id }, data: { elements } });
+}

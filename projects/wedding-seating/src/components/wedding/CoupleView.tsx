@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { Point } from "@/lib/floorplan/geometry";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import type { PlanGuest, PlanTable, PlanLayout } from "@/components/plan/usePlan";
+import { parseElements } from "@/lib/floorplan/elements";
 
 // Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
 // client component doesn't pull the server-only Prisma module into the browser bundle.
@@ -29,6 +30,8 @@ interface FloorPlanRecord {
   width: number;
   depth: number;
   zones: string | null;
+  /** JSON list of decorative room elements (dance floor, bar, ...) — Plan 18 Task 8. */
+  elements: string | null;
 }
 
 interface TemplateRecord {
@@ -253,6 +256,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                 roomWidth={layout?.width ?? 0}
                 roomDepth={layout?.depth ?? 0}
                 zones={[]}
+                elements={parseElements(layout?.elements)}
                 overCapacityIds={[]}
                 maxWidth={CANVAS_WIDTH}
                 maxHeight={CANVAS_HEIGHT}
@@ -299,6 +303,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                     roomWidth={templateFloorPlan.width}
                     roomDepth={templateFloorPlan.depth}
                     zones={parseZones(templateFloorPlan.zones)}
+                    elements={parseElements(templateFloorPlan.elements)}
                     overCapacityIds={[]}
                     maxWidth={CANVAS_WIDTH}
                     maxHeight={CANVAS_HEIGHT}
@@ -325,6 +330,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                   selectedId={null}
                   mode="select"
                   zones={parseZones(floorPlan.zones)}
+                  elements={parseElements(floorPlan.elements)}
                   maxWidth={CANVAS_WIDTH}
                   maxHeight={CANVAS_HEIGHT}
                   onAddTable={noop}

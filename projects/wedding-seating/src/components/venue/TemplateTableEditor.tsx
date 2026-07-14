@@ -12,6 +12,7 @@ import {
 import type { Point } from "@/lib/floorplan/geometry";
 import { pointInPolygon } from "@/lib/floorplan/boundary";
 import { spacingViolations } from "@/lib/floorplan/spacing";
+import { parseElements, serializeElements, type RoomElement } from "@/lib/floorplan/elements";
 import type { TableInput } from "@/lib/db/tables";
 
 // Reuses the same canvas as the floor-plan/plan editors (Plan 2/12): image
@@ -45,6 +46,26 @@ interface FloorPlanRecord {
   minSpacing: number | null;
   zones: string | null;
   boundary: string | null;
+  elements: string | null;
+}
+
+// Default size (metres) for a newly-placed room element, converted to natural pixels
+// via the floor plan's scale — falls back to a fixed pixel size when uncalibrated
+// (scale 0), same convention `tableRenderSize` uses for tables.
+const DEFAULT_ELEMENT_WIDTH_M = 3;
+const DEFAULT_ELEMENT_HEIGHT_M = 2;
+const DEFAULT_ELEMENT_WIDTH_PX = 150;
+const DEFAULT_ELEMENT_HEIGHT_PX = 100;
+
+// A small fixed palette keeps element colors readable/consistent rather than an
+// unconstrained color wheel — still a real <input type="color"> for anyone who wants
+// something else.
+const ELEMENT_COLOR_PALETTE = ["#60a5fa", "#f97316", "#34d399", "#a78bfa", "#f472b6", "#fbbf24"];
+
+let elementCounter = 0;
+function newElementId(): string {
+  elementCounter += 1;
+  return `el-${Date.now()}-${elementCounter}`;
 }
 
 function imageUrlFor(image: string): string | undefined {
@@ -101,6 +122,15 @@ export default function TemplateTableEditor({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
+  // Room elements (Plan 18 Task 8 — dance floor, bar, ...): unlike tables, these
+  // aren't part of the reducer's "Guardar" save flow — each add/move/label/color/
+  // delete persists immediately (same convention as `handleRenameTable` below and
+  // the floor-plan editor's zone drawing), since they belong to the floor plan, not
+  // the template's table set.
+  const [elements, setElements] = useState<RoomElement[]>([]);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [elementsSaveError, setElementsSaveError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
@@ -113,7 +143,9 @@ export default function TemplateTableEditor({
       if (!tablesRes.ok) throw new Error("failed to load template tables");
       const tables = (await tablesRes.json()) as EditorTable[];
       dispatch({ type: "load", tables });
-      setFloorPlan(fpRes.ok ? ((await fpRes.json()) as FloorPlanRecord) : null);
+      const fp = fpRes.ok ? ((await fpRes.json()) as FloorPlanRecord) : null;
+      setFloorPlan(fp);
+      setElements(parseElements(fp?.elements));
       setTableTypes(typesRes.ok ? ((await typesRes.json()) as TableTypeRecord[]) : []);
     } catch {
       setLoadError("Failed to load editor data");
@@ -166,6 +198,77 @@ export default function TemplateTableEditor({
     dispatch({ type: "delete-table", id });
   }
 
+  // Selecting a table vs. an element is mutually exclusive — each clears the other,
+  // so the editor never shows both a table's and an element's controls at once.
+  function handleSelectTable(id: string | null) {
+    dispatch({ type: "select", id });
+    setSelectedElementId(null);
+  }
+
+  function handleSelectElement(id: string) {
+    setSelectedElementId(id);
+    dispatch({ type: "select", id: null });
+  }
+
+  const persistElements = useCallback(
+    async (next: RoomElement[]) => {
+      setElementsSaveError(null);
+      try {
+        const res = await fetch(`/api/floorplans/${floorPlanId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ elements: serializeElements(next) }),
+        });
+        if (!res.ok) throw new Error("failed to save elements");
+      } catch {
+        setElementsSaveError("Não foi possível guardar os elementos.");
+      }
+    },
+    [floorPlanId]
+  );
+
+  // Places a default-sized rectangle centered on the click (natural-pixel space),
+  // sized from the floor plan's real-world scale when calibrated, a fixed pixel
+  // fallback otherwise (same convention `tableRenderSize` uses for tables).
+  function handleAddElement(at: Point) {
+    const scale = floorPlan?.scale ?? 0;
+    const w = scale > 0 ? DEFAULT_ELEMENT_WIDTH_M * scale : DEFAULT_ELEMENT_WIDTH_PX;
+    const h = scale > 0 ? DEFAULT_ELEMENT_HEIGHT_M * scale : DEFAULT_ELEMENT_HEIGHT_PX;
+    const element: RoomElement = {
+      id: newElementId(),
+      x: at.x - w / 2,
+      y: at.y - h / 2,
+      w,
+      h,
+      label: "Novo elemento",
+      color: ELEMENT_COLOR_PALETTE[elements.length % ELEMENT_COLOR_PALETTE.length],
+    };
+    const next = [...elements, element];
+    setElements(next);
+    setSelectedElementId(element.id);
+    dispatch({ type: "select", id: null });
+    void persistElements(next);
+  }
+
+  function handleMoveElement(id: string, to: Point) {
+    const next = elements.map((e) => (e.id === id ? { ...e, x: to.x, y: to.y } : e));
+    setElements(next);
+    void persistElements(next);
+  }
+
+  function handleUpdateElement(id: string, patch: Partial<Pick<RoomElement, "label" | "color">>) {
+    const next = elements.map((e) => (e.id === id ? { ...e, ...patch } : e));
+    setElements(next);
+    void persistElements(next);
+  }
+
+  function handleDeleteElement(id: string) {
+    const next = elements.filter((e) => e.id !== id);
+    setElements(next);
+    if (selectedElementId === id) setSelectedElementId(null);
+    void persistElements(next);
+  }
+
   // Spacing: reuses the floor-plan spacing check against this layout's
   // minSpacing/scale (0 when uncalibrated — spacingViolations then only ever
   // flags literally overlapping tables, never a false positive).
@@ -192,6 +295,11 @@ export default function TemplateTableEditor({
   const selectedTable = useMemo(
     () => state.tables.find((t) => t.id === state.selectedId),
     [state.tables, state.selectedId]
+  );
+
+  const selectedElement = useMemo(
+    () => elements.find((e) => e.id === selectedElementId) ?? null,
+    [elements, selectedElementId]
   );
 
   // Shared persist step: PUTs a given table set (saveTemplateTables deletes +
@@ -291,11 +399,20 @@ export default function TemplateTableEditor({
             >
               {mode === "add-table" ? "A adicionar — clique no mapa" : "Adicionar do catálogo"}
             </button>
+            <button
+              type="button"
+              onClick={() => setMode((m) => (m === "add-element" ? "select" : "add-element"))}
+              style={{ fontWeight: mode === "add-element" ? 700 : 400 }}
+            >
+              {mode === "add-element" ? "A adicionar elemento — clique no mapa" : "Adicionar elemento"}
+            </button>
             <button type="button" onClick={handleSave} disabled={saving}>
               {saving ? "A guardar..." : "Guardar"}
             </button>
             {savedAt !== null && <span style={{ color: "#059669" }}>Guardado.</span>}
           </div>
+
+          {elementsSaveError && <p style={{ color: "#dc2626" }}>{elementsSaveError}</p>}
 
           {!hasTableTypes && (
             <p style={{ color: "#dc2626" }}>
@@ -340,9 +457,15 @@ export default function TemplateTableEditor({
             warningTableIds={warningTableIds}
             onAddTable={handleAddTable}
             onMoveTable={handleMoveTable}
-            onSelect={(id) => dispatch({ type: "select", id })}
+            onSelect={handleSelectTable}
             onDeleteTable={handleDeleteTable}
             onRenameTable={handleRenameTable}
+            elements={elements}
+            selectedElementId={selectedElementId}
+            onSelectElement={handleSelectElement}
+            onMoveElement={handleMoveElement}
+            onAddElement={handleAddElement}
+            onDeleteElement={handleDeleteElement}
           />
 
           {/* Selected-table controls (Plan 18 Task 5): "cabeceiras" only applies to
@@ -364,6 +487,50 @@ export default function TemplateTableEditor({
                 />{" "}
                 Com cabeceiras (assentos nos topos curtos)
               </label>
+            </div>
+          )}
+
+          {/* Selected-element controls (Plan 18 Task 8): label + color + delete. Move
+              happens by dragging the element directly on the canvas above. */}
+          {selectedElement && (
+            <div
+              style={{
+                marginTop: 8,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                flexWrap: "wrap",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                padding: 8,
+              }}
+            >
+              <label>
+                Texto{" "}
+                <input
+                  data-testid="element-label-input"
+                  value={selectedElement.label}
+                  onChange={(e) => handleUpdateElement(selectedElement.id, { label: e.target.value })}
+                  style={{ width: 160 }}
+                />
+              </label>
+              <label>
+                Cor{" "}
+                <input
+                  data-testid="element-color-input"
+                  type="color"
+                  value={selectedElement.color}
+                  onChange={(e) => handleUpdateElement(selectedElement.id, { color: e.target.value })}
+                />
+              </label>
+              <button
+                type="button"
+                data-testid="delete-selected-element"
+                onClick={() => handleDeleteElement(selectedElement.id)}
+                style={{ color: "#dc2626" }}
+              >
+                Remover elemento
+              </button>
             </div>
           )}
         </>

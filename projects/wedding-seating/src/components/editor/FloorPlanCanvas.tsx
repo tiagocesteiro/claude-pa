@@ -8,6 +8,7 @@ import type { EditorTable } from "@/lib/floorplan/editorState";
 import type { Point } from "@/lib/floorplan/geometry";
 import { tableRenderSize } from "@/lib/floorplan/tableShape";
 import { chairPositions } from "@/lib/floorplan/chairs";
+import type { RoomElement } from "@/lib/floorplan/elements";
 
 // Decorative chair dots — same convention as the seating plan's PlanCanvas, but
 // always neutral (the editor has no seated guests to tint by).
@@ -34,7 +35,7 @@ function useImageElement(src: string | undefined): HTMLImageElement | undefined 
   return image;
 }
 
-export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-zone";
+export type CanvasMode = "select" | "add-table" | "calibrate" | "draw-zone" | "add-element";
 
 /** Stroke colors cycled per zone index so multiple zones stay visually distinguishable. */
 const ZONE_COLORS = ["#6C9BD1", "#E88B7D", "#6FBF9B", "#A98BD1", "#E8B04B"];
@@ -78,6 +79,24 @@ export interface FloorPlanCanvasProps {
    * clears it back to the "Mesa N" fallback. The prompt itself lives here (this
    * component already knows the table's current name); omit to disable renaming. */
   onRenameTable?: (id: string, name: string | null) => void;
+  /** Decorative room elements (dance floor, bar, ... — Plan 18 Task 8), each a
+   * labelled/colored rectangle in image-natural pixel space. Rendered behind the
+   * tables; NOT fed into spacing/zone checks (they're not tables). Read-only unless
+   * `onMoveElement`/`onSelectElement` are provided (the editor's "Elementos" mode). */
+  elements?: RoomElement[];
+  /** Currently-selected element id (editor mode only) — renders a highlighted outline. */
+  selectedElementId?: string | null;
+  /** Called when an element is clicked (editor mode only, i.e. when provided). */
+  onSelectElement?: (id: string) => void;
+  /** Called when an element is dragged to a new position (top-left, natural-pixel
+   * space). Its presence also makes elements draggable. */
+  onMoveElement?: (id: string, to: Point) => void;
+  /** In "add-element" mode, called with the click position (natural pixels) — the
+   * caller places a default-sized rectangle there. */
+  onAddElement?: (at: Point) => void;
+  /** When provided, each element renders a small "×" remove button (same affordance
+   * as `onDeleteTable`). Omit to render without it (read-only views). */
+  onDeleteElement?: (id: string) => void;
 }
 
 export default function FloorPlanCanvas({
@@ -100,6 +119,12 @@ export default function FloorPlanCanvas({
   onZoneClick,
   onDeleteTable,
   onRenameTable,
+  elements = [],
+  selectedElementId = null,
+  onSelectElement,
+  onMoveElement,
+  onAddElement,
+  onDeleteElement,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
@@ -141,6 +166,16 @@ export default function FloorPlanCanvas({
     };
   });
 
+  // Same top-left convention as the Rect itself (no offsetX/Y) — unlike tables, whose
+  // x/y are their center point.
+  const elementGeoms = elements.map((el) => ({
+    element: el,
+    displayX: el.x * displayScale,
+    displayY: el.y * displayScale,
+    width: el.w * displayScale,
+    height: el.h * displayScale,
+  }));
+
   function handleStageClick(e: KonvaEventObject<MouseEvent>) {
     if (e.target !== e.target.getStage()) return;
     const pos = e.target.getStage()?.getPointerPosition();
@@ -158,11 +193,21 @@ export default function FloorPlanCanvas({
       onZoneClick?.(naturalPos);
       return;
     }
+    if (mode === "add-element") {
+      onAddElement?.(naturalPos);
+      return;
+    }
     onSelect(null);
   }
 
   const cursor =
-    mode === "add-table" ? "copy" : mode === "calibrate" || mode === "draw-zone" ? "crosshair" : "default";
+    mode === "add-table" || mode === "add-element"
+      ? "copy"
+      : mode === "calibrate" || mode === "draw-zone"
+        ? "crosshair"
+        : "default";
+
+  const elementsInteractive = Boolean(onMoveElement || onSelectElement);
 
   return (
     <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
@@ -207,6 +252,50 @@ export default function FloorPlanCanvas({
               {zone.map((p, i) => (
                 <Circle key={i} x={p.x * displayScale} y={p.y * displayScale} radius={4} fill={color} />
               ))}
+            </Fragment>
+          );
+        })}
+      </Layer>
+      {/* Room elements (Plan 18 Task 8 — dance floor, bar, ...): decorative rectangles
+          drawn behind the tables, filled with a semi-transparent version of their
+          chosen color, label centered. Draggable/selectable only when the caller
+          wires onMoveElement/onSelectElement (the template editor's "Elementos" mode);
+          inert (listening=false) everywhere else, e.g. the seating plan/couple view. */}
+      <Layer listening={elementsInteractive}>
+        {elementGeoms.map(({ element, displayX, displayY, width, height }) => {
+          const isSelected = element.id === selectedElementId;
+          return (
+            <Fragment key={element.id}>
+              <Rect
+                x={displayX}
+                y={displayY}
+                width={width}
+                height={height}
+                fill={`${element.color}b3`}
+                stroke={isSelected ? "#2563eb" : element.color}
+                strokeWidth={isSelected ? 3 : 1.5}
+                draggable={Boolean(onMoveElement)}
+                onClick={onSelectElement ? () => onSelectElement(element.id) : undefined}
+                onTap={onSelectElement ? () => onSelectElement(element.id) : undefined}
+                onDragEnd={
+                  onMoveElement
+                    ? (e) => onMoveElement(element.id, toNatural({ x: e.target.x(), y: e.target.y() }))
+                    : undefined
+                }
+              />
+              <Text
+                x={displayX}
+                y={displayY}
+                width={width}
+                height={height}
+                align="center"
+                verticalAlign="middle"
+                text={element.label}
+                fontSize={14}
+                fontStyle="bold"
+                fill="#111827"
+                listening={false}
+              />
             </Fragment>
           );
         })}
@@ -291,6 +380,39 @@ export default function FloorPlanCanvas({
               position: "absolute",
               left: g.displayX + g.width / 2 - 10,
               top: g.displayY - g.height / 2 - 10,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              border: "1px solid #dc2626",
+              background: "#fef2f2",
+              color: "#dc2626",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 700,
+              lineHeight: 1,
+              padding: 0,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+              pointerEvents: "auto",
+            }}
+          >
+            ×
+          </button>
+        ))}
+      </div>
+    )}
+    {onDeleteElement && (
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {elementGeoms.map((g) => (
+          <button
+            key={g.element.id}
+            type="button"
+            data-testid={`delete-element-${g.element.id}`}
+            onClick={() => onDeleteElement(g.element.id)}
+            title="Remover elemento"
+            style={{
+              position: "absolute",
+              left: g.displayX + g.width - 10,
+              top: g.displayY - 10,
               width: 22,
               height: 22,
               borderRadius: "50%",

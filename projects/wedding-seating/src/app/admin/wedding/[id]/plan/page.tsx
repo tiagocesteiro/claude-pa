@@ -10,6 +10,7 @@ import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
 import type { AttributeKey } from "@/lib/plan/colors";
+import { parseElements } from "@/lib/floorplan/elements";
 
 // "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
 // for "no color") passed to setColorAttr / buildColorMap.
@@ -102,6 +103,11 @@ export default function PlanPage() {
   } = usePlan(weddingId);
 
   const hasTables = tables.length > 0;
+
+  // Decorative room elements (Plan 18 Task 8 — dance floor, bar, ...) from the wedding's
+  // applied dinner template's floor plan. Rendered read-only here (they're only editable
+  // in the venue's template editor); never fed into the seating engine or any warning.
+  const elements = useMemo(() => parseElements(layout?.elements), [layout]);
 
   // Stable, human labels ("Mesa 1", "Mesa 2", ...) derived from table order — used by the
   // canvas, the warnings list, and the TableList so a table reads the same everywhere
@@ -204,6 +210,7 @@ export default function PlanPage() {
             roomWidth={layout?.width ?? 0}
             roomDepth={layout?.depth ?? 0}
             zones={[]}
+            elements={elements}
             overCapacityIds={violations.overCapacity}
             maxWidth={CANVAS_WIDTH}
             maxHeight={CANVAS_HEIGHT}

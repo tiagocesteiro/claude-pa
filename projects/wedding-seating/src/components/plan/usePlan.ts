@@ -64,6 +64,9 @@ export interface PlanLayout {
   width: number;
   depth: number;
   zones: string | null;
+  /** JSON list of decorative room elements (dance floor, bar, ...) — Plan 18 Task 8.
+   * Parsed via `parseElements` before being handed to PlanCanvas. */
+  elements: string | null;
 }
 
 export interface PlanTemplate {
