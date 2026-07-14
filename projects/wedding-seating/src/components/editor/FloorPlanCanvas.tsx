@@ -11,6 +11,7 @@ import { chairPositions } from "@/lib/floorplan/chairs";
 import type { RoomElement } from "@/lib/floorplan/elements";
 import { computeSnap, type SnapGuides } from "@/lib/floorplan/snap";
 import { spacingHalfExtents, resolveNoOverlap, type SpacingBox } from "@/lib/floorplan/spacingGeom";
+import { resolveInsideZone } from "@/lib/floorplan/zoneClearance";
 
 // Alignment-guide snap (Plan 18 Task 9): the on-screen "magnetism" distance, in
 // display (screen) pixels, converted to natural pixels via displayScale before
@@ -124,7 +125,10 @@ export interface FloorPlanCanvasProps {
   showSpacing?: boolean;
   /** Minimum required gap between table edges, in METRES (matches the floor
    * plan's `minSpacing` field). 0/absent draws no boundary and disables the
-   * drag barrier (only literal overlaps are still prevented, via a 0 margin). */
+   * drag barrier (only literal overlaps are still prevented, via a 0 margin).
+   * Also drives the zone-wall clearance barrier below (Plan 18 Task 12): a
+   * table must keep at least this many metres from the walls of whichever
+   * zone contains it, in addition to staying clear of other tables. */
   minSpacing?: number;
 }
 
@@ -226,6 +230,44 @@ export default function FloorPlanCanvas({
     return resolveNoOverlap(at, self, others);
   }
 
+  // Zone-wall clearance barrier (Plan 18 Task 12): tracks, per table, the last
+  // centre position confirmed to respect the wall clearance (seeded from the
+  // table's committed x/y at drag start) — used to clamp back to when a live
+  // position would leave every zone entirely (resolveInsideZone reports
+  // ok:false), same "hold the last good spot" idea `resolveNoOverlap`'s
+  // barrier achieves implicitly by never proposing an invalid position.
+  const lastValidZonePositionRef = useRef<Record<string, Point>>({});
+
+  function handleTableDragStart(tableId: string) {
+    const dragged = tables.find((t) => t.id === tableId);
+    if (dragged) lastValidZonePositionRef.current[tableId] = { x: dragged.x, y: dragged.y };
+  }
+
+  // Clearance in natural pixels: the table's own half-extent (its largest
+  // dimension / 2 — a circular approximation is fine for a wall check) plus
+  // the full `minSpacing` (metres -> pixels via `scale`), matching the spec's
+  // `maxHalfExtent(table) + minSpacing*scale` — unlike the table-table margin,
+  // the wall doesn't contribute its own half, so no /2 here.
+  function wallClearance(table: EditorTable): number {
+    const { wPx, hPx } = tableRenderSize(table, scale);
+    return Math.max(wPx, hPx) / 2 + minSpacing * scale;
+  }
+
+  function applyZoneClearance(tableId: string, at: Point): Point {
+    if (!showSpacing || minSpacing <= 0 || zones.length === 0) return at;
+    const dragged = tables.find((t) => t.id === tableId);
+    if (!dragged) return at;
+    const clearance = wallClearance(dragged);
+    const resolved = resolveInsideZone(at, clearance, zones);
+    if (!resolved.ok) {
+      // Would leave every zone — reject the move outright, holding the table
+      // at the last position confirmed inside a zone with valid clearance.
+      return lastValidZonePositionRef.current[tableId] ?? { x: dragged.x, y: dragged.y };
+    }
+    lastValidZonePositionRef.current[tableId] = { x: resolved.x, y: resolved.y };
+    return { x: resolved.x, y: resolved.y };
+  }
+
   function handleTableDragMove(tableId: string, e: KonvaEventObject<DragEvent>) {
     const node = e.target;
     let natural = toNatural({ x: node.x(), y: node.y() });
@@ -239,6 +281,7 @@ export default function FloorPlanCanvas({
     }
 
     natural = applySpacingBarrier(tableId, natural);
+    natural = applyZoneClearance(tableId, natural);
 
     node.x(natural.x * displayScale);
     node.y(natural.y * displayScale);
@@ -452,6 +495,7 @@ export default function FloorPlanCanvas({
             isSelected={t.id === selectedId}
             hasWarning={warningTableIds.includes(t.id)}
             onSelect={() => onSelect(t.id)}
+            onDragStart={showSpacing ? () => handleTableDragStart(t.id) : undefined}
             onDragMove={enableSnap || showSpacing ? (e) => handleTableDragMove(t.id, e) : undefined}
             onDragEnd={(e) => {
               onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }));
@@ -609,6 +653,7 @@ function TableShape({
   isSelected,
   hasWarning,
   onSelect,
+  onDragStart,
   onDragMove,
   onDragEnd,
   onRename,
@@ -622,6 +667,9 @@ function TableShape({
   isSelected: boolean;
   hasWarning?: boolean;
   onSelect: () => void;
+  /** Seeds the zone-wall clearance barrier's "last valid position" at the start
+   * of a drag (Plan 18 Task 12). Omit to disable (matches `showSpacing={false}`). */
+  onDragStart?: () => void;
   /** Live alignment-snap while dragging (Plan 18 Task 9). Omit to disable (matches
    * `enableSnap={false}` on the parent canvas). */
   onDragMove?: (e: KonvaEventObject<DragEvent>) => void;
@@ -662,6 +710,7 @@ function TableShape({
           draggable
           onClick={onSelect}
           onTap={onSelect}
+          onDragStart={onDragStart}
           onDragMove={onDragMove}
           onDragEnd={onDragEnd}
           onDblClick={onRename}
@@ -681,6 +730,7 @@ function TableShape({
           draggable
           onClick={onSelect}
           onTap={onSelect}
+          onDragStart={onDragStart}
           onDragMove={onDragMove}
           onDragEnd={onDragEnd}
           onDblClick={onRename}

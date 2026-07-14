@@ -12,7 +12,8 @@ import {
 import type { Point } from "@/lib/floorplan/geometry";
 import { pointInPolygon } from "@/lib/floorplan/boundary";
 import { spacingHalfExtents, resolveNoOverlap, boxesOverlap, type SpacingBox } from "@/lib/floorplan/spacingGeom";
-import type { ShapeTable } from "@/lib/floorplan/tableShape";
+import { resolveInsideZone } from "@/lib/floorplan/zoneClearance";
+import { tableRenderSize, type ShapeTable } from "@/lib/floorplan/tableShape";
 import { parseElements, serializeElements, type RoomElement } from "@/lib/floorplan/elements";
 import type { TableInput } from "@/lib/db/tables";
 
@@ -91,6 +92,16 @@ function parseZones(fp: FloorPlanRecord | null): Point[][] {
 
 function normalizeShape(shape: string): "round" | "oval" | "rect" {
   return shape === "oval" || shape === "rect" ? shape : "round";
+}
+
+/** Minimum required clearance (natural pixels) between a table's center and any
+ * zone wall (Plan 18 Task 12): the table's own half-extent (largest dimension
+ * / 2 — a circular approximation, fine for a wall check) plus the FULL
+ * `minSpacing` in pixels — unlike the table-table margin, the wall doesn't
+ * contribute its own half of the gap. */
+function wallClearanceFor(table: ShapeTable, scale: number, minSpacing: number): number {
+  const { wPx, hPx } = tableRenderSize(table, scale);
+  return Math.max(wPx, hPx) / 2 + minSpacing * scale;
 }
 
 export interface TemplateTableEditorProps {
@@ -211,7 +222,21 @@ export default function TemplateTableEditor({
       cy: t.y,
       ...spacingHalfExtents(t, scale, minSpacing),
     }));
-    const resolvedAt = resolveNoOverlap(at, self, others);
+    let resolvedAt = resolveNoOverlap(at, self, others);
+
+    // Wall clearance (Plan 18 Task 12): nudge the new table inside a zone with
+    // proper clearance from its walls (e.g. the click landed just outside a
+    // zone, or too close to its wall). If it can't be placed in any zone at
+    // all, fall back to the table-table-resolved position instead of
+    // blocking the add.
+    if (minSpacing > 0 && zones.length > 0) {
+      const clearance = wallClearanceFor(shapeTable, scale, minSpacing);
+      const zoneResolved = resolveInsideZone(resolvedAt, clearance, zones);
+      if (zoneResolved.ok) {
+        resolvedAt = { x: zoneResolved.x, y: zoneResolved.y };
+      }
+    }
+
     dispatch({ type: "add-table", at: resolvedAt, preset });
   }
 
@@ -339,14 +364,28 @@ export default function TemplateTableEditor({
     return ids;
   }, [state.tables, floorPlan]);
 
-  // Out-of-zone: a table is flagged when its center falls inside NONE of the
-  // layout's zones. No zones drawn yet = nothing to flag against.
+  // Out-of-zone / wall-clearance: a table is flagged when its center falls
+  // inside NONE of the layout's zones, OR (Plan 18 Task 12) it IS inside a
+  // zone but violates that zone's wall clearance — i.e. resolveInsideZone
+  // would have to move it to satisfy `minSpacing`. The drag/add barriers
+  // already prevent this going forward, so this mainly catches pre-existing
+  // layouts (e.g. after minSpacing is raised, or a zone redrawn smaller). No
+  // zones drawn yet = nothing to flag against.
   const outOfZoneIds = useMemo(() => {
     if (zones.length === 0) return [] as string[];
+    const scale = floorPlan?.scale ?? 0;
+    const minSpacing = floorPlan?.minSpacing ?? 0;
     return state.tables
-      .filter((t) => !zones.some((zone) => pointInPolygon({ x: t.x, y: t.y }, zone)))
+      .filter((t) => {
+        const inAnyZone = zones.some((zone) => pointInPolygon({ x: t.x, y: t.y }, zone));
+        if (!inAnyZone) return true;
+        if (minSpacing <= 0) return false;
+        const clearance = wallClearanceFor(t, scale, minSpacing);
+        const resolved = resolveInsideZone({ x: t.x, y: t.y }, clearance, zones);
+        return !resolved.ok || resolved.x !== t.x || resolved.y !== t.y;
+      })
       .map((t) => t.id);
-  }, [state.tables, zones]);
+  }, [state.tables, zones, floorPlan]);
 
   const warningTableIds = useMemo(
     () => Array.from(new Set([...spacingIds, ...outOfZoneIds])),
@@ -492,7 +531,7 @@ export default function TemplateTableEditor({
               )}
               {outOfZoneIds.length > 0 && (
                 <p style={{ color: "#dc2626", margin: "4px 0" }} data-testid="zone-warning">
-                  {outOfZoneIds.length} mesa(s) fora de qualquer zona.
+                  {outOfZoneIds.length} mesa(s) fora de qualquer zona ou perto demais da parede.
                 </p>
               )}
             </div>

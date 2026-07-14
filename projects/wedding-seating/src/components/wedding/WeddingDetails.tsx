@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ArrangementThumbnail from "@/components/wedding/ArrangementThumbnail";
 
 // Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
 // client component doesn't pull the server-only Prisma module into the browser bundle.
@@ -31,7 +32,7 @@ interface Template {
 
 interface MomentTemplate {
   id: string;
-  floorPlan: { image: string } | null;
+  floorPlan: { image: string | null; scale: number; width: number; depth: number } | null;
 }
 
 interface Moment {
@@ -70,15 +71,6 @@ const label: React.CSSProperties = {
 function toDateInputValue(iso: string | null): string {
   if (!iso) return "";
   return iso.slice(0, 10);
-}
-
-// Same rel-path convention used by the plan/couple-overview canvases: the DB stores
-// image paths like "data/uploads/<file>" — strip that prefix so the browser hits the
-// /api/uploads/<file> route instead.
-function imageUrlFor(image: string | null | undefined): string | undefined {
-  if (!image) return undefined;
-  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
-  return `/api/uploads/${rel}`;
 }
 
 export default function WeddingDetails({ weddingId }: { weddingId: string }) {
@@ -439,25 +431,7 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
               <span style={{ fontSize: 12, color: "var(--text-muted)" }}>A aplicar arranjo...</span>
             )}
 
-            {moment.template &&
-              (moment.template.floorPlan?.image ? (
-                <img
-                  src={imageUrlFor(moment.template.floorPlan.image)}
-                  alt={`Miniatura do arranjo de ${MOMENT_LABELS[moment.kind]}`}
-                  style={{
-                    maxWidth: 160,
-                    maxHeight: 120,
-                    objectFit: "contain",
-                    border: "1px solid var(--border)",
-                    borderRadius: 4,
-                    background: "#fff",
-                  }}
-                />
-              ) : (
-                <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
-                  sem imagem
-                </span>
-              ))}
+            {moment.template && <ArrangementThumbnail template={moment.template} />}
 
             <label style={{ ...label, gap: 4 }}>
               Notas
