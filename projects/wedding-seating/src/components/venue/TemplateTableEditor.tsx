@@ -466,6 +466,7 @@ export default function TemplateTableEditor({
             onMoveElement={handleMoveElement}
             onAddElement={handleAddElement}
             onDeleteElement={handleDeleteElement}
+            enableSnap
           />
 
           {/* Selected-table controls (Plan 18 Task 5): "cabeceiras" only applies to

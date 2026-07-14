@@ -9,6 +9,13 @@ import type { Point } from "@/lib/floorplan/geometry";
 import { tableRenderSize } from "@/lib/floorplan/tableShape";
 import { chairPositions } from "@/lib/floorplan/chairs";
 import type { RoomElement } from "@/lib/floorplan/elements";
+import { computeSnap, type SnapGuides } from "@/lib/floorplan/snap";
+
+// Alignment-guide snap (Plan 18 Task 9): the on-screen "magnetism" distance, in
+// display (screen) pixels, converted to natural pixels via displayScale before
+// being handed to `computeSnap` (which operates in natural-pixel/centre space,
+// same as every other persisted quantity here).
+const SNAP_THRESHOLD_SCREEN_PX = 8;
 
 // Decorative chair dots — same convention as the seating plan's PlanCanvas, but
 // always neutral (the editor has no seated guests to tint by).
@@ -97,6 +104,12 @@ export interface FloorPlanCanvasProps {
   /** When provided, each element renders a small "×" remove button (same affordance
    * as `onDeleteTable`). Omit to render without it (read-only views). */
   onDeleteElement?: (id: string) => void;
+  /** Enables AutoCAD-style centre-alignment snap while dragging a table (Plan 18
+   * Task 9): dashed guide lines + magnetism to other tables' centres. Opt-in and
+   * defaults to off so read-only views (couple overview) and the floor-plan/zone
+   * editor — which pass a no-op `onMoveTable` — are unaffected; only the venue
+   * template editor (`TemplateTableEditor`) turns this on. */
+  enableSnap?: boolean;
 }
 
 export default function FloorPlanCanvas({
@@ -125,9 +138,15 @@ export default function FloorPlanCanvas({
   onMoveElement,
   onAddElement,
   onDeleteElement,
+  enableSnap = false,
 }: FloorPlanCanvasProps) {
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
+
+  // Active alignment guide lines while a table is mid-drag (Plan 18 Task 9), in
+  // natural-pixel space — same convention as calibrationPoints/zones — so they
+  // scale up alongside everything else at render time. Cleared on drag end.
+  const [snapGuides, setSnapGuides] = useState<SnapGuides>({});
 
   // Plan 18 Task 7: a "blank room" (no photo) is sized from its typed dimensions ×
   // scale instead of an image's natural pixels — same natural-pixel space, so
@@ -150,6 +169,34 @@ export default function FloorPlanCanvas({
 
   function toNatural(p: Point): Point {
     return { x: p.x / displayScale, y: p.y / displayScale };
+  }
+
+  // Natural-pixel equivalent of the fixed on-screen magnetism distance — computeSnap
+  // itself is unit-agnostic, but every persisted coordinate here (table x/y, guide
+  // positions) lives in natural-pixel space, so the threshold has to match.
+  const snapThresholdNatural = SNAP_THRESHOLD_SCREEN_PX / displayScale;
+
+  // AutoCAD-style centre-alignment snap (Plan 18 Task 9), called from a table's
+  // onDragMove while `enableSnap` is on: snaps the dragged Konva node's live
+  // position to the nearest other table's centre line (within threshold) on each
+  // axis independently, and tracks which guide line(s) to draw. Mutating the node
+  // position directly (vs. only updating React state) is what makes the shape
+  // visibly "stick" mid-drag — onDragEnd then reads that same (already-snapped)
+  // node position via the existing toNatural(...) conversion, so no separate
+  // "commit the snapped value" step is needed.
+  function handleTableDragMove(tableId: string, e: KonvaEventObject<DragEvent>) {
+    if (!enableSnap) return;
+    const node = e.target;
+    const draggedNatural = toNatural({ x: node.x(), y: node.y() });
+    const others = tables.filter((t) => t.id !== tableId).map((t) => ({ x: t.x, y: t.y }));
+    const snapped = computeSnap(draggedNatural, others, snapThresholdNatural);
+    node.x(snapped.x * displayScale);
+    node.y(snapped.y * displayScale);
+    setSnapGuides(snapped.guides);
+  }
+
+  function clearSnapGuides() {
+    if (enableSnap) setSnapGuides({});
   }
 
   // Geometry for the HTML remove-button overlay (only rendered when onDeleteTable
@@ -311,9 +358,11 @@ export default function FloorPlanCanvas({
             isSelected={t.id === selectedId}
             hasWarning={warningTableIds.includes(t.id)}
             onSelect={() => onSelect(t.id)}
-            onDragEnd={(e) =>
-              onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }))
-            }
+            onDragMove={enableSnap ? (e) => handleTableDragMove(t.id, e) : undefined}
+            onDragEnd={(e) => {
+              onMoveTable(t.id, toNatural({ x: e.target.x(), y: e.target.y() }));
+              clearSnapGuides();
+            }}
             onRename={
               onRenameTable
                 ? () => {
@@ -325,6 +374,27 @@ export default function FloorPlanCanvas({
             }
           />
         ))}
+      </Layer>
+      {/* Alignment guide lines (Plan 18 Task 9) — dashed lines spanning the stage at
+          the active vertical/horizontal snap position, drawn while dragging a table
+          near another's centre line. Non-listening, cleared on drag end. */}
+      <Layer listening={false}>
+        {snapGuides.vertical !== undefined && (
+          <Line
+            points={[snapGuides.vertical * displayScale, 0, snapGuides.vertical * displayScale, stageHeight]}
+            stroke="#2563eb"
+            strokeWidth={1}
+            dash={[6, 4]}
+          />
+        )}
+        {snapGuides.horizontal !== undefined && (
+          <Line
+            points={[0, snapGuides.horizontal * displayScale, stageWidth, snapGuides.horizontal * displayScale]}
+            stroke="#2563eb"
+            strokeWidth={1}
+            dash={[6, 4]}
+          />
+        )}
       </Layer>
       {/* Decorative chair layer — non-listening so it never intercepts table
           drag/select/delete. Neutral dots only (no seated-guest data here);
@@ -445,6 +515,7 @@ function TableShape({
   isSelected,
   hasWarning,
   onSelect,
+  onDragMove,
   onDragEnd,
   onRename,
 }: {
@@ -457,6 +528,9 @@ function TableShape({
   isSelected: boolean;
   hasWarning?: boolean;
   onSelect: () => void;
+  /** Live alignment-snap while dragging (Plan 18 Task 9). Omit to disable (matches
+   * `enableSnap={false}` on the parent canvas). */
+  onDragMove?: (e: KonvaEventObject<DragEvent>) => void;
   onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
   /** Double-click to rename (Plan 18 Task 4). Omit to disable. */
   onRename?: () => void;
@@ -494,6 +568,7 @@ function TableShape({
           draggable
           onClick={onSelect}
           onTap={onSelect}
+          onDragMove={onDragMove}
           onDragEnd={onDragEnd}
           onDblClick={onRename}
           onDblTap={onRename}
@@ -512,6 +587,7 @@ function TableShape({
           draggable
           onClick={onSelect}
           onTap={onSelect}
+          onDragMove={onDragMove}
           onDragEnd={onDragEnd}
           onDblClick={onRename}
           onDblTap={onRename}
