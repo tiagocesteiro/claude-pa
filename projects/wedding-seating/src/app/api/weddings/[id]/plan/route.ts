@@ -18,7 +18,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (wedding?.floorPlanId) {
     const fp = await getFloorPlan(wedding.floorPlanId);
     if (fp) {
-      layout = { floorPlanId: fp.id, image: fp.image, scale: fp.scale, zones: fp.zones };
+      layout = {
+        floorPlanId: fp.id,
+        image: fp.image,
+        scale: fp.scale,
+        width: fp.width,
+        depth: fp.depth,
+        zones: fp.zones,
+      };
     }
   }
 

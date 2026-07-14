@@ -45,6 +45,13 @@ export interface FloorPlanCanvasProps {
   /** Floor plan's pixels-per-metre calibration; drives each table's real render size
    * via `tableRenderSize`. 0/absent falls back to `tableRenderSize`'s fixed defaults. */
   scale?: number;
+  /** Room dimensions in metres (Plan 18 Task 7 — "create a room from scratch"). Only
+   * used when there's no `imageUrl`: the stage is then sized from `roomWidth*scale ×
+   * roomDepth*scale` natural pixels (same convention as an image's natural size) and
+   * a plain room rectangle is drawn as the background. Ignored whenever `imageUrl` is
+   * present — the image always defines the natural size instead. */
+  roomWidth?: number;
+  roomDepth?: number;
   selectedId: string | null;
   mode: CanvasMode;
   /** Reference calibration points, in image-natural pixel space. */
@@ -77,6 +84,8 @@ export default function FloorPlanCanvas({
   imageUrl,
   tables,
   scale = 0,
+  roomWidth = 0,
+  roomDepth = 0,
   selectedId,
   mode,
   calibrationPoints = [],
@@ -95,15 +104,24 @@ export default function FloorPlanCanvas({
   const image = useImageElement(imageUrl);
   const stageRef = useRef<Konva.Stage>(null);
 
-  // displayScale maps image-natural pixels -> on-screen (display) pixels.
+  // Plan 18 Task 7: a "blank room" (no photo) is sized from its typed dimensions ×
+  // scale instead of an image's natural pixels — same natural-pixel space, so
+  // tables/zones/calibration/the delete overlay all stay aligned without any of
+  // them knowing whether the background is a photo or a plain rectangle.
+  const hasRoom = !image && roomWidth > 0 && roomDepth > 0 && scale > 0;
+  const roomNaturalWidth = roomWidth * scale;
+  const roomNaturalHeight = roomDepth * scale;
+
+  // displayScale maps natural pixels (image OR room) -> on-screen (display) pixels.
   // Persisted quantities (table x/y, calibration points) live in natural space;
   // only rendering multiplies by displayScale. Falls back to a 1:1, max-bounds
-  // box before an image has loaded.
-  const naturalWidth = image?.naturalWidth || maxWidth;
-  const naturalHeight = image?.naturalHeight || maxHeight;
-  const displayScale = image ? Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight) : 1;
-  const stageWidth = image ? naturalWidth * displayScale : maxWidth;
-  const stageHeight = image ? naturalHeight * displayScale : maxHeight;
+  // box when there's neither an image nor valid room dimensions.
+  const naturalWidth = image?.naturalWidth || (hasRoom ? roomNaturalWidth : maxWidth);
+  const naturalHeight = image?.naturalHeight || (hasRoom ? roomNaturalHeight : maxHeight);
+  const hasBackground = Boolean(image) || hasRoom;
+  const displayScale = hasBackground ? Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight) : 1;
+  const stageWidth = hasBackground ? naturalWidth * displayScale : maxWidth;
+  const stageHeight = hasBackground ? naturalHeight * displayScale : maxHeight;
 
   function toNatural(p: Point): Point {
     return { x: p.x / displayScale, y: p.y / displayScale };
@@ -158,6 +176,18 @@ export default function FloorPlanCanvas({
       <Layer>
         {image && (
           <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
+        )}
+        {!image && hasRoom && (
+          <Rect
+            x={0}
+            y={0}
+            width={stageWidth}
+            height={stageHeight}
+            fill="#fafaf9"
+            stroke="#9ca3af"
+            strokeWidth={2}
+            listening={false}
+          />
         )}
       </Layer>
       <Layer listening={false}>

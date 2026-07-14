@@ -72,6 +72,12 @@ export interface PlanCanvasProps {
   /** Floor plan's pixels-per-metre calibration; drives each table's real render size
    * via `tableRenderSize`. 0/absent falls back to `tableRenderSize`'s fixed defaults. */
   scale?: number;
+  /** Room dimensions in metres (Plan 18 Task 7 — "blank room" layouts, no photo).
+   * Same convention as FloorPlanCanvas: used only when there's no `imageUrl`, to
+   * size the stage from `roomWidth*scale x roomDepth*scale` natural pixels and
+   * draw a plain room rectangle behind the tables. */
+  roomWidth?: number;
+  roomDepth?: number;
   /** Read-only zone outlines (rooms/areas) from the applied template's floor plan,
    * each a closed polygon in image-natural pixel space. Rendered behind the tables,
    * same translucent style as the editor — no interaction here. */
@@ -131,6 +137,8 @@ export default function PlanCanvas({
   imageUrl,
   tables,
   scale = 0,
+  roomWidth = 0,
+  roomDepth = 0,
   zones = [],
   overCapacityIds,
   maxWidth,
@@ -200,13 +208,21 @@ export default function PlanCanvas({
     onRenameTable?.(tableId, next.trim() || null);
   }
 
-  // displayScale maps image-natural pixels -> on-screen (display) pixels, same
-  // convention as FloorPlanCanvas (Plan 2). Table x/y here are always natural.
-  const naturalWidth = image?.naturalWidth || maxWidth;
-  const naturalHeight = image?.naturalHeight || maxHeight;
-  const displayScale = image ? Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight) : 1;
-  const stageWidth = image ? naturalWidth * displayScale : maxWidth;
-  const stageHeight = image ? naturalHeight * displayScale : maxHeight;
+  // Plan 18 Task 7: a "blank room" (no photo) is sized from its typed dimensions ×
+  // scale instead of an image's natural pixels — same natural-pixel space as an
+  // image, so tables/chairs/the drop overlay all stay aligned either way.
+  const hasRoom = !image && roomWidth > 0 && roomDepth > 0 && scale > 0;
+  const roomNaturalWidth = roomWidth * scale;
+  const roomNaturalHeight = roomDepth * scale;
+
+  // displayScale maps natural pixels (image OR room) -> on-screen (display) pixels,
+  // same convention as FloorPlanCanvas (Plan 2). Table x/y here are always natural.
+  const naturalWidth = image?.naturalWidth || (hasRoom ? roomNaturalWidth : maxWidth);
+  const naturalHeight = image?.naturalHeight || (hasRoom ? roomNaturalHeight : maxHeight);
+  const hasBackground = Boolean(image) || hasRoom;
+  const displayScale = hasBackground ? Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight) : 1;
+  const stageWidth = hasBackground ? naturalWidth * displayScale : maxWidth;
+  const stageHeight = hasBackground ? naturalHeight * displayScale : maxHeight;
 
   const overCapacitySet = new Set(overCapacityIds);
 
@@ -249,6 +265,18 @@ export default function PlanCanvas({
         <Layer>
           {image && (
             <KonvaImage image={image} width={stageWidth} height={stageHeight} listening={false} />
+          )}
+          {!image && hasRoom && (
+            <Rect
+              x={0}
+              y={0}
+              width={stageWidth}
+              height={stageHeight}
+              fill="#fafaf9"
+              stroke="#9ca3af"
+              strokeWidth={2}
+              listening={false}
+            />
           )}
         </Layer>
         <Layer listening={false}>

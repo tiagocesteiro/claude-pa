@@ -201,6 +201,8 @@ export default function PlanPage() {
             imageUrl={imageUrlFor(layout?.image ?? "")}
             tables={tableViews}
             scale={layout?.scale ?? 0}
+            roomWidth={layout?.width ?? 0}
+            roomDepth={layout?.depth ?? 0}
             zones={[]}
             overCapacityIds={violations.overCapacity}
             maxWidth={CANVAS_WIDTH}

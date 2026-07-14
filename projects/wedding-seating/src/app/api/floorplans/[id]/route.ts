@@ -6,6 +6,7 @@ import {
   updateFloorPlanBoundary,
   updateFloorPlanZones,
   updateFloorPlanName,
+  updateFloorPlanDimensions,
   deleteFloorPlan,
 } from "@/lib/db/floorplans";
 
@@ -29,6 +30,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   if (typeof b?.zones === "string" || b?.zones === null) {
     return NextResponse.json(await updateFloorPlanZones(id, b.zones));
+  }
+  // Plan 18 Task 7: "define by dimensions" sends width+depth+scale together (the
+  // editor computes `scale` from a fit helper before PATCHing) — checked before the
+  // scale-only branch below, which stays reserved for the two-click calibration flow.
+  if (
+    typeof b?.width === "number" &&
+    typeof b?.depth === "number" &&
+    typeof b?.scale === "number"
+  ) {
+    return NextResponse.json(
+      await updateFloorPlanDimensions(id, { width: b.width, depth: b.depth, scale: b.scale })
+    );
   }
   if (typeof b?.scale !== "number") return NextResponse.json({ error: "scale required" }, { status: 400 });
   return NextResponse.json(await updateFloorPlanScale(id, b.scale));

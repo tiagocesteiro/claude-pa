@@ -34,6 +34,16 @@ export function updateFloorPlanScale(id: string, scale: number): Promise<FloorPl
   return prisma.floorPlan.update({ where: { id }, data: { scale } });
 }
 
+/** Plan 18 Task 7: set/replace a "blank room" floor plan's dimensions + derived
+ * scale together (used by the editor's "Sala sem planta" control — no photo, the
+ * room itself is defined by these metres + the fit scale computed from them). */
+export function updateFloorPlanDimensions(
+  id: string,
+  input: { width: number; depth: number; scale: number }
+): Promise<FloorPlan> {
+  return prisma.floorPlan.update({ where: { id }, data: input });
+}
+
 export function updateFloorPlanSpacing(id: string, minSpacing: number | null): Promise<FloorPlan> {
   return prisma.floorPlan.update({ where: { id }, data: { minSpacing } });
 }

@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import CalibrationTool from "@/components/editor/CalibrationTool";
 import type { CanvasMode } from "@/components/editor/FloorPlanCanvas";
 import type { Point } from "@/lib/floorplan/geometry";
+import { fitRoomScale } from "@/lib/floorplan/roomFit";
 
 const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), {
   ssr: false,
@@ -58,6 +59,15 @@ export default function FloorPlanEditorPage() {
 
   const [nameInput, setNameInput] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
+
+  // Plan 18 Task 7: "create a room from scratch" — a floor plan with no uploaded
+  // image can instead be defined by typed dimensions (metres). Submitting derives
+  // a fit scale (the room's longer side maps to a fixed natural-pixel target) and
+  // persists width+depth+scale together via the dimensions PATCH branch.
+  const [lengthInput, setLengthInput] = useState("");
+  const [widthInput, setWidthInput] = useState("");
+  const [dimensionsError, setDimensionsError] = useState<string | null>(null);
+  const [savingDimensions, setSavingDimensions] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -215,6 +225,32 @@ export default function FloorPlanEditorPage() {
     }
   }
 
+  async function handleSetDimensions() {
+    setDimensionsError(null);
+    const lengthM = Number(lengthInput);
+    const widthM = Number(widthInput);
+    if (!Number.isFinite(lengthM) || lengthM <= 0 || !Number.isFinite(widthM) || widthM <= 0) {
+      setDimensionsError("Indica comprimento e largura em metros, maiores que 0.");
+      return;
+    }
+    const scale = fitRoomScale(lengthM, widthM);
+    setSavingDimensions(true);
+    try {
+      const res = await fetch(`/api/floorplans/${floorPlanId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ width: lengthM, depth: widthM, scale }),
+      });
+      if (!res.ok) throw new Error("failed to save dimensions");
+      const fp = (await res.json()) as FloorPlanRecord;
+      setFloorPlan(fp);
+    } catch {
+      setDimensionsError("Não foi possível guardar as dimensões da sala.");
+    } finally {
+      setSavingDimensions(false);
+    }
+  }
+
   const activeZoneIndex = zones.length > 0 ? zones.length - 1 : -1;
 
   return (
@@ -255,6 +291,51 @@ export default function FloorPlanEditorPage() {
             </label>
             {uploadError && <span style={{ color: "#dc2626", marginLeft: 8 }}>{uploadError}</span>}
           </div>
+
+          {!floorPlan?.image && (
+            <div style={{ marginBottom: 12, border: "1px solid var(--border)", borderRadius: 8, padding: 12 }}>
+              <strong>Sala sem planta (definir dimensões)</strong>
+              <p style={{ color: "var(--text-muted)", marginTop: 6 }}>
+                Sem foto? Indica as dimensões reais da sala e é desenhado um retângulo à escala
+                para colocares mesas em cima.
+              </p>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <label>
+                  Comprimento (m):{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    value={lengthInput}
+                    onChange={(e) => setLengthInput(e.target.value)}
+                    placeholder="ex: 12"
+                    style={{ width: 90 }}
+                  />
+                </label>
+                <label>
+                  Largura (m):{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    value={widthInput}
+                    onChange={(e) => setWidthInput(e.target.value)}
+                    placeholder="ex: 8"
+                    style={{ width: 90 }}
+                  />
+                </label>
+                <button type="button" onClick={handleSetDimensions} disabled={savingDimensions}>
+                  {savingDimensions ? "A guardar..." : "Definir"}
+                </button>
+                {floorPlan && floorPlan.width > 0 && floorPlan.depth > 0 && (
+                  <span style={{ color: "var(--text-muted)" }}>
+                    Atual: {floorPlan.width}m x {floorPlan.depth}m
+                  </span>
+                )}
+              </div>
+              {dimensionsError && <p style={{ color: "#dc2626" }}>{dimensionsError}</p>}
+            </div>
+          )}
 
           <div style={{ marginBottom: 12 }}>
             <CalibrationTool
@@ -337,6 +418,8 @@ export default function FloorPlanEditorPage() {
               imageUrl={imageUrlFor(floorPlan?.image ?? "")}
               tables={[]}
               scale={floorPlan?.scale ?? 0}
+              roomWidth={floorPlan?.width ?? 0}
+              roomDepth={floorPlan?.depth ?? 0}
               selectedId={null}
               mode={mode}
               calibrationPoints={calibrationPoints}

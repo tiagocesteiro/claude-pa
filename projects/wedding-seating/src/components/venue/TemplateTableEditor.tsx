@@ -320,14 +320,18 @@ export default function TemplateTableEditor({
             </div>
           )}
 
-          {!floorPlan?.image && (
-            <p style={{ color: "#6b7280" }}>Esta planta ainda não tem imagem.</p>
+          {!floorPlan?.image && !(floorPlan && floorPlan.width > 0 && floorPlan.depth > 0) && (
+            <p style={{ color: "#6b7280" }}>
+              Esta planta ainda não tem imagem nem dimensões definidas.
+            </p>
           )}
 
           <FloorPlanCanvas
             imageUrl={imageUrlFor(floorPlan?.image ?? "")}
             tables={state.tables}
             scale={floorPlan?.scale ?? 0}
+            roomWidth={floorPlan?.width ?? 0}
+            roomDepth={floorPlan?.depth ?? 0}
             selectedId={state.selectedId}
             mode={mode}
             zones={zones}

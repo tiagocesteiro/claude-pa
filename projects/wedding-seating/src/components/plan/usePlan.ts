@@ -54,11 +54,15 @@ export interface PlanGroup {
 }
 
 /** The template's floor-plan background (image + scale + zones), attached to the
- * wedding once a template has been applied. `null` before any template is applied. */
+ * wedding once a template has been applied. `null` before any template is applied.
+ * `width`/`depth` (metres) feed the blank-room render (Plan 18 Task 7) when `image`
+ * is empty — a layout defined by dimensions rather than an uploaded photo. */
 export interface PlanLayout {
   floorPlanId: string;
   image: string;
   scale: number;
+  width: number;
+  depth: number;
   zones: string | null;
 }
 

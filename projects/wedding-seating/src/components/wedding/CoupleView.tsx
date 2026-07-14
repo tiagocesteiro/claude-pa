@@ -25,6 +25,9 @@ interface FloorPlanRecord {
   id: string;
   image: string;
   scale: number;
+  /** Metres — feeds the blank-room render (Plan 18 Task 7) when `image` is empty. */
+  width: number;
+  depth: number;
   zones: string | null;
 }
 
@@ -247,6 +250,8 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                 imageUrl={imageUrlFor(layout?.image)}
                 tables={tableViews}
                 scale={layout?.scale ?? 0}
+                roomWidth={layout?.width ?? 0}
+                roomDepth={layout?.depth ?? 0}
                 zones={[]}
                 overCapacityIds={[]}
                 maxWidth={CANVAS_WIDTH}
@@ -291,6 +296,8 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                     imageUrl={imageUrlFor(templateFloorPlan.image)}
                     tables={views}
                     scale={templateFloorPlan.scale}
+                    roomWidth={templateFloorPlan.width}
+                    roomDepth={templateFloorPlan.depth}
                     zones={parseZones(templateFloorPlan.zones)}
                     overCapacityIds={[]}
                     maxWidth={CANVAS_WIDTH}
@@ -313,6 +320,8 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                   imageUrl={imageUrlFor(floorPlan.image)}
                   tables={[]}
                   scale={floorPlan.scale}
+                  roomWidth={floorPlan.width}
+                  roomDepth={floorPlan.depth}
                   selectedId={null}
                   mode="select"
                   zones={parseZones(floorPlan.zones)}
