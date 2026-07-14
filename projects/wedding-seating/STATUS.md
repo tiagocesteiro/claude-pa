@@ -74,7 +74,8 @@ npx prisma migrate dev # if schema changed
 - Accents work correctly in import (an earlier "scrambled groups" report was a corrupted bash-generated sample file, not an app bug).
 
 ## Verification status
-- 214 automated tests green; `tsc --noEmit` + `next build` clean.
+- 239 automated tests green; `tsc --noEmit` + `next build` clean.
+- Template editor barriers (Plan 18 T11/T12): tables keep min-spacing from each other AND from **zone walls** (`spacingGeom` + `zoneClearance`), with visual boundaries + drag barrier + add-outside-limit. Rect tables seat along their length (`chairs.ts`). Detalhes moment thumbnails render the **arrangement** (tables, no zones) via `ArrangementThumbnail`.
 - Admin can **delete** weddings and venues (cascade) via "Apagar" buttons on `/admin` (`DELETE /api/weddings/[id]` + `DELETE /api/venues/[id]`; deleting a wedding cascades guests/groups/constraints/moments/tables; deleting a venue cascades floor plans/table types/templates and nulls referencing weddings' venueId).
 - Floor plans (layouts) have a **name** (`FloorPlan.name`, editable in the layouts list + editor) and can be **deleted** (`DELETE /api/floorplans/[id]` — cascades the plan's tables + any templates built on it). Layouts list shows the name (fallback "Planta N").
 - The dev DB (`prisma/dev.db`) was wiped clean of all QA/test data on 2026-07-13 — starts empty. (Note: orphaned uploaded images may remain under `data/uploads/`.) Every plan's UI was driven end-to-end with Playwright (generate, drag, colors, locks, swap, catalog, spacing, boundary, chairs, zones, template-apply, wedding table move/add/remove + template-unchanged) with screenshots in `.superpowers/`.
