@@ -262,6 +262,21 @@ export default function TemplateTableEditor({
     void persistElements(next);
   }
 
+  // Resize keeps the element's CENTRE fixed (grows/shrinks symmetrically) so it
+  // doesn't drift when you tweak a dimension. `dims` are in natural pixels.
+  function handleResizeElement(id: string, dims: { w?: number; h?: number }) {
+    const next = elements.map((e) => {
+      if (e.id !== id) return e;
+      const cx = e.x + e.w / 2;
+      const cy = e.y + e.h / 2;
+      const w = dims.w != null && dims.w > 0 ? dims.w : e.w;
+      const h = dims.h != null && dims.h > 0 ? dims.h : e.h;
+      return { ...e, w, h, x: cx - w / 2, y: cy - h / 2 };
+    });
+    setElements(next);
+    void persistElements(next);
+  }
+
   function handleDeleteElement(id: string) {
     const next = elements.filter((e) => e.id !== id);
     setElements(next);
@@ -524,6 +539,49 @@ export default function TemplateTableEditor({
                   onChange={(e) => handleUpdateElement(selectedElement.id, { color: e.target.value })}
                 />
               </label>
+              {(() => {
+                const elScale = floorPlan?.scale ?? 0;
+                const unit = elScale > 0 ? "m" : "px";
+                const toDisp = (px: number) =>
+                  elScale > 0 ? Math.round((px / elScale) * 100) / 100 : Math.round(px);
+                const toPx = (val: number) => (elScale > 0 ? val * elScale : val);
+                return (
+                  <>
+                    <label>
+                      Largura ({unit}){" "}
+                      <input
+                        data-testid="element-width-input"
+                        type="number"
+                        min={0}
+                        step={elScale > 0 ? 0.1 : 5}
+                        value={toDisp(selectedElement.w)}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (!Number.isNaN(v) && v > 0)
+                            handleResizeElement(selectedElement.id, { w: toPx(v) });
+                        }}
+                        style={{ width: 80 }}
+                      />
+                    </label>
+                    <label>
+                      Comprimento ({unit}){" "}
+                      <input
+                        data-testid="element-height-input"
+                        type="number"
+                        min={0}
+                        step={elScale > 0 ? 0.1 : 5}
+                        value={toDisp(selectedElement.h)}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (!Number.isNaN(v) && v > 0)
+                            handleResizeElement(selectedElement.id, { h: toPx(v) });
+                        }}
+                        style={{ width: 80 }}
+                      />
+                    </label>
+                  </>
+                );
+              })()}
               <button
                 type="button"
                 data-testid="delete-selected-element"
