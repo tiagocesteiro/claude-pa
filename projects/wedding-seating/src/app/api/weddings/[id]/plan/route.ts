@@ -5,6 +5,10 @@ import { listWeddingTables } from "@/lib/db/weddingTables";
 import { getWedding } from "@/lib/db/weddings";
 import { getFloorPlan } from "@/lib/db/floorplans";
 
+// Node runtime (prisma is Node-only); headroom for building the plan payload (Fase 0).
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [wedding, guests, constraints, tables] = await Promise.all([

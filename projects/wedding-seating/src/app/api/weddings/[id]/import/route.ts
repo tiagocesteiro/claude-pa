@@ -3,6 +3,11 @@ import { parseGuestWorkbook } from "@/lib/import/parseGuests";
 import { importGuests } from "@/lib/import/importGuests";
 import { getWedding } from "@/lib/db/weddings";
 
+// Node runtime (exceljs is Node-only); larger serverless timeout for parsing a
+// large guest workbook (Fase 0 — deploy readiness).
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

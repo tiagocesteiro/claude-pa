@@ -6,6 +6,11 @@ import { saveAssignment } from "@/lib/db/assignment";
 import { buildSeatingInput } from "@/lib/plan/buildSeatingInput";
 import { solveSeating } from "@/lib/seating";
 
+// Node runtime (prisma/solver are Node-only); larger serverless timeout for the
+// compute-heavy seating solver (Fase 0 — deploy readiness).
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { saveUploadedImage } from "@/lib/upload";
 import { prisma } from "@/lib/db/client";
 
+// Node runtime (filesystem/Buffer + prisma); headroom for the multipart upload (Fase 0).
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const form = await req.formData();
