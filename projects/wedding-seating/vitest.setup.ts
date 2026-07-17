@@ -1,2 +1,3 @@
-// Per-file: ensure every test worker talks to the throwaway test DB.
-process.env.DATABASE_URL = "file:./test.db";
+// DATABASE_URL is injected per-worker via vitest.config's `test.env` (the isolated
+// Postgres `test` schema). No override needed here.
+export {};
