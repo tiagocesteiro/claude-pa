@@ -119,6 +119,18 @@
     {
       "date": "2026-07-17",
       "name": "Serviço de Cancelamento de Ginásio"
+    },
+    {
+      "date": "2026-07-18",
+      "name": "n8n Ops Watchdog"
+    },
+    {
+      "date": "2026-07-18",
+      "name": "Regulatory Watch Agent (economia circular/embalagens)"
+    },
+    {
+      "date": "2026-07-18",
+      "name": "Vending Ops Copilot"
     }
   ]
 }
