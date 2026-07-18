@@ -26,7 +26,14 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     globalSetup: ["./vitest.globalSetup.ts"],
     fileParallelism: false,
-    // Every test worker talks to the isolated `test` schema.
-    env: { DATABASE_URL: testUrl },
+    // Every test worker talks to the isolated `test` schema. Supabase Storage vars
+    // are also forwarded here (loadEnv reads `.env`, but vitest doesn't load it into
+    // process.env on its own) so upload.test.ts/images.test.ts can hit the real bucket.
+    env: {
+      DATABASE_URL: testUrl,
+      NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
+      SUPABASE_STORAGE_BUCKET: env.SUPABASE_STORAGE_BUCKET,
+    },
   },
 });

@@ -16,6 +16,7 @@ import { resolveInsideZone } from "@/lib/floorplan/zoneClearance";
 import { tableRenderSize, type ShapeTable } from "@/lib/floorplan/tableShape";
 import { parseElements, serializeElements, type RoomElement } from "@/lib/floorplan/elements";
 import type { TableInput } from "@/lib/db/tables";
+import { imageUrlFor } from "@/lib/images";
 
 // Reuses the same canvas as the floor-plan/plan editors (Plan 2/12): image
 // background + zones + realistic round/oval/rect table shapes + drag. Loaded
@@ -68,12 +69,6 @@ let elementCounter = 0;
 function newElementId(): string {
   elementCounter += 1;
   return `el-${Date.now()}-${elementCounter}`;
-}
-
-function imageUrlFor(image: string): string | undefined {
-  if (!image) return undefined;
-  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
-  return `/api/uploads/${rel}`;
 }
 
 /** Zones (read-only background) for this layout: prefers the multi-zone field,

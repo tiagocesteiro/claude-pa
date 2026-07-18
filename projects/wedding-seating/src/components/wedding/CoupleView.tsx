@@ -9,6 +9,7 @@ import type { PlanGuest, PlanTable, PlanLayout, PlanGroup } from "@/components/p
 import { parseElements } from "@/lib/floorplan/elements";
 import { buildPdfFilename, groupGuestsByTable } from "@/lib/plan/pdfExport";
 import { buildColorMap, type AttributeKey } from "@/lib/plan/colors";
+import { imageUrlFor } from "@/lib/images";
 
 // "Pintar por" control options — same set + labels as the seating plan's (Plan 18
 // Task 4), reused here for the overview's dinner render. Label shown to the user
@@ -120,12 +121,6 @@ const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanva
 // mesas tab; each moment's canvas fits inside this box preserving its image's aspect ratio.
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 560;
-
-function imageUrlFor(image: string | undefined): string | undefined {
-  if (!image) return undefined;
-  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
-  return `/api/uploads/${rel}`;
-}
 
 function parseZones(zones: string | null | undefined): Point[][] {
   if (!zones) return [];

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
+import { imageUrlFor } from "@/lib/images";
 
 // Reused for the Detalhes moment thumbnail: a SMALL read-only render of the
 // template's tables placed on its room — no zones, no seated guests. Loaded
@@ -39,15 +40,6 @@ interface TemplateTableRow {
   depth: number | null;
   name: string | null;
   heads: boolean | null;
-}
-
-// Same rel-path convention used throughout (WeddingDetails, CoupleView): the DB
-// stores image paths like "data/uploads/<file>" — strip that prefix so the
-// browser hits the /api/uploads/<file> route instead.
-function imageUrlFor(image: string | null | undefined): string | undefined {
-  if (!image) return undefined;
-  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
-  return `/api/uploads/${rel}`;
 }
 
 // Required by PlanCanvas's prop types even though nothing can trigger them here

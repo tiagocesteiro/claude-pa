@@ -8,6 +8,7 @@ import CalibrationTool from "@/components/editor/CalibrationTool";
 import type { CanvasMode } from "@/components/editor/FloorPlanCanvas";
 import type { Point } from "@/lib/floorplan/geometry";
 import { fitRoomScale } from "@/lib/floorplan/roomFit";
+import { imageUrlFor } from "@/lib/images";
 
 const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), {
   ssr: false,
@@ -31,12 +32,6 @@ interface FloorPlanRecord {
   minSpacing: number | null;
   boundary: string | null;
   zones: string | null;
-}
-
-function imageUrlFor(image: string): string | undefined {
-  if (!image) return undefined;
-  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
-  return `/api/uploads/${rel}`;
 }
 
 export default function FloorPlanEditorPage() {

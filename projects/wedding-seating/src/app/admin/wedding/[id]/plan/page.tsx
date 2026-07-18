@@ -11,6 +11,7 @@ import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
 import type { AttributeKey } from "@/lib/plan/colors";
 import { parseElements } from "@/lib/floorplan/elements";
+import { imageUrlFor } from "@/lib/images";
 
 // "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
 // for "no color") passed to setColorAttr / buildColorMap.
@@ -47,12 +48,6 @@ const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
 // fits inside this box preserving the uploaded image's aspect ratio.
 const CANVAS_WIDTH = 960;
 const CANVAS_HEIGHT = 640;
-
-function imageUrlFor(image: string): string | undefined {
-  if (!image) return undefined;
-  const rel = image.replace(/^data\/uploads\//, "").replace(/\\/g, "/");
-  return `/api/uploads/${rel}`;
-}
 
 // Resolves an engine warning to a human-readable, NAME-based message: group-split looks up
 // warning.groupId in the groups list, together-split/separate-unsatisfiable look up both ids

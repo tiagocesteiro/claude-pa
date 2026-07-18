@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.110.7",
     "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "konva": "^10.3.0",
