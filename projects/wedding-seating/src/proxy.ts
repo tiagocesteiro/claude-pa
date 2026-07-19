@@ -1,39 +1,44 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
 /**
- * INTERIM shared-password gate (HTTP Basic Auth).
+ * Proxy (Next.js 16's renamed Middleware) — two concerns merged into the one
+ * allowed proxy file:
  *
- * The app has no real authentication yet (that lands in Fase C: Supabase Auth +
- * venue/couple accounts). Until then this keeps the deployed site private without
- * paying for Vercel's paid Deployment Protection, and — unlike Vercel's setting —
- * it also covers the production URL and every /api route.
- *
- * Active ONLY when `SITE_PASSWORD` is set, so local development stays open.
- * Remove this file once Fase C's real auth + tenancy (Fase D) are in place.
- *
- * Note: Next.js 16 renamed the Middleware convention to Proxy (`src/proxy.ts`).
+ * 1. INTERIM shared-password gate (HTTP Basic Auth) — kept as-is from before
+ *    Fase C. Active ONLY when `SITE_PASSWORD` is set, so local dev stays open.
+ *    Remove once Fase D's real route protection is in place.
+ * 2. Supabase session refresh (Fase C) — keeps the auth cookie alive so
+ *    logged-in users aren't silently signed out. This does NOT redirect or
+ *    gate anything by auth state (that's Fase D) — logged-out users can still
+ *    reach every page for now.
  */
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const password = process.env.SITE_PASSWORD;
-  if (!password) return NextResponse.next(); // no password configured → open (local dev)
-
-  const auth = req.headers.get("authorization");
-  if (auth?.startsWith("Basic ")) {
-    try {
-      const decoded = atob(auth.slice("Basic ".length));
-      const sep = decoded.indexOf(":");
-      const supplied = sep >= 0 ? decoded.slice(sep + 1) : "";
-      // Any username is accepted; only the password matters for this interim gate.
-      if (supplied === password) return NextResponse.next();
-    } catch {
-      // malformed header → fall through to the 401 below
+  if (password) {
+    const auth = req.headers.get("authorization");
+    let authorized = false;
+    if (auth?.startsWith("Basic ")) {
+      try {
+        const decoded = atob(auth.slice("Basic ".length));
+        const sep = decoded.indexOf(":");
+        const supplied = sep >= 0 ? decoded.slice(sep + 1) : "";
+        // Any username is accepted; only the password matters for this interim gate.
+        authorized = supplied === password;
+      } catch {
+        // malformed header → not authorized, falls through to the 401 below
+      }
+    }
+    if (!authorized) {
+      return new NextResponse("Acesso privado.", {
+        status: 401,
+        headers: { "WWW-Authenticate": 'Basic realm="Wedding Seating (privado)"' },
+      });
     }
   }
 
-  return new NextResponse("Acesso privado.", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Wedding Seating (privado)"' },
-  });
+  // Basic-auth gate passed (or not configured) — refresh the Supabase session.
+  return updateSession(req);
 }
 
 export const config = {

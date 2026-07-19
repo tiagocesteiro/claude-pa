@@ -10,11 +10,22 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+/// Mirrors a Supabase `auth.users` row (id = same uuid). Not a Prisma relation
+/// to auth.users — that schema lives outside Prisma's reach. Created/upserted
+/// right after signup/login (see `src/lib/db/profiles.ts`).
+model Profile {
+  id        String   @id // Supabase auth.users.id (uuid)
+  email     String
+  role      String   // "venue" | "couple" | "admin"
+  createdAt DateTime @default(now())
+}
+
 model Venue {
   id        String     @id @default(cuid())
   name      String
   location  String?
   photos    String?    // JSON array of file paths
+  ownerId   String?    // Profile.id of the venue account — nullable until Fase D tightens + filters
   floorPlans FloorPlan[]
   tableTypes TableType[]
   layoutTemplates LayoutTemplate[]
@@ -97,6 +108,7 @@ model Wedding {
   date          DateTime?
   venueId       String?
   venue         Venue?     @relation(fields: [venueId], references: [id])
+  ownerId       String?    // Profile.id of the couple account — nullable (a venue may create the wedding first)
   partner1      String?
   partner1Email String?
   partner1Phone String?
@@ -113,7 +125,22 @@ model Wedding {
   groups        Group[]
   constraints   Constraint[]
   moments       WeddingMoment[]
+  invites       WeddingInvite[]
   createdAt     DateTime  @default(now())
+}
+
+/// Invites a couple/venue account to a Wedding they don't yet own an account
+/// for (issue/accept endpoints land in Fase E — this is just the data model).
+model WeddingInvite {
+  id           String    @id @default(cuid())
+  weddingId    String
+  wedding      Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  email        String
+  token        String    @unique
+  role         String    // "venue" | "couple"
+  acceptedById String?
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
 }
 
 model WeddingMoment {
