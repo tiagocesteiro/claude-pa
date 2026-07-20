@@ -57,8 +57,8 @@ it("persists a valid floor plan assignment for a moment", async () => {
   const body = await res.json();
   expect(body.floorPlanId).toBe(fp.id);
 
-  const moment = await prisma.weddingMoment.findUnique({
-    where: { weddingId_kind: { weddingId: w.id, kind: "cocktail" } },
+  const moment = await prisma.weddingMoment.findFirst({
+    where: { weddingId: w.id, kind: "cocktail" },
   });
   expect(moment?.floorPlanId).toBe(fp.id);
 });
@@ -121,8 +121,8 @@ it("persists a valid template assignment for a moment", async () => {
   const body = await res.json();
   expect(body.templateId).toBe(template.id);
 
-  const moment = await prisma.weddingMoment.findUnique({
-    where: { weddingId_kind: { weddingId: w.id, kind: "dance" } },
+  const moment = await prisma.weddingMoment.findFirst({
+    where: { weddingId: w.id, kind: "dance" },
   });
   expect(moment?.templateId).toBe(template.id);
 });

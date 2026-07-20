@@ -30,6 +30,7 @@ model Venue {
   tableTypes      TableType[]
   layoutTemplates LayoutTemplate[]
   weddings        Wedding[]
+  decorItems      DecorItem[]
   createdAt       DateTime         @default(now())
 }
 
@@ -134,6 +135,7 @@ model Wedding {
   moments       WeddingMoment[]
   invites       WeddingInvite[]
   layouts       WeddingLayout[]
+  suppliers     Supplier[]
   createdAt     DateTime        @default(now())
 }
 
@@ -196,18 +198,94 @@ model WeddingInvite {
   createdAt    DateTime @default(now())
 }
 
+/// A moment in the wedding day (cerimónia, cocktail, jantar, dança, or a custom
+/// one the couple adds). Dynamic now: the 4 defaults are seeded on wedding
+/// creation with a `kind` tag + `title`/`order`, but the couple can add/remove/
+/// rename/reorder freely, so identity is `id` (not the old (weddingId,kind)
+/// unique). Each moment keeps a venue arrangement VIEW (`templateId`) and gains a
+/// decoration list + a task list.
 model WeddingMoment {
   id          String          @id @default(cuid())
   weddingId   String
   wedding     Wedding         @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  kind        String // "ceremony" | "cocktail" | "dinner" | "dance"
+  kind        String? // tag for the seeded defaults (ceremony|cocktail|dinner|dance); null for custom
+  title       String? // display name; falls back to the kind label when null
+  order       Int             @default(0)
   floorPlanId String?
   floorPlan   FloorPlan?      @relation(fields: [floorPlanId], references: [id])
   templateId  String?
   template    LayoutTemplate? @relation(fields: [templateId], references: [id])
-  notes       String?
+  notes       String? // legacy free-text (superseded by tasks); kept, unused by new UI
+  tasks       MomentTask[]
+  decor       MomentDecor[]
 
-  @@unique([weddingId, kind])
+  @@index([weddingId])
+}
+
+/// A supplier/vendor for a wedding (catering, fotografia, DJ, ...). Wedding-owned;
+/// added on the Detalhes page. Assignable as the responsible party of a task.
+model Supplier {
+  id        String       @id @default(cuid())
+  weddingId String
+  wedding   Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name      String
+  service   String? // what they provide (free text)
+  contact   String? // phone/email/note
+  createdAt DateTime     @default(now())
+  tasks     MomentTask[]
+
+  @@index([weddingId])
+}
+
+/// A to-do / pending item within a moment, assignable to the couple, the venue,
+/// or a specific supplier (`assignee` + `supplierId`).
+model MomentTask {
+  id         String        @id @default(cuid())
+  momentId   String
+  moment     WeddingMoment @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  text       String
+  done       Boolean       @default(false)
+  assignee   String        @default("couple") // "couple" | "venue" | "supplier"
+  supplierId String? // set when assignee == "supplier"
+  supplier   Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  dueDate    DateTime?
+  order      Int           @default(0)
+  createdAt  DateTime      @default(now())
+
+  @@index([momentId])
+}
+
+/// A decoration line on a moment: either references a venue catalog item
+/// (`decorItemId`) or is the couple's own custom item (`name`/`note` when the ref
+/// is null). `quantity` applies to both.
+model MomentDecor {
+  id          String        @id @default(cuid())
+  momentId    String
+  moment      WeddingMoment @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  decorItemId String? // from the venue's catalog; null => custom item
+  decorItem   DecorItem?    @relation(fields: [decorItemId], references: [id], onDelete: SetNull)
+  name        String? // custom item name (when decorItemId is null)
+  note        String?
+  quantity    Int           @default(1)
+  createdAt   DateTime      @default(now())
+
+  @@index([momentId])
+}
+
+/// The venue's decoration catalog (dataset). Venue-owned; the couple picks items
+/// from it per moment (and may also add their own custom MomentDecor lines).
+model DecorItem {
+  id          String        @id @default(cuid())
+  venueId     String
+  venue       Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name        String
+  category    String?
+  image       String? // optional Supabase Storage object path
+  price       Float?
+  createdAt   DateTime      @default(now())
+  momentDecor MomentDecor[]
+
+  @@index([venueId])
 }
 
 model Group {

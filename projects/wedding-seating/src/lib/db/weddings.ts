@@ -1,6 +1,6 @@
 import type { Wedding } from "@prisma/client";
 import { prisma } from "./client";
-import { MOMENT_KINDS } from "./moments";
+import { defaultMomentSeed } from "./moments";
 
 export interface WeddingDetailFields {
   couple?: string;
@@ -33,9 +33,7 @@ export function createWedding(input: {
 }): Promise<Wedding> {
   return prisma.$transaction(async (tx) => {
     const wedding = await tx.wedding.create({ data: input });
-    await tx.weddingMoment.createMany({
-      data: MOMENT_KINDS.map((kind) => ({ weddingId: wedding.id, kind, floorPlanId: null })),
-    });
+    await tx.weddingMoment.createMany({ data: defaultMomentSeed(wedding.id) });
     return wedding;
   });
 }

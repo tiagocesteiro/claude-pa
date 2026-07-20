@@ -471,6 +471,80 @@ export async function assertConstraintAccess(
   await assertWeddingAccess(actor, c.weddingId, mode);
 }
 
+// ── Moments · tasks · decoration · suppliers (wedding-owned) ─────────────────
+
+/** A WeddingMoment (and its tasks + decor) is owned by the couple who owns the
+ * parent wedding — resolve through weddingId → the wedding gate. */
+export async function assertMomentAccess(
+  actor: Actor,
+  momentId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const m = await prisma.weddingMoment.findUnique({
+    where: { id: momentId },
+    select: { weddingId: true },
+  });
+  if (!m) throw notFound("Moment");
+  await assertWeddingAccess(actor, m.weddingId, mode);
+}
+
+/** A task belongs to a moment → wedding. */
+export async function assertTaskAccess(
+  actor: Actor,
+  taskId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const t = await prisma.momentTask.findUnique({
+    where: { id: taskId },
+    select: { moment: { select: { weddingId: true } } },
+  });
+  if (!t) throw notFound("Task");
+  await assertWeddingAccess(actor, t.moment.weddingId, mode);
+}
+
+/** A decoration line belongs to a moment → wedding. */
+export async function assertMomentDecorAccess(
+  actor: Actor,
+  decorId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const d = await prisma.momentDecor.findUnique({
+    where: { id: decorId },
+    select: { moment: { select: { weddingId: true } } },
+  });
+  if (!d) throw notFound("Decor");
+  await assertWeddingAccess(actor, d.moment.weddingId, mode);
+}
+
+/** A supplier is wedding-owned. */
+export async function assertSupplierAccess(
+  actor: Actor,
+  supplierId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const s = await prisma.supplier.findUnique({
+    where: { id: supplierId },
+    select: { weddingId: true },
+  });
+  if (!s) throw notFound("Supplier");
+  await assertWeddingAccess(actor, s.weddingId, mode);
+}
+
+/** A DecorItem is venue-owned (the venue's catalog) — venue writes; couple reads
+ * a venue it has booked (same rule as floor plans / templates). */
+export async function assertDecorItemAccess(
+  actor: Actor,
+  decorItemId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const item = await prisma.decorItem.findUnique({
+    where: { id: decorItemId },
+    select: { venueId: true },
+  });
+  if (!item) throw notFound("Decor item");
+  await assertVenueAccess(actor, item.venueId, mode);
+}
+
 /**
  * A couple-owned WeddingLayout (and its tables + seats) is owned by the couple
  * who owns the parent wedding — resolve through weddingId and defer to the
