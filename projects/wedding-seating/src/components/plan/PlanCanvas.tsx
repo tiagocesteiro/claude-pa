@@ -131,6 +131,8 @@ export interface PlanCanvasProps {
   onAddElementAt?: (at: Point) => void;
   /** Called when an element's remove button is clicked (editMode). */
   onRemoveElement?: (id: string) => void;
+  /** Called on double-click of an element (editMode) — opens a name/size dialog. */
+  onEditElement?: (id: string) => void;
   /** Called (double-click on a table, Plan 18 Task 4) with the new name — `null`
    * clears it back to the "Mesa N" fallback. Only wired in the non-editMode,
    * interactive branch (see `handleTableDoubleClick` for the single-click guard). */
@@ -190,6 +192,7 @@ export default function PlanCanvas({
   onMoveElement,
   onAddElementAt,
   onRemoveElement,
+  onEditElement,
   onRenameTable,
   readOnly = false,
   onStageReady,
@@ -376,6 +379,8 @@ export default function PlanCanvas({
                       ? (e) => onMoveElement?.(el.id, toNatural({ x: e.target.x(), y: e.target.y() }))
                       : undefined
                   }
+                  onDblClick={elementsEditable ? () => onEditElement?.(el.id) : undefined}
+                  onDblTap={elementsEditable ? () => onEditElement?.(el.id) : undefined}
                 />
                 <Text
                   x={displayX}

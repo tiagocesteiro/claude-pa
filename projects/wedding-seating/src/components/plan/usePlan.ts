@@ -632,6 +632,16 @@ export function usePlan(weddingId: string, layoutId?: string) {
     [elements, persistElements]
   );
 
+  // Edit an element's label and/or size (natural pixels) — double-click dialog.
+  const updateElement = useCallback(
+    (id: string, patch: Partial<Pick<RoomElement, "label" | "w" | "h">>) => {
+      const previous = elements;
+      const next = elements.map((e) => (e.id === id ? { ...e, ...patch } : e));
+      void persistElements(next, previous);
+    },
+    [elements, persistElements]
+  );
+
   const violations: PlanViolations = useMemo(
     () => planViolations(guests, tables, constraints),
     [guests, tables, constraints]
@@ -677,6 +687,7 @@ export function usePlan(weddingId: string, layoutId?: string) {
     addElement,
     moveElement,
     removeElement,
+    updateElement,
     violations,
     colorAttr,
     setColorAttr,

@@ -88,6 +88,7 @@ export default function LayoutPlanPage() {
     addElement,
     moveElement,
     removeElement,
+    updateElement,
     violations,
     colorAttr,
     setColorAttr,
@@ -101,6 +102,31 @@ export default function LayoutPlanPage() {
   // Element-editing (bar, dance floor, ...) — mutually exclusive with add-table.
   const [addElMode, setAddElMode] = useState(false);
   const [elLabel, setElLabel] = useState("Pista de dança");
+  // Double-click properties dialog for an element (name + size in metres).
+  const [editEl, setEditEl] = useState<{ id: string; label: string; widthM: string; depthM: string } | null>(null);
+  const elScale = layout?.scale && layout.scale > 0 ? layout.scale : 50;
+
+  function openElementDialog(id: string) {
+    const el = elements.find((e) => e.id === id);
+    if (!el) return;
+    setEditEl({
+      id,
+      label: el.label,
+      widthM: (el.w / elScale).toFixed(1),
+      depthM: (el.h / elScale).toFixed(1),
+    });
+  }
+  function saveElementDialog() {
+    if (!editEl) return;
+    const w = Number(editEl.widthM) * elScale;
+    const h = Number(editEl.depthM) * elScale;
+    updateElement(editEl.id, {
+      label: editEl.label.trim() || "Elemento",
+      ...(w > 0 ? { w } : {}),
+      ...(h > 0 ? { h } : {}),
+    });
+    setEditEl(null);
+  }
 
   // Whether this layout's moment has a seating plan — gates all the guest-seating
   // UI. Defaults to true until the plan payload loads.
@@ -292,8 +318,9 @@ export default function LayoutPlanPage() {
 
       {editMode && (
         <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: -4 }}>
-          Arrasta as mesas para as posicionar. Usa <strong>Adicionar mesa</strong> e clica na sala para
-          colocar; o botão de remover aparece em cada mesa. A sentada mantém-se ao mover mesas.
+          Arrasta as mesas/elementos para os posicionar. Usa <strong>Adicionar mesa</strong> ou{" "}
+          <strong>Adicionar elemento</strong> e clica na sala para colocar. <strong>Duplo-clique num elemento</strong>{" "}
+          (bar, pista…) abre as propriedades (nome + tamanho). O botão de remover aparece em cada mesa/elemento.
         </p>
       )}
 
@@ -347,6 +374,7 @@ export default function LayoutPlanPage() {
             onMoveElement={moveElement}
             onAddElementAt={placeElementAt}
             onRemoveElement={removeElement}
+            onEditElement={openElementDialog}
           />
 
           {!editMode && seatingEnabled && (
@@ -423,6 +451,60 @@ export default function LayoutPlanPage() {
             dietary: g.dietary,
           }))}
         />
+      )}
+
+      {/* Element properties dialog (double-click) */}
+      {editEl && (
+        <div
+          onClick={() => setEditEl(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: 20, width: 300, boxShadow: "0 8px 30px rgba(0,0,0,0.2)" }}
+          >
+            <h3 style={{ marginTop: 0 }}>Propriedades do elemento</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <label style={{ fontSize: 13 }}>
+                Nome
+                <input
+                  className="input"
+                  value={editEl.label}
+                  onChange={(e) => setEditEl((s) => (s ? { ...s, label: e.target.value } : s))}
+                  autoFocus
+                />
+              </label>
+              <div style={{ display: "flex", gap: 10 }}>
+                <label style={{ fontSize: 13, flex: 1 }}>
+                  Largura (m)
+                  <input
+                    className="input"
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    value={editEl.widthM}
+                    onChange={(e) => setEditEl((s) => (s ? { ...s, widthM: e.target.value } : s))}
+                  />
+                </label>
+                <label style={{ fontSize: 13, flex: 1 }}>
+                  Comprimento (m)
+                  <input
+                    className="input"
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    value={editEl.depthM}
+                    onChange={(e) => setEditEl((s) => (s ? { ...s, depthM: e.target.value } : s))}
+                  />
+                </label>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <Button variant="ghost" onClick={() => setEditEl(null)}>Cancelar</Button>
+              <Button variant="primary" onClick={saveElementDialog}>Guardar</Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
