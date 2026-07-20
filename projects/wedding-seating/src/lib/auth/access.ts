@@ -288,6 +288,9 @@ export async function listVenueBookings(actor: Actor): Promise<VenueBookingSumma
       // PII-free: only RSVP status + whether the guest is seated. NEVER name/dietary.
       guests: { select: { rsvp: true, assignedTableId: true } },
       _count: { select: { tables: true } },
+      // The couple's FINAL layout drives progress now (counts only, no PII);
+      // falls back to the legacy arrangement below when none is marked final.
+      layouts: { where: { isFinal: true }, select: { _count: { select: { tables: true, seats: true } } } },
     },
   });
 
@@ -296,13 +299,19 @@ export async function listVenueBookings(actor: Actor): Promise<VenueBookingSumma
     let confirmed = 0;
     let pending = 0;
     let declined = 0;
-    let seated = 0;
+    let legacySeated = 0;
     for (const g of w.guests) {
       if (g.rsvp === "confirmed") confirmed++;
       else if (g.rsvp === "declined") declined++;
       else pending++; // "pending" or null → pending
-      if (g.assignedTableId) seated++;
+      if (g.assignedTableId) legacySeated++;
     }
+    const final = w.layouts[0];
+    const hasFinal = w.layouts.length > 0;
+    const seated = hasFinal ? final._count.seats : legacySeated;
+    const arrangementPicked = hasFinal
+      ? final._count.tables > 0
+      : w._count.tables > 0 || w.templateId != null;
     return {
       id: w.id,
       couple: w.couple,
@@ -311,7 +320,7 @@ export async function listVenueBookings(actor: Actor): Promise<VenueBookingSumma
       venueName: w.venue?.name ?? null,
       guestEstimate: w.guestEstimate,
       guests: { total, confirmed, pending, declined, seated },
-      arrangementPicked: w._count.tables > 0 || w.templateId != null,
+      arrangementPicked,
       seatingDone: total > 0 && seated === total,
     };
   });
@@ -378,6 +387,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
         venue: { select: { name: true } },
         guests: { select: { rsvp: true, assignedTableId: true } },
         _count: { select: { tables: true } },
+        layouts: { where: { isFinal: true }, select: { _count: { select: { tables: true, seats: true } } } },
       },
     }),
     prisma.profile.findMany({ select: { id: true, email: true } }),
@@ -400,14 +410,20 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       let confirmed = 0;
       let pending = 0;
       let declined = 0;
-      let seated = 0;
+      let legacySeated = 0;
       for (const g of w.guests) {
         if (g.rsvp === "confirmed") confirmed++;
         else if (g.rsvp === "declined") declined++;
         else pending++; // "pending" or null → pending
-        if (g.assignedTableId) seated++;
+        if (g.assignedTableId) legacySeated++;
       }
       const total = w.guests.length;
+      const final = w.layouts[0];
+      const hasFinal = w.layouts.length > 0;
+      const seated = hasFinal ? final._count.seats : legacySeated;
+      const arrangementPicked = hasFinal
+        ? final._count.tables > 0
+        : w._count.tables > 0 || w.templateId != null;
       return {
         id: w.id,
         couple: w.couple,
@@ -415,7 +431,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
         venueName: w.venue?.name ?? null,
         ownerEmail: ownerEmail(w.ownerId),
         guests: { total, confirmed, pending, declined, seated },
-        arrangementPicked: w._count.tables > 0 || w.templateId != null,
+        arrangementPicked,
         seatingDone: total > 0 && seated === total,
       };
     }),

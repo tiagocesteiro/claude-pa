@@ -260,6 +260,39 @@ describe("Fase E — venue booking oversight (PII-free)", () => {
     expect(a.seatingDone).toBe(false); // 2 of 4 seated
   });
 
+  it("progress reflects the couple's FINAL layout, not the legacy arrangement", async () => {
+    const w = await prisma.wedding.create({
+      data: { couple: "Layout Couple", ownerId: CA.userId, venueId: fe.venueA },
+    });
+    // g1 carries a legacy assignedTableId that must now be IGNORED (superseded by
+    // the final layout's own seating). Layout seats g1 + g2 → 2 of 3.
+    const g1 = await prisma.guest.create({
+      data: { weddingId: w.id, name: "L1", rsvp: "confirmed", assignedTableId: "legacy" },
+    });
+    const g2 = await prisma.guest.create({ data: { weddingId: w.id, name: "L2", rsvp: "confirmed" } });
+    await prisma.guest.create({ data: { weddingId: w.id, name: "L3", rsvp: "pending" } });
+    const layout = await prisma.weddingLayout.create({
+      data: { weddingId: w.id, name: "Final", isFinal: true },
+    });
+    const t1 = await prisma.table.create({
+      data: { weddingLayoutId: layout.id, shape: "round", capacity: 8, x: 0, y: 0, fixed: false },
+    });
+    await prisma.table.create({
+      data: { weddingLayoutId: layout.id, shape: "round", capacity: 8, x: 1, y: 1, fixed: false },
+    });
+    await prisma.layoutSeat.createMany({
+      data: [
+        { weddingLayoutId: layout.id, guestId: g1.id, tableId: t1.id },
+        { weddingLayoutId: layout.id, guestId: g2.id, tableId: t1.id },
+      ],
+    });
+
+    const a = (await listVenueBookings(VA)).find((b) => b.id === w.id)!;
+    expect(a.arrangementPicked).toBe(true); // the final layout has tables
+    expect(a.guests.seated).toBe(2); // from LayoutSeat — legacy assignedTableId would've been 1
+    expect(a.seatingDone).toBe(false); // 2 of 3
+  });
+
   it("payload is counts-only — no guest name/dietary leaks anywhere", async () => {
     const bookings = await listVenueBookings(VA);
     const a = bookings.find((b) => b.id === fe.weddingA)!;

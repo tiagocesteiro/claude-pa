@@ -180,15 +180,44 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
       setLoading(true);
       setError(null);
       try {
-        const [weddingRes, planRes] = await Promise.all([
+        const [weddingRes, layoutsRes] = await Promise.all([
           fetch(`/api/weddings/${weddingId}`),
-          fetch(`/api/weddings/${weddingId}/plan`),
+          fetch(`/api/weddings/${weddingId}/layouts`),
         ]);
         if (!weddingRes.ok) throw new Error("wedding not found");
         const weddingData = (await weddingRes.json()) as WeddingDetail;
-        const planData = planRes.ok
-          ? ((await planRes.json()) as PlanResponse)
-          : { guests: [], tables: [], layout: null };
+
+        // The DINNER render comes from the couple's FINAL layout (its tables +
+        // per-layout seating). Falls back to the legacy wedding arrangement when
+        // no layout is marked final yet, so pre-layout weddings still render.
+        let planData: PlanResponse = { guests: [], tables: [], layout: null };
+        let finalId: string | null = null;
+        if (layoutsRes.ok) {
+          const { layouts } = (await layoutsRes.json()) as {
+            layouts: { id: string; isFinal: boolean }[];
+          };
+          finalId = layouts?.find((l) => l.isFinal)?.id ?? null;
+        }
+        if (finalId) {
+          const pRes = await fetch(`/api/layouts/${finalId}/plan`);
+          if (pRes.ok) {
+            const d = (await pRes.json()) as {
+              guests: PlanGuest[];
+              tables: PlanTable[];
+              seats?: { guestId: string; tableId: string }[];
+              background?: PlanLayout | null;
+            };
+            const seatBy = new Map((d.seats ?? []).map((s) => [s.guestId, s.tableId]));
+            planData = {
+              guests: (d.guests ?? []).map((g) => ({ ...g, assignedTableId: seatBy.get(g.id) ?? null })),
+              tables: d.tables ?? [],
+              layout: d.background ?? null,
+            };
+          }
+        } else {
+          const planRes = await fetch(`/api/weddings/${weddingId}/plan`);
+          if (planRes.ok) planData = (await planRes.json()) as PlanResponse;
+        }
         if (cancelled) return;
         setWedding(weddingData);
         setPlan(planData);
