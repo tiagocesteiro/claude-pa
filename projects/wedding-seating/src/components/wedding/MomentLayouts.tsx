@@ -3,6 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button, Card, Badge, Input, Field } from "@/components/ui";
+import { imageUrlFor } from "@/lib/images";
+
+/** Client-safe parse of a template's photos JSON column → string[]. */
+function parsePhotos(json: string | null): string[] {
+  if (!json) return [];
+  try {
+    const p = JSON.parse(json);
+    return Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 interface LayoutRow {
   id: string;
@@ -18,6 +30,7 @@ interface TemplateRow {
   venueId: string;
   minGuests: number;
   maxGuests: number;
+  photos: string | null;
 }
 
 /** The layouts of ONE moment — create (from a venue template or a blank room),
@@ -180,6 +193,26 @@ export default function MomentLayouts({
                   ))}
                 </select>
               </Field>
+              {(() => {
+                const sel = venueTemplates.find((t) => t.id === tplId);
+                const photos = sel ? parsePhotos(sel.photos) : [];
+                if (!sel) return null;
+                return photos.length > 0 ? (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                    {photos.map((p) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={p}
+                        src={imageUrlFor(p)}
+                        alt={sel.name}
+                        style={{ width: 110, height: 82, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>Sem fotos de exemplo.</p>
+                );
+              })()}
               <Field label="Nome (opcional)">
                 <Input value={tplName} onChange={(e) => setTplName(e.target.value)} placeholder="ex.: Plano A" />
               </Field>

@@ -1,6 +1,35 @@
 import { describe, it, expect, afterAll } from "vitest";
-import { createTemplate, listTemplates, updateTemplate, deleteTemplate } from "./templates";
+import {
+  createTemplate,
+  listTemplates,
+  updateTemplate,
+  deleteTemplate,
+  getTemplatePhotos,
+  setTemplatePhotos,
+  parsePhotos,
+} from "./templates";
 import { prisma } from "./client";
+
+it("template example photos round-trip (add + remove)", async () => {
+  const v = await prisma.venue.create({ data: { name: "V Photos" } });
+  const t = await createTemplate({ venueId: v.id, name: "P", minGuests: 40, maxGuests: 80 });
+  expect(await getTemplatePhotos(t.id)).toEqual([]);
+
+  await setTemplatePhotos(t.id, ["tpl-x/a.jpg", "tpl-x/b.jpg"]);
+  expect(await getTemplatePhotos(t.id)).toEqual(["tpl-x/a.jpg", "tpl-x/b.jpg"]);
+
+  await setTemplatePhotos(t.id, ["tpl-x/a.jpg"]);
+  expect(await getTemplatePhotos(t.id)).toEqual(["tpl-x/a.jpg"]);
+
+  // Empty list clears the column back to null.
+  await setTemplatePhotos(t.id, []);
+  const row = await prisma.layoutTemplate.findUnique({ where: { id: t.id }, select: { photos: true } });
+  expect(row?.photos).toBeNull();
+
+  expect(parsePhotos(null)).toEqual([]);
+  expect(parsePhotos("not json")).toEqual([]);
+  expect(parsePhotos(JSON.stringify(["x", 3, "y"]))).toEqual(["x", "y"]);
+});
 
 it("CRUDs layout templates for a venue", async () => {
   const v = await prisma.venue.create({ data: { name: "V Tpl" } });

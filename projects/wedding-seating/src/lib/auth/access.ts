@@ -139,6 +139,7 @@ export function listTemplatesFor(actor: Actor) {
     venue: { select: { name: true } },
     floorPlanId: true,
     floorPlan: { select: { image: true } },
+    photos: true,
   } as const;
   if (actor.role === "admin") {
     return prisma.layoutTemplate.findMany({ select, orderBy: { createdAt: "asc" } });

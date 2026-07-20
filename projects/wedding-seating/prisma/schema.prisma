@@ -58,6 +58,7 @@ model LayoutTemplate {
   minGuests   Int
   maxGuests   Int
   lines       String? // JSON: { tableTypeId: string; quantity: number }[] (legacy/optional)
+  photos      String? // JSON array of Supabase Storage object paths — example photos of this setup, shown to couples when picking a base template
   tables      Table[]
   moments     WeddingMoment[]
   createdAt   DateTime        @default(now())

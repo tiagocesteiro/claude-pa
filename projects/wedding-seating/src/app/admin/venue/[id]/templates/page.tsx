@@ -3,6 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import TemplateTableEditor from "@/components/venue/TemplateTableEditor";
+import TemplatePhotos from "@/components/venue/TemplatePhotos";
+
+/** Client-safe parse of a template's photos JSON column → string[]. */
+function parsePhotos(json: string | null): string[] {
+  if (!json) return [];
+  try {
+    const p = JSON.parse(json);
+    return Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 interface TemplateRecord {
   id: string;
@@ -12,6 +24,7 @@ interface TemplateRecord {
   minGuests: number;
   maxGuests: number;
   lines: string;
+  photos: string | null;
 }
 
 interface FloorPlanOption {
@@ -317,6 +330,7 @@ export default function VenueTemplatesPage() {
                         {openEditorId === t.id ? "Fechar mesas" : "Editar mesas"}
                       </button>
                     </div>
+                    <TemplatePhotos templateId={t.id} initialPhotos={parsePhotos(t.photos)} />
                     {openEditorId === t.id && t.floorPlanId && (
                       <TemplateTableEditor
                         templateId={t.id}
