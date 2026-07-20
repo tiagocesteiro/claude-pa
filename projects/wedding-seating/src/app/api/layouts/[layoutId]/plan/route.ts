@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db/client";
 import { getLayout, listLayoutTables, getLayoutSeats } from "@/lib/db/layouts";
 import { listGuests } from "@/lib/db/guests";
 import { listConstraints } from "@/lib/db/constraints";
@@ -27,6 +28,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ layoutI
 
   const layout = await getLayout(layoutId);
   if (!layout) return NextResponse.json({ error: "layout não encontrado" }, { status: 404 });
+  // Whether the owning moment has a seating plan (gates the seating UI in the editor).
+  const moment = layout.momentId
+    ? await prisma.weddingMoment.findUnique({ where: { id: layout.momentId }, select: { hasSeating: true } })
+    : null;
+  const hasSeating = moment?.hasSeating ?? true;
 
   const [guests, constraints, tables, seats] = await Promise.all([
     listGuests(layout.weddingId),
@@ -65,7 +71,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ layoutI
   }
 
   return NextResponse.json({
-    layout: { id: layout.id, name: layout.name, isFinal: layout.isFinal, weddingId: layout.weddingId },
+    meta: {
+      id: layout.id,
+      name: layout.name,
+      isFinal: layout.isFinal,
+      weddingId: layout.weddingId,
+      momentId: layout.momentId,
+      hasSeating,
+    },
     background,
     tables,
     seats, // [{ id, weddingLayoutId, guestId, tableId }]

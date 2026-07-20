@@ -59,14 +59,12 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
 
   const detailsHref = `/admin/wedding/${weddingId}/details`;
   const guestsHref = `/admin/wedding/${weddingId}`;
-  const planHref = `/admin/wedding/${weddingId}/plan`;
   const coupleHref = `/admin/wedding/${weddingId}/couple`;
 
   const tabs = [
     { label: "Detalhes", href: detailsHref, active: pathname?.endsWith("/details") ?? false },
     { label: "Convidados", href: guestsHref, active: pathname === guestsHref },
-    // Restrições moved into the seating editor (per-layout "Restrições entre convidados").
-    { label: "Layouts", href: planHref, active: pathname?.includes("/plan") ?? false },
+    // Layouts + seating live INSIDE each moment now (no standalone Layouts tab).
     // one tab per moment
     ...moments.map((m) => ({
       label: momentLabel(m),

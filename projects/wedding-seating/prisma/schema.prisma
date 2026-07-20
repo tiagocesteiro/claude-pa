@@ -146,15 +146,20 @@ model Wedding {
 /// The guest list is shared at the wedding level — only tables + seating differ
 /// per layout, so a guest can sit at different tables across layouts.
 model WeddingLayout {
-  id          String       @id @default(cuid())
+  id          String         @id @default(cuid())
   weddingId   String
-  wedding     Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  wedding     Wedding        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  // A layout now belongs to a MOMENT (the room arrangement of that moment). A
+  // moment can have several; exactly one is `isFinal` PER MOMENT. `weddingId` is
+  // kept (populated from the moment) for tenancy + shared-guest resolution.
+  momentId    String?
+  moment      WeddingMoment? @relation(fields: [momentId], references: [id], onDelete: Cascade)
   name        String
-  isFinal     Boolean      @default(false)
+  isFinal     Boolean        @default(false)
   // Background source: EITHER a venue template's floor plan (read-only render
   // source — image/scale/zones/elements) …
   floorPlanId String?
-  floorPlan   FloorPlan?   @relation(fields: [floorPlanId], references: [id])
+  floorPlan   FloorPlan?     @relation(fields: [floorPlanId], references: [id])
   templateId  String? // provenance: the template it was created from (informational)
   // … OR a blank room the couple defined by dimensions (no floorPlanId).
   width       Float? // metres
@@ -166,7 +171,7 @@ model WeddingLayout {
   elements    String?
   tables      Table[]
   seats       LayoutSeat[]
-  createdAt   DateTime     @default(now())
+  createdAt   DateTime       @default(now())
 
   @@index([weddingId])
 }
@@ -215,6 +220,10 @@ model WeddingMoment {
   kind        String? // tag for the seeded defaults (ceremony|cocktail|dinner|dance); null for custom
   title       String? // display name; falls back to the kind label when null
   order       Int             @default(0)
+  // Whether this moment has a SEATING plan (assigned seats) — typically only the
+  // dinner. When false, its layouts are arrangements (tables + elements) with no
+  // seated guests.
+  hasSeating  Boolean         @default(false)
   floorPlanId String?
   floorPlan   FloorPlan?      @relation(fields: [floorPlanId], references: [id])
   templateId  String?
@@ -222,6 +231,7 @@ model WeddingMoment {
   notes       String? // legacy free-text (superseded by tasks); kept, unused by new UI
   tasks       MomentTask[]
   decor       MomentDecor[]
+  layouts     WeddingLayout[]
 
   @@index([weddingId])
 }

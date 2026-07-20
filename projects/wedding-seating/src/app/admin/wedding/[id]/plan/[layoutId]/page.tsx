@@ -67,6 +67,7 @@ export default function LayoutPlanPage() {
     tables,
     groups,
     layout,
+    layoutMeta,
     venueTableTypes,
     loading,
     generating,
@@ -101,23 +102,12 @@ export default function LayoutPlanPage() {
   const [addElMode, setAddElMode] = useState(false);
   const [elLabel, setElLabel] = useState("Pista de dança");
 
-  // Heading meta (name + final badge) — the plan payload carries the background,
-  // not the layout's own name/isFinal, so read it from the wedding's layout list.
-  const [meta, setMeta] = useState<{ name: string; isFinal: boolean } | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const res = await fetch(`/api/weddings/${weddingId}/layouts`);
-      if (!res.ok) return;
-      const data = (await res.json()) as { layouts: { id: string; name: string; isFinal: boolean }[] };
-      const found = data.layouts?.find((l) => l.id === layoutId);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial meta load on mount
-      if (!cancelled && found) setMeta({ name: found.name, isFinal: found.isFinal });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [weddingId, layoutId]);
+  // Whether this layout's moment has a seating plan — gates all the guest-seating
+  // UI. Defaults to true until the plan payload loads.
+  const seatingEnabled = layoutMeta?.hasSeating ?? true;
+  const backHref = layoutMeta?.momentId
+    ? `/admin/wedding/${weddingId}/moment/${layoutMeta.momentId}`
+    : `/admin/wedding/${weddingId}/details`;
 
   const hasTables = tables.length > 0;
   // `elements` now comes from usePlan (mutable + persisted); no local parse.
@@ -206,13 +196,14 @@ export default function LayoutPlanPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
       <p style={{ marginBottom: 8 }}>
-        <Link href={`/admin/wedding/${weddingId}/plan`} style={{ color: "var(--text-muted)" }}>
-          &larr; Layouts
+        <Link href={backHref} style={{ color: "var(--text-muted)" }}>
+          &larr; Voltar ao momento
         </Link>
       </p>
       <h1 style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {meta?.name ?? "Layout"}
-        {meta?.isFinal && <Badge tone="accent">Final</Badge>}
+        {layoutMeta?.name ?? "Layout"}
+        {layoutMeta?.isFinal && <Badge tone="accent">Final</Badge>}
+        {!seatingEnabled && <Badge tone="neutral">Sem lugares marcados</Badge>}
       </h1>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
@@ -268,20 +259,20 @@ export default function LayoutPlanPage() {
           </>
         )}
 
-        {!editMode && (
+        {!editMode && seatingEnabled && (
           <Button variant="primary" onClick={generate} disabled={!hasTables || generating} loading={generating}>
             {generating ? "A gerar..." : "Gerar sentada"}
           </Button>
         )}
 
-        {score !== null && !editMode && (
+        {score !== null && !editMode && seatingEnabled && (
           <Badge tone="accent" className="app-header-role">
             <span data-testid="plan-score">Score: {score.toFixed(2)}</span>
           </Badge>
         )}
         {loading && <span style={{ color: "var(--text-muted)" }}>A carregar...</span>}
 
-        {!editMode && (
+        {!editMode && seatingEnabled && (
           <label>
             Pintar por:{" "}
             <select
@@ -308,7 +299,7 @@ export default function LayoutPlanPage() {
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
-      {!editMode && (
+      {!editMode && seatingEnabled && (
         <details style={{ marginBottom: 16, border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "8px 12px", background: "var(--surface)" }}>
           <summary style={{ cursor: "pointer", fontWeight: 500 }}>
             Restrições entre convidados{" "}
@@ -358,7 +349,7 @@ export default function LayoutPlanPage() {
             onRemoveElement={removeElement}
           />
 
-          {!editMode && (
+          {!editMode && seatingEnabled && (
             <div style={{ minWidth: 260, flex: "0 0 260px", display: "flex", flexDirection: "column", gap: 16 }}>
               {colorAttr && colorMap.legend.length > 0 && (
                 <div data-testid="color-legend" style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
@@ -421,7 +412,7 @@ export default function LayoutPlanPage() {
         </div>
       )}
 
-      {hasTables && !editMode && (
+      {hasTables && !editMode && seatingEnabled && (
         <TableList
           rows={tableListRows}
           unassigned={unassigned.map((g) => ({

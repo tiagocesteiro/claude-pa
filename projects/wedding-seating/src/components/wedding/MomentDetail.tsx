@@ -1,49 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import ArrangementThumbnail from "@/components/wedding/ArrangementThumbnail";
-import type { PlanTableView } from "@/components/plan/PlanCanvas";
-import { parseElements } from "@/lib/floorplan/elements";
-import { imageUrlFor } from "@/lib/images";
+import MomentLayouts from "@/components/wedding/MomentLayouts";
 import { Button, Card, Input, Badge } from "@/components/ui";
-
-const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), { ssr: false });
-
-// The dinner moment's arrangement is the couple's FINAL layout (from the Layouts
-// tab), not a venue template — mirrors what the Visão geral / venue progress use.
-interface DinnerLayout {
-  id: string;
-  name: string;
-  image: string | null;
-  scale: number;
-  width: number;
-  depth: number;
-  elements: string | null;
-  tables: {
-    id: string;
-    shape: string;
-    capacity: number;
-    x: number;
-    y: number;
-    name: string | null;
-    heads: boolean | null;
-    fixed: boolean;
-    width: number | null;
-    depth: number | null;
-  }[];
-  seats: { guestId: string; tableId: string }[];
-  guests: { id: string; name: string }[];
-}
 
 interface MomentMeta {
   id: string;
   title: string | null;
   kind: string | null;
-  templateId: string | null;
-  template: { id: string; floorPlan: { image: string | null; scale: number; width: number; depth: number } | null } | null;
+  hasSeating: boolean;
 }
 interface Task {
   id: string;
@@ -71,13 +37,6 @@ interface CatalogItem {
   category: string | null;
   price: number | null;
 }
-interface Template {
-  id: string;
-  name: string;
-  venueId: string;
-  minGuests: number;
-  maxGuests: number;
-}
 
 const KIND_LABELS: Record<string, string> = {
   ceremony: "Cerimónia",
@@ -97,13 +56,9 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const [decor, setDecor] = useState<DecorLine[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [venueId, setVenueId] = useState<string | null>(null);
-  const [dinnerLayout, setDinnerLayout] = useState<DinnerLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Add-forms
   const [taskText, setTaskText] = useState("");
   const [taskAssignee, setTaskAssignee] = useState("couple");
   const [taskSupplier, setTaskSupplier] = useState("");
@@ -134,17 +89,11 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     let cancelled = false;
     (async () => {
       await Promise.all([loadMoment(), loadSuppliers()]);
-      // wedding venueId → templates + decor catalog
       const wRes = await fetch(`/api/weddings/${weddingId}`);
       if (!cancelled && wRes.ok) {
         const w = (await wRes.json()) as { venueId: string | null };
-        setVenueId(w.venueId);
         if (w.venueId) {
-          const [tRes, cRes] = await Promise.all([
-            fetch(`/api/templates`),
-            fetch(`/api/venues/${w.venueId}/decor-items`),
-          ]);
-          if (tRes.ok) setTemplates(((await tRes.json()) as Template[]) ?? []);
+          const cRes = await fetch(`/api/venues/${w.venueId}/decor-items`);
           if (cRes.ok) setCatalog(((await cRes.json()) as { items: CatalogItem[] }).items ?? []);
         }
       }
@@ -155,87 +104,6 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       cancelled = true;
     };
   }, [weddingId, loadMoment, loadSuppliers]);
-
-  // The dinner moment shows the couple's FINAL layout (from the Layouts tab), not
-  // a venue template. Fetch it whenever this moment is the dinner.
-  const isDinner = moment?.kind === "dinner";
-  useEffect(() => {
-    if (!isDinner) {
-      setDinnerLayout(null);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const lRes = await fetch(`/api/weddings/${weddingId}/layouts`);
-      if (!lRes.ok) return;
-      const { layouts } = (await lRes.json()) as { layouts: { id: string; name: string; isFinal: boolean }[] };
-      const final = layouts?.find((l) => l.isFinal);
-      if (!final) {
-        if (!cancelled) setDinnerLayout(null);
-        return;
-      }
-      const pRes = await fetch(`/api/layouts/${final.id}/plan`);
-      if (!pRes.ok) return;
-      const d = (await pRes.json()) as {
-        tables: DinnerLayout["tables"];
-        seats?: { guestId: string; tableId: string }[];
-        guests: { id: string; name: string }[];
-        background?: { image: string | null; scale: number; width: number; depth: number; elements: string | null } | null;
-      };
-      if (cancelled) return;
-      setDinnerLayout({
-        id: final.id,
-        name: final.name,
-        image: d.background?.image ?? null,
-        scale: d.background?.scale ?? 0,
-        width: d.background?.width ?? 0,
-        depth: d.background?.depth ?? 0,
-        elements: d.background?.elements ?? null,
-        tables: d.tables ?? [],
-        seats: d.seats ?? [],
-        guests: d.guests ?? [],
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isDinner, weddingId]);
-
-  const dinnerTableViews: PlanTableView[] = useMemo(() => {
-    if (!dinnerLayout) return [];
-    return dinnerLayout.tables.map((t, i) => ({
-      id: t.id,
-      shape: t.shape,
-      capacity: t.capacity,
-      x: t.x,
-      y: t.y,
-      label: `Mesa ${i + 1}`,
-      name: t.name,
-      heads: t.heads,
-      fixed: t.fixed,
-      width: t.width,
-      depth: t.depth,
-      guests: (dinnerLayout.seats.filter((s) => s.tableId === t.id)).map((s) => {
-        const g = dinnerLayout.guests.find((x) => x.id === s.guestId);
-        return { id: s.guestId, name: g?.name ?? "", locked: false };
-      }),
-    }));
-  }, [dinnerLayout]);
-
-  const venueTemplates = templates.filter((t) => venueId && t.venueId === venueId);
-
-  async function setTemplate(templateId: string | null) {
-    const res = await fetch(`/api/moments/${momentId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ templateId }),
-    });
-    if (!res.ok) {
-      setError("Não foi possível guardar o arranjo.");
-      return;
-    }
-    await loadMoment();
-  }
 
   async function rename() {
     if (!moment) return;
@@ -250,9 +118,19 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   }
 
   async function removeMoment() {
-    if (!window.confirm("Remover este momento? As tarefas e decoração deste momento perdem-se.")) return;
+    if (!window.confirm("Remover este momento? Os layouts, tarefas e decoração deste momento perdem-se.")) return;
     const res = await fetch(`/api/moments/${momentId}`, { method: "DELETE" });
     if (res.ok) router.push(`/admin/wedding/${weddingId}/details`);
+  }
+
+  async function toggleSeating(hasSeating: boolean) {
+    setMoment((m) => (m ? { ...m, hasSeating } : m)); // optimistic
+    await fetch(`/api/moments/${momentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hasSeating }),
+    });
+    await loadMoment();
   }
 
   // ── Tasks ──
@@ -284,7 +162,6 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     await fetch(`/api/tasks/${id}`, { method: "DELETE" });
     await loadMoment();
   }
-
   function assigneeLabel(t: Task): string {
     if (t.assignee === "couple") return "Noivos";
     if (t.assignee === "venue") return "Quinta";
@@ -322,7 +199,6 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     await fetch(`/api/decor/${id}`, { method: "DELETE" });
     await loadMoment();
   }
-
   function decorName(d: DecorLine): string {
     return d.decorItem?.name ?? d.name ?? "Item";
   }
@@ -331,7 +207,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   if (!moment) return <p style={{ color: "#dc2626" }}>{error ?? "Momento não encontrado."}</p>;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 820 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h2 style={{ margin: 0 }}>{momentTitle(moment)}</h2>
         <Button variant="ghost" onClick={rename}>Renomear</Button>
@@ -339,69 +215,21 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       </div>
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
-      {/* Arrangement */}
+      {/* Layout(s) */}
       <Card>
-        <h3 style={{ marginTop: 0 }}>{isDinner ? "Plano de mesas" : "Arranjo da sala"}</h3>
-        {isDinner ? (
-          // The dinner's arrangement IS the couple's final layout (managed in the
-          // Layouts tab). Show it read-only here with a link to edit.
-          dinnerLayout ? (
-            <>
-              <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
-                Layout final: <strong>{dinnerLayout.name}</strong> · {dinnerLayout.tables.length} mesas ·{" "}
-                {dinnerLayout.seats.length} sentados{" "}
-                <Link href={`/admin/wedding/${weddingId}/plan/${dinnerLayout.id}`}>Editar</Link>
-              </p>
-              {dinnerLayout.tables.length > 0 && (
-                <PlanCanvas
-                  imageUrl={imageUrlFor(dinnerLayout.image)}
-                  tables={dinnerTableViews}
-                  scale={dinnerLayout.scale}
-                  roomWidth={dinnerLayout.width}
-                  roomDepth={dinnerLayout.depth}
-                  zones={[]}
-                  elements={parseElements(dinnerLayout.elements)}
-                  overCapacityIds={[]}
-                  maxWidth={860}
-                  maxHeight={520}
-                  onAssign={() => {}}
-                  onToggleGuestLock={() => {}}
-                  onToggleTableFixed={() => {}}
-                  onSwap={() => {}}
-                  readOnly
-                />
-              )}
-            </>
-          ) : (
-            <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
-              Ainda não há um layout marcado como final. Cria e marca um no separador{" "}
-              <Link href={`/admin/wedding/${weddingId}/plan`}>Layouts</Link>.
-            </p>
-          )
-        ) : !venueId ? (
-          <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Escolhe primeiro a quinta em Detalhes.</p>
-        ) : (
-          <>
-            <select
-              className="input"
-              value={moment.templateId ?? ""}
-              onChange={(e) => setTemplate(e.target.value || null)}
-              style={{ maxWidth: 320 }}
-            >
-              <option value="">— (nenhum)</option>
-              {venueTemplates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} — {t.minGuests}-{t.maxGuests}
-                </option>
-              ))}
-            </select>
-            {moment.template && (
-              <div style={{ marginTop: 10 }}>
-                <ArrangementThumbnail template={moment.template} />
-              </div>
-            )}
-          </>
-        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <h3 style={{ marginTop: 0, marginBottom: 0 }}>Layout da sala</h3>
+          <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+            <input type="checkbox" checked={moment.hasSeating} onChange={(e) => toggleSeating(e.target.checked)} />
+            Tem plano de mesas (lugares marcados)
+          </label>
+        </div>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 6 }}>
+          {moment.hasSeating
+            ? "Desenha o layout e senta os convidados. Podes ter vários layouts e marcar um como final."
+            : "Desenha a disposição da sala (mesas + elementos como bar/pista). Sem lugares marcados."}
+        </p>
+        <MomentLayouts weddingId={weddingId} momentId={momentId} hasSeating={moment.hasSeating} />
       </Card>
 
       {/* Decoration */}
@@ -413,12 +241,8 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
             {decor.map((d) => (
               <li key={d.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ flex: 1 }}>
-                  {decorName(d)} {d.quantity > 1 && <span style={{ color: "var(--text-muted)" }}>×{d.quantity}</span>}
-                  {d.decorItem ? (
-                    <Badge tone="neutral" className="app-header-role">Quinta</Badge>
-                  ) : (
-                    <Badge tone="accent" className="app-header-role">Próprio</Badge>
-                  )}
+                  {decorName(d)} {d.quantity > 1 && <span style={{ color: "var(--text-muted)" }}>×{d.quantity}</span>}{" "}
+                  {d.decorItem ? <Badge tone="neutral">Quinta</Badge> : <Badge tone="accent">Próprio</Badge>}
                   {d.decorItem?.price != null && (
                     <span style={{ color: "var(--text-muted)", fontSize: 12 }}> · {d.decorItem.price} €</span>
                   )}
@@ -428,17 +252,13 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
             ))}
           </ul>
         )}
-
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
           <label style={{ fontSize: 13 }}>
             Do catálogo da quinta{" "}
             <select className="input" value={catalogPick} onChange={(e) => setCatalogPick(e.target.value)} style={{ minWidth: 160 }}>
               <option value="">Escolhe…</option>
               {catalog.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.category ? ` (${c.category})` : ""}
-                </option>
+                <option key={c.id} value={c.id}>{c.name}{c.category ? ` (${c.category})` : ""}</option>
               ))}
             </select>
           </label>
@@ -467,14 +287,13 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
                 <span style={{ flex: 1, textDecoration: t.done ? "line-through" : "none", color: t.done ? "var(--text-muted)" : "inherit" }}>
                   {t.text}
                 </span>
-                <Badge tone="neutral" className="app-header-role">{assigneeLabel(t)}</Badge>
+                <Badge tone="neutral">{assigneeLabel(t)}</Badge>
                 {t.dueDate && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t.dueDate.slice(0, 10)}</span>}
                 <Button variant="ghost" onClick={() => removeTask(t.id)}>Remover</Button>
               </li>
             ))}
           </ul>
         )}
-
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
           <label style={{ fontSize: 13, flex: "1 1 200px" }}>
             Nova tarefa{" "}

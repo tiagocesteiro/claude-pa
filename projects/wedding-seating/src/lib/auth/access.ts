@@ -290,7 +290,10 @@ export async function listVenueBookings(actor: Actor): Promise<VenueBookingSumma
       _count: { select: { tables: true } },
       // The couple's FINAL layout drives progress now (counts only, no PII);
       // falls back to the legacy arrangement below when none is marked final.
-      layouts: { where: { isFinal: true }, select: { _count: { select: { tables: true, seats: true } } } },
+      layouts: {
+        where: { isFinal: true, moment: { hasSeating: true } },
+        select: { _count: { select: { tables: true, seats: true } } },
+      },
     },
   });
 
@@ -387,7 +390,10 @@ export async function getAdminOverview(): Promise<AdminOverview> {
         venue: { select: { name: true } },
         guests: { select: { rsvp: true, assignedTableId: true } },
         _count: { select: { tables: true } },
-        layouts: { where: { isFinal: true }, select: { _count: { select: { tables: true, seats: true } } } },
+        layouts: {
+        where: { isFinal: true, moment: { hasSeating: true } },
+        select: { _count: { select: { tables: true, seats: true } } },
+      },
       },
     }),
     prisma.profile.findMany({ select: { id: true, email: true } }),

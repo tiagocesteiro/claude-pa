@@ -34,9 +34,10 @@ export interface LayoutSummary {
   seatedCount: number;
 }
 
-export async function listLayouts(weddingId: string): Promise<LayoutSummary[]> {
+/** Layouts of ONE moment (moment-scoped now, was wedding-scoped). */
+export async function listLayouts(momentId: string): Promise<LayoutSummary[]> {
   const rows = await prisma.weddingLayout.findMany({
-    where: { weddingId },
+    where: { momentId },
     orderBy: { createdAt: "asc" },
     include: { _count: { select: { tables: true, seats: true } } },
   });
@@ -60,14 +61,14 @@ export function getLayout(layoutId: string): Promise<WeddingLayout | null> {
   return prisma.weddingLayout.findUnique({ where: { id: layoutId } });
 }
 
-/** The wedding's chosen layout (`isFinal`), or null if none marked yet. */
-export function getFinalLayout(weddingId: string): Promise<WeddingLayout | null> {
-  return prisma.weddingLayout.findFirst({ where: { weddingId, isFinal: true } });
+/** The moment's chosen layout (`isFinal`), or null if none marked yet. */
+export function getFinalLayout(momentId: string): Promise<WeddingLayout | null> {
+  return prisma.weddingLayout.findFirst({ where: { momentId, isFinal: true } });
 }
 
-/** True when the wedding has no layouts yet — the first created becomes final. */
-async function isFirstLayout(weddingId: string): Promise<boolean> {
-  const n = await prisma.weddingLayout.count({ where: { weddingId } });
+/** True when the moment has no layouts yet — the first created becomes final. */
+async function isFirstLayout(momentId: string): Promise<boolean> {
+  const n = await prisma.weddingLayout.count({ where: { momentId } });
   return n === 0;
 }
 
@@ -78,20 +79,25 @@ async function isFirstLayout(weddingId: string): Promise<boolean> {
  * to the wedding's venue.
  */
 export async function createLayoutFromTemplate(
-  weddingId: string,
+  momentId: string,
   templateId: string,
   name: string
 ): Promise<WeddingLayout> {
+  const moment = await prisma.weddingMoment.findUniqueOrThrow({
+    where: { id: momentId },
+    select: { weddingId: true },
+  });
   const template = await prisma.layoutTemplate.findUniqueOrThrow({
     where: { id: templateId },
     select: { floorPlanId: true, floorPlan: { select: { elements: true } } },
   });
   const templateTables = await prisma.table.findMany({ where: { templateId } });
-  const isFinal = await isFirstLayout(weddingId);
+  const isFinal = await isFirstLayout(momentId);
 
   return prisma.weddingLayout.create({
     data: {
-      weddingId,
+      weddingId: moment.weddingId,
+      momentId,
       name,
       isFinal,
       templateId,
@@ -119,13 +125,18 @@ export async function createLayoutFromTemplate(
 /** New couple layout as a BLANK room defined by dimensions (no floor plan, no
  * tables — the couple adds them in the editor). */
 export async function createBlankLayout(
-  weddingId: string,
+  momentId: string,
   input: { name: string; width: number; depth: number; scale: number }
 ): Promise<WeddingLayout> {
-  const isFinal = await isFirstLayout(weddingId);
+  const moment = await prisma.weddingMoment.findUniqueOrThrow({
+    where: { id: momentId },
+    select: { weddingId: true },
+  });
+  const isFinal = await isFirstLayout(momentId);
   return prisma.weddingLayout.create({
     data: {
-      weddingId,
+      weddingId: moment.weddingId,
+      momentId,
       name: input.name,
       isFinal,
       width: input.width,
@@ -150,21 +161,21 @@ export function saveLayoutElements(layoutId: string, elements: string | null): P
  * every OTHER layout of the wedding and sets it on this one. Both writes are
  * scoped by `weddingId` so a layout id from another wedding is a no-op.
  */
-export async function setFinalLayout(weddingId: string, layoutId: string): Promise<void> {
-  // Guard membership first: without this, a layoutId from another wedding would
-  // clear this wedding's flag (first updateMany) without setting a new one.
+export async function setFinalLayout(momentId: string, layoutId: string): Promise<void> {
+  // Guard membership first: without this, a layoutId from another moment would
+  // clear this moment's flag (first updateMany) without setting a new one.
   const belongs = await prisma.weddingLayout.findFirst({
-    where: { id: layoutId, weddingId },
+    where: { id: layoutId, momentId },
     select: { id: true },
   });
   if (!belongs) return;
   await prisma.$transaction([
     prisma.weddingLayout.updateMany({
-      where: { weddingId, id: { not: layoutId } },
+      where: { momentId, id: { not: layoutId } },
       data: { isFinal: false },
     }),
     prisma.weddingLayout.updateMany({
-      where: { weddingId, id: layoutId },
+      where: { momentId, id: layoutId },
       data: { isFinal: true },
     }),
   ]);
@@ -172,21 +183,21 @@ export async function setFinalLayout(weddingId: string, layoutId: string): Promi
 
 /**
  * Delete a layout (its tables + seats cascade). If the deleted layout was the
- * final one and other layouts remain, promote the oldest remaining to final so a
- * wedding with ≥1 layout always has exactly one final.
+ * final one and other layouts remain in the MOMENT, promote the oldest remaining
+ * to final so a moment with ≥1 layout always has exactly one final.
  */
 export async function deleteLayout(layoutId: string): Promise<void> {
   const layout = await prisma.weddingLayout.findUnique({
     where: { id: layoutId },
-    select: { weddingId: true, isFinal: true },
+    select: { momentId: true, isFinal: true },
   });
   if (!layout) return;
 
   await prisma.weddingLayout.delete({ where: { id: layoutId } });
 
-  if (layout.isFinal) {
+  if (layout.isFinal && layout.momentId) {
     const next = await prisma.weddingLayout.findFirst({
-      where: { weddingId: layout.weddingId },
+      where: { momentId: layout.momentId },
       orderBy: { createdAt: "asc" },
       select: { id: true },
     });

@@ -271,8 +271,12 @@ describe("Fase E — venue booking oversight (PII-free)", () => {
     });
     const g2 = await prisma.guest.create({ data: { weddingId: w.id, name: "L2", rsvp: "confirmed" } });
     await prisma.guest.create({ data: { weddingId: w.id, name: "L3", rsvp: "pending" } });
+    // Layouts are moment-scoped; progress counts the dinner (hasSeating) final layout.
+    const dinner = await prisma.weddingMoment.create({
+      data: { weddingId: w.id, kind: "dinner", title: "Jantar", order: 2, hasSeating: true },
+    });
     const layout = await prisma.weddingLayout.create({
-      data: { weddingId: w.id, name: "Final", isFinal: true },
+      data: { weddingId: w.id, momentId: dinner.id, name: "Final", isFinal: true },
     });
     const t1 = await prisma.table.create({
       data: { weddingLayoutId: layout.id, shape: "round", capacity: 8, x: 0, y: 0, fixed: false },

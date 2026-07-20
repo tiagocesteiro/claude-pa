@@ -35,58 +35,67 @@ async function seedTemplate(n = 3) {
   return { venueId: v.id, floorPlanId: fp.id, templateId: tpl.id };
 }
 
+/** A wedding + its first seeded moment id (layouts are moment-scoped). */
+async function weddingMoment(couple: string, venueId?: string) {
+  const w = await createWedding({ couple, venueId });
+  const moment = await prisma.weddingMoment.findFirstOrThrow({
+    where: { weddingId: w.id },
+    orderBy: { order: "asc" },
+  });
+  return { wedding: w, momentId: moment.id };
+}
+
 it("createLayoutFromTemplate copies the template's tables + adopts its floor plan", async () => {
   const { venueId, floorPlanId, templateId } = await seedTemplate(3);
-  const w = await createWedding({ couple: "From Template", venueId });
+  const { momentId } = await weddingMoment("From Template", venueId);
 
-  const layout = await createLayoutFromTemplate(w.id, templateId, "Principal");
+  const layout = await createLayoutFromTemplate(momentId, templateId, "Principal");
 
   expect(layout.floorPlanId).toBe(floorPlanId);
   expect(layout.templateId).toBe(templateId);
+  expect(layout.momentId).toBe(momentId);
   const tables = await listLayoutTables(layout.id);
   expect(tables.length).toBe(3);
   expect(tables.every((t) => t.weddingLayoutId === layout.id)).toBe(true);
-  // Fresh ids — not the template's rows.
   const tplTables = await prisma.table.findMany({ where: { templateId } });
   const tplIds = new Set(tplTables.map((t) => t.id));
   expect(tables.every((t) => !tplIds.has(t.id))).toBe(true);
 });
 
-it("the first layout of a wedding becomes final; later ones do not", async () => {
-  const w = await createWedding({ couple: "First Final" });
-  const a = await createBlankLayout(w.id, { name: "A", width: 10, depth: 8, scale: 50 });
-  const b = await createBlankLayout(w.id, { name: "B", width: 10, depth: 8, scale: 50 });
+it("the first layout of a moment becomes final; later ones do not", async () => {
+  const { momentId } = await weddingMoment("First Final");
+  const a = await createBlankLayout(momentId, { name: "A", width: 10, depth: 8, scale: 50 });
+  const b = await createBlankLayout(momentId, { name: "B", width: 10, depth: 8, scale: 50 });
 
   expect(a.isFinal).toBe(true);
   expect(b.isFinal).toBe(false);
-  expect((await getFinalLayout(w.id))?.id).toBe(a.id);
+  expect((await getFinalLayout(momentId))?.id).toBe(a.id);
 });
 
-it("setFinalLayout marks exactly one, scoped to the wedding", async () => {
-  const w = await createWedding({ couple: "Set Final" });
-  const a = await createBlankLayout(w.id, { name: "A", width: 10, depth: 8, scale: 50 });
-  const b = await createBlankLayout(w.id, { name: "B", width: 10, depth: 8, scale: 50 });
+it("setFinalLayout marks exactly one, scoped to the moment", async () => {
+  const { momentId } = await weddingMoment("Set Final");
+  const a = await createBlankLayout(momentId, { name: "A", width: 10, depth: 8, scale: 50 });
+  const b = await createBlankLayout(momentId, { name: "B", width: 10, depth: 8, scale: 50 });
 
-  await setFinalLayout(w.id, b.id);
-  const list = await listLayouts(w.id);
+  await setFinalLayout(momentId, b.id);
+  const list = await listLayouts(momentId);
   expect(list.find((l) => l.id === a.id)?.isFinal).toBe(false);
   expect(list.find((l) => l.id === b.id)?.isFinal).toBe(true);
   expect(list.filter((l) => l.isFinal).length).toBe(1);
 
-  // A layout id from ANOTHER wedding must not flip this wedding's flags.
-  const other = await createWedding({ couple: "Other" });
-  const oLayout = await createBlankLayout(other.id, { name: "O", width: 5, depth: 5, scale: 50 });
-  await setFinalLayout(w.id, oLayout.id); // no-op for w (oLayout not in w)
-  const list2 = await listLayouts(w.id);
-  // b stays final; the foreign id changed nothing, and no w-layout was set final by it.
+  // A layout id from ANOTHER moment must not flip this moment's flags.
+  const other = await weddingMoment("Other");
+  const oLayout = await createBlankLayout(other.momentId, { name: "O", width: 5, depth: 5, scale: 50 });
+  await setFinalLayout(momentId, oLayout.id); // no-op
+  const list2 = await listLayouts(momentId);
   expect(list2.find((l) => l.id === b.id)?.isFinal).toBe(true);
 });
 
 it("seating is independent per layout — same guest, different tables", async () => {
-  const w = await createWedding({ couple: "Per-layout seating" });
-  const g = await prisma.guest.create({ data: { weddingId: w.id, name: "Ana" } });
-  const la = await createBlankLayout(w.id, { name: "A", width: 10, depth: 8, scale: 50 });
-  const lb = await createBlankLayout(w.id, { name: "B", width: 10, depth: 8, scale: 50 });
+  const { wedding, momentId } = await weddingMoment("Per-layout seating");
+  const g = await prisma.guest.create({ data: { weddingId: wedding.id, name: "Ana" } });
+  const la = await createBlankLayout(momentId, { name: "A", width: 10, depth: 8, scale: 50 });
+  const lb = await createBlankLayout(momentId, { name: "B", width: 10, depth: 8, scale: 50 });
   const ta = await prisma.table.create({
     data: { weddingLayoutId: la.id, shape: "round", capacity: 8, x: 1, y: 1, fixed: false },
   });
@@ -97,20 +106,17 @@ it("seating is independent per layout — same guest, different tables", async (
   await saveLayoutAssignment(la.id, [{ guestId: g.id, tableId: ta.id }]);
   await saveLayoutAssignment(lb.id, [{ guestId: g.id, tableId: tb.id }]);
 
-  const seatsA = await getLayoutSeats(la.id);
-  const seatsB = await getLayoutSeats(lb.id);
-  expect(seatsA).toHaveLength(1);
-  expect(seatsA[0].tableId).toBe(ta.id);
-  expect(seatsB[0].tableId).toBe(tb.id);
+  expect((await getLayoutSeats(la.id))[0].tableId).toBe(ta.id);
+  expect((await getLayoutSeats(lb.id))[0].tableId).toBe(tb.id);
 });
 
 it("saveLayoutAssignment ignores foreign guests and foreign tables (tenancy)", async () => {
-  const w = await createWedding({ couple: "Mine" });
-  const other = await createWedding({ couple: "Other" });
-  const mine = await createBlankLayout(w.id, { name: "M", width: 10, depth: 8, scale: 50 });
-  const otherLayout = await createBlankLayout(other.id, { name: "O", width: 10, depth: 8, scale: 50 });
-  const myGuest = await prisma.guest.create({ data: { weddingId: w.id, name: "Meu" } });
-  const foreignGuest = await prisma.guest.create({ data: { weddingId: other.id, name: "Alheio" } });
+  const { wedding, momentId } = await weddingMoment("Mine");
+  const other = await weddingMoment("Other");
+  const mine = await createBlankLayout(momentId, { name: "M", width: 10, depth: 8, scale: 50 });
+  const otherLayout = await createBlankLayout(other.momentId, { name: "O", width: 10, depth: 8, scale: 50 });
+  const myGuest = await prisma.guest.create({ data: { weddingId: wedding.id, name: "Meu" } });
+  const foreignGuest = await prisma.guest.create({ data: { weddingId: other.wedding.id, name: "Alheio" } });
   const myTable = await prisma.table.create({
     data: { weddingLayoutId: mine.id, shape: "round", capacity: 8, x: 1, y: 1, fixed: false },
   });
@@ -119,9 +125,9 @@ it("saveLayoutAssignment ignores foreign guests and foreign tables (tenancy)", a
   });
 
   await saveLayoutAssignment(mine.id, [
-    { guestId: myGuest.id, tableId: myTable.id }, // ok
-    { guestId: foreignGuest.id, tableId: myTable.id }, // foreign guest → ignored
-    { guestId: myGuest.id, tableId: foreignTable.id }, // foreign table → ignored (keeps prior)
+    { guestId: myGuest.id, tableId: myTable.id },
+    { guestId: foreignGuest.id, tableId: myTable.id },
+    { guestId: myGuest.id, tableId: foreignTable.id },
   ]);
 
   const seats = await getLayoutSeats(mine.id);
@@ -131,58 +137,53 @@ it("saveLayoutAssignment ignores foreign guests and foreign tables (tenancy)", a
 });
 
 it("removing a table from a layout drops its seats (cascade)", async () => {
-  const w = await createWedding({ couple: "Remove Table" });
-  const g = await prisma.guest.create({ data: { weddingId: w.id, name: "Zé" } });
-  const layout = await createBlankLayout(w.id, { name: "L", width: 10, depth: 8, scale: 50 });
+  const { wedding, momentId } = await weddingMoment("Remove Table");
+  const g = await prisma.guest.create({ data: { weddingId: wedding.id, name: "Zé" } });
+  const layout = await createBlankLayout(momentId, { name: "L", width: 10, depth: 8, scale: 50 });
   const t = await prisma.table.create({
     data: { weddingLayoutId: layout.id, shape: "round", capacity: 8, x: 1, y: 1, fixed: false },
   });
   await saveLayoutAssignment(layout.id, [{ guestId: g.id, tableId: t.id }]);
   expect(await getLayoutSeats(layout.id)).toHaveLength(1);
 
-  // saveLayoutTables with an empty list removes the table → its seat cascades away.
   await saveLayoutTables(layout.id, []);
   expect(await listLayoutTables(layout.id)).toHaveLength(0);
   expect(await getLayoutSeats(layout.id)).toHaveLength(0);
 });
 
 it("saveLayoutTables preserves ids on update so seats survive edits", async () => {
-  const w = await createWedding({ couple: "Preserve Ids" });
-  const g = await prisma.guest.create({ data: { weddingId: w.id, name: "Rui" } });
-  const layout = await createBlankLayout(w.id, { name: "L", width: 10, depth: 8, scale: 50 });
+  const { wedding, momentId } = await weddingMoment("Preserve Ids");
+  const g = await prisma.guest.create({ data: { weddingId: wedding.id, name: "Rui" } });
+  const layout = await createBlankLayout(momentId, { name: "L", width: 10, depth: 8, scale: 50 });
   const t = await prisma.table.create({
     data: { weddingLayoutId: layout.id, shape: "round", capacity: 8, x: 1, y: 1, fixed: false },
   });
   await saveLayoutAssignment(layout.id, [{ guestId: g.id, tableId: t.id }]);
 
-  // Move the same table (keep its id) → seat must remain.
-  await saveLayoutTables(layout.id, [
-    { id: t.id, shape: "round", capacity: 10, x: 5, y: 5, fixed: false },
-  ]);
+  await saveLayoutTables(layout.id, [{ id: t.id, shape: "round", capacity: 10, x: 5, y: 5, fixed: false }]);
   const seats = await getLayoutSeats(layout.id);
   expect(seats).toHaveLength(1);
   expect(seats[0].tableId).toBe(t.id);
-  const tables = await listLayoutTables(layout.id);
-  expect(tables[0].capacity).toBe(10);
+  expect((await listLayoutTables(layout.id))[0].capacity).toBe(10);
 });
 
 it("deleteLayout cascades tables/seats and promotes the next layout to final", async () => {
-  const w = await createWedding({ couple: "Delete Final" });
-  const a = await createBlankLayout(w.id, { name: "A", width: 10, depth: 8, scale: 50 }); // final
-  const b = await createBlankLayout(w.id, { name: "B", width: 10, depth: 8, scale: 50 });
+  const { momentId } = await weddingMoment("Delete Final");
+  const a = await createBlankLayout(momentId, { name: "A", width: 10, depth: 8, scale: 50 });
+  const b = await createBlankLayout(momentId, { name: "B", width: 10, depth: 8, scale: 50 });
 
   await deleteLayout(a.id);
-  const list = await listLayouts(w.id);
+  const list = await listLayouts(momentId);
   expect(list).toHaveLength(1);
   expect(list[0].id).toBe(b.id);
-  expect(list[0].isFinal).toBe(true); // promoted
+  expect(list[0].isFinal).toBe(true);
 });
 
 it("listLayouts returns table + seated counts; clearLayoutSeats empties seating", async () => {
-  const w = await createWedding({ couple: "Counts" });
-  const g1 = await prisma.guest.create({ data: { weddingId: w.id, name: "G1" } });
-  const g2 = await prisma.guest.create({ data: { weddingId: w.id, name: "G2" } });
-  const layout = await createBlankLayout(w.id, { name: "L", width: 10, depth: 8, scale: 50 });
+  const { wedding, momentId } = await weddingMoment("Counts");
+  const g1 = await prisma.guest.create({ data: { weddingId: wedding.id, name: "G1" } });
+  const g2 = await prisma.guest.create({ data: { weddingId: wedding.id, name: "G2" } });
+  const layout = await createBlankLayout(momentId, { name: "L", width: 10, depth: 8, scale: 50 });
   const t = await prisma.table.create({
     data: { weddingLayoutId: layout.id, shape: "round", capacity: 8, x: 1, y: 1, fixed: false },
   });
@@ -191,13 +192,13 @@ it("listLayouts returns table + seated counts; clearLayoutSeats empties seating"
     { guestId: g2.id, tableId: t.id },
   ]);
 
-  let summary = (await listLayouts(w.id)).find((l) => l.id === layout.id)!;
+  let summary = (await listLayouts(momentId)).find((l) => l.id === layout.id)!;
   expect(summary.tableCount).toBe(1);
   expect(summary.seatedCount).toBe(2);
 
   await renameLayout(layout.id, "Renomeado");
   await clearLayoutSeats(layout.id);
-  summary = (await listLayouts(w.id)).find((l) => l.id === layout.id)!;
+  summary = (await listLayouts(momentId)).find((l) => l.id === layout.id)!;
   expect(summary.name).toBe("Renomeado");
   expect(summary.seatedCount).toBe(0);
 });
@@ -206,12 +207,11 @@ it("createLayoutFromTemplate seeds elements from the template's floor plan; save
   const { venueId, floorPlanId, templateId } = await seedTemplate(1);
   const els = JSON.stringify([{ id: "e1", x: 10, y: 10, w: 200, h: 100, label: "Bar", color: "#6e8c66" }]);
   await prisma.floorPlan.update({ where: { id: floorPlanId }, data: { elements: els } });
-  const w = await createWedding({ couple: "Elements", venueId });
+  const { momentId } = await weddingMoment("Elements", venueId);
 
-  const layout = await createLayoutFromTemplate(w.id, templateId, "Com bar");
-  expect(layout.elements).toBe(els); // copied from the template's floor plan
+  const layout = await createLayoutFromTemplate(momentId, templateId, "Com bar");
+  expect(layout.elements).toBe(els);
 
-  // Editing the layout's elements is independent of the template.
   const updated = JSON.stringify([
     { id: "e1", x: 10, y: 10, w: 200, h: 100, label: "Bar", color: "#6e8c66" },
     { id: "e2", x: 300, y: 50, w: 250, h: 150, label: "Pista", color: "#6e8c66" },
@@ -219,8 +219,7 @@ it("createLayoutFromTemplate seeds elements from the template's floor plan; save
   await saveLayoutElements(layout.id, updated);
   expect((await getLayout(layout.id))?.elements).toBe(updated);
 
-  // A blank layout starts with no elements.
-  const blank = await createBlankLayout(w.id, { name: "Vazio", width: 10, depth: 8, scale: 50 });
+  const blank = await createBlankLayout(momentId, { name: "Vazio", width: 10, depth: 8, scale: 50 });
   expect(blank.elements).toBeNull();
 });
 

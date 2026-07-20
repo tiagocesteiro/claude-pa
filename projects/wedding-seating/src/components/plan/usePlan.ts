@@ -119,6 +119,13 @@ export function usePlan(weddingId: string, layoutId?: string) {
   const [constraints, setConstraints] = useState<PlanConstraint[]>([]);
   const [groups, setGroups] = useState<PlanGroup[]>([]);
   const [layout, setLayout] = useState<PlanLayout | null>(null);
+  const [layoutMeta, setLayoutMeta] = useState<{
+    id: string;
+    name: string;
+    isFinal: boolean;
+    momentId: string | null;
+    hasSeating: boolean;
+  } | null>(null);
   const [elements, setElements] = useState<RoomElement[]>([]);
   const [templates, setTemplates] = useState<PlanTemplate[]>([]);
   const [venueTableTypes, setVenueTableTypes] = useState<PlanTableType[]>([]);
@@ -153,6 +160,7 @@ export function usePlan(weddingId: string, layoutId?: string) {
         // layout mode
         seats?: { guestId: string; tableId: string }[];
         background?: PlanLayout | null;
+        meta?: { id: string; name: string; isFinal: boolean; momentId: string | null; hasSeating: boolean } | null;
       };
       if (layoutId) {
         // Layout mode: seating lives in a separate `seats` array — fold each
@@ -161,6 +169,7 @@ export function usePlan(weddingId: string, layoutId?: string) {
         const seatBy = new Map((data.seats ?? []).map((s) => [s.guestId, s.tableId]));
         setGuests((data.guests ?? []).map((g) => ({ ...g, assignedTableId: seatBy.get(g.id) ?? null })));
         setLayout(data.background ?? null);
+        setLayoutMeta(data.meta ?? null);
         setElements(parseElements(data.background?.elements ?? null));
       } else {
         setGuests(data.guests ?? []);
@@ -642,6 +651,7 @@ export function usePlan(weddingId: string, layoutId?: string) {
     constraints,
     groups,
     layout,
+    layoutMeta,
     templates,
     venueId,
     venueTableTypes,

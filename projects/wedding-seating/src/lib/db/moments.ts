@@ -17,13 +17,15 @@ export function isMomentKind(value: unknown): value is MomentKind {
   return typeof value === "string" && (MOMENT_KINDS as readonly string[]).includes(value);
 }
 
-/** The default moments seeded on wedding creation (kept editable/removable). */
+/** The default moments seeded on wedding creation (kept editable/removable).
+ * Only the dinner has a seating plan by default. */
 export function defaultMomentSeed(weddingId: string) {
   return MOMENT_KINDS.map((kind, i) => ({
     weddingId,
     kind,
     title: MOMENT_LABELS[kind],
     order: i,
+    hasSeating: kind === "dinner",
   }));
 }
 
@@ -56,13 +58,20 @@ export async function createMoment(weddingId: string, title: string): Promise<We
  * present are written; venue-match on template/floorPlan is enforced by the route. */
 export function updateMoment(
   momentId: string,
-  fields: { title?: string; order?: number; templateId?: string | null; floorPlanId?: string | null }
+  fields: {
+    title?: string;
+    order?: number;
+    templateId?: string | null;
+    floorPlanId?: string | null;
+    hasSeating?: boolean;
+  }
 ): Promise<WeddingMoment> {
   const data: Record<string, unknown> = {};
   if ("title" in fields) data.title = fields.title;
   if ("order" in fields) data.order = fields.order;
   if ("templateId" in fields) data.templateId = fields.templateId;
   if ("floorPlanId" in fields) data.floorPlanId = fields.floorPlanId;
+  if ("hasSeating" in fields) data.hasSeating = fields.hasSeating;
   return prisma.weddingMoment.update({ where: { id: momentId }, data });
 }
 
