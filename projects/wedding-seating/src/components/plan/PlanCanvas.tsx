@@ -121,6 +121,16 @@ export interface PlanCanvasProps {
   onAddTableAt?: (at: Point) => void;
   /** Called when a table's remove button is clicked. */
   onRemoveTable?: (tableId: string) => void;
+  /** While `editMode`, clicking empty canvas places a new generic element (bar,
+   * dance floor, ...) instead of a table. Mutually exclusive with addTableMode. */
+  addElementMode?: boolean;
+  /** Called when a room element is dragged to a new position (natural pixels).
+   * Its presence also makes elements draggable in editMode. */
+  onMoveElement?: (id: string, to: Point) => void;
+  /** Called (in `addElementMode`) with the click position (natural pixels). */
+  onAddElementAt?: (at: Point) => void;
+  /** Called when an element's remove button is clicked (editMode). */
+  onRemoveElement?: (id: string) => void;
   /** Called (double-click on a table, Plan 18 Task 4) with the new name — `null`
    * clears it back to the "Mesa N" fallback. Only wired in the non-editMode,
    * interactive branch (see `handleTableDoubleClick` for the single-click guard). */
@@ -176,6 +186,10 @@ export default function PlanCanvas({
   onMoveTable,
   onAddTableAt,
   onRemoveTable,
+  addElementMode = false,
+  onMoveElement,
+  onAddElementAt,
+  onRemoveElement,
   onRenameTable,
   readOnly = false,
   onStageReady,
@@ -188,6 +202,7 @@ export default function PlanCanvas({
   const interactive = !readOnly;
   const effectiveEditMode = editMode && interactive;
   const effectiveAddTableMode = addTableMode && interactive;
+  const effectiveAddElementMode = addElementMode && interactive;
 
   // Plan 17/Task 3: tables show only their colored chair dots by default; a table's
   // seated guests' name chips appear only for the one table the user clicked. Toggled
@@ -271,14 +286,26 @@ export default function PlanCanvas({
   // Placing a new table (editMode + addTableMode): a click on empty stage space
   // (not on a table shape) reports its natural-space position to the caller.
   function handleStageClick(e: KonvaEventObject<MouseEvent>) {
-    if (!effectiveEditMode || !effectiveAddTableMode) return;
+    if (!effectiveEditMode) return;
     if (e.target !== e.target.getStage()) return;
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
-    onAddTableAt?.(toNatural(pos));
+    if (effectiveAddElementMode) onAddElementAt?.(toNatural(pos));
+    else if (effectiveAddTableMode) onAddTableAt?.(toNatural(pos));
   }
 
-  const stageCursor = effectiveEditMode && effectiveAddTableMode ? "copy" : "default";
+  // Element on-screen geometry (for the HTML remove-button overlay in editMode).
+  const elementGeoms = elements.map((el) => ({
+    el,
+    displayX: el.x * displayScale,
+    displayY: el.y * displayScale,
+    width: el.w * displayScale,
+    height: el.h * displayScale,
+  }));
+  const elementsEditable = effectiveEditMode && Boolean(onMoveElement);
+
+  const stageCursor =
+    effectiveEditMode && (effectiveAddTableMode || effectiveAddElementMode) ? "copy" : "default";
 
   return (
     <div style={{ position: "relative", width: stageWidth, height: stageHeight }}>
@@ -327,7 +354,7 @@ export default function PlanCanvas({
         {/* Room elements (Plan 18 Task 8 — dance floor, bar, ...): always read-only
             here, drawn behind the tables with a semi-transparent fill in their chosen
             color and a centered label. */}
-        <Layer listening={false}>
+        <Layer listening={elementsEditable}>
           {elements.map((el) => {
             const displayX = el.x * displayScale;
             const displayY = el.y * displayScale;
@@ -343,6 +370,12 @@ export default function PlanCanvas({
                   fill={`${el.color}b3`}
                   stroke={el.color}
                   strokeWidth={1.5}
+                  draggable={elementsEditable}
+                  onDragEnd={
+                    elementsEditable
+                      ? (e) => onMoveElement?.(el.id, toNatural({ x: e.target.x(), y: e.target.y() }))
+                      : undefined
+                  }
                 />
                 <Text
                   x={displayX}
@@ -355,6 +388,7 @@ export default function PlanCanvas({
                   fontSize={14}
                   fontStyle="bold"
                   fill="#111827"
+                  listening={false}
                 />
               </Fragment>
             );
@@ -433,6 +467,37 @@ export default function PlanCanvas({
           sits on top of the Stage) never fights Konva's own drag handling for the
           table shape underneath it (see editMode wiring above). */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {/* Element remove buttons (editMode) — drawn alongside the table overlay. */}
+        {elementsEditable &&
+          onRemoveElement &&
+          elementGeoms.map(({ el, displayX, displayY, width }) => (
+            <button
+              key={`el-remove-${el.id}`}
+              type="button"
+              onClick={() => onRemoveElement(el.id)}
+              title="Remover elemento"
+              style={{
+                position: "absolute",
+                left: displayX + width - 11,
+                top: displayY - 11,
+                width: 22,
+                height: 22,
+                borderRadius: "50%",
+                border: "1px solid #dc2626",
+                background: "#fef2f2",
+                color: "#dc2626",
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 700,
+                lineHeight: 1,
+                padding: 0,
+                boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                pointerEvents: "auto",
+              }}
+            >
+              ×
+            </button>
+          ))}
         {effectiveEditMode
           ? geoms.map((g) => (
               <div

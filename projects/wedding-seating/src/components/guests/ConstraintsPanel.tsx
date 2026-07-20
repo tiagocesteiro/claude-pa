@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Guest } from "./useGuestBoard";
 
 interface Constraint {
   id: string;
@@ -11,12 +10,14 @@ interface Constraint {
   guestBId: string;
 }
 
+/** Only id + name are used — accepts any guest-like list (the guest board's full
+ * Guest, or the seating editor's PlanGuest). */
 export default function ConstraintsPanel({
   weddingId,
   guests,
 }: {
   weddingId: string;
-  guests: Guest[];
+  guests: { id: string; name: string }[];
 }) {
   const [constraints, setConstraints] = useState<Constraint[]>([]);
   const [guestAId, setGuestAId] = useState("");

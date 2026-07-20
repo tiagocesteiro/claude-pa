@@ -160,6 +160,10 @@ model WeddingLayout {
   width       Float? // metres
   depth       Float? // metres
   scale       Float? // pixels per metre
+  // Generic decorative rectangles the couple places (bar, pista de dança, ...) —
+  // same JSON shape as FloorPlan.elements. Seeded from the template's floor plan
+  // on creation-from-template; editable in the couple's layout editor.
+  elements    String?
   tables      Table[]
   seats       LayoutSeat[]
   createdAt   DateTime     @default(now())

@@ -84,7 +84,7 @@ export async function createLayoutFromTemplate(
 ): Promise<WeddingLayout> {
   const template = await prisma.layoutTemplate.findUniqueOrThrow({
     where: { id: templateId },
-    select: { floorPlanId: true },
+    select: { floorPlanId: true, floorPlan: { select: { elements: true } } },
   });
   const templateTables = await prisma.table.findMany({ where: { templateId } });
   const isFinal = await isFirstLayout(weddingId);
@@ -96,6 +96,8 @@ export async function createLayoutFromTemplate(
       isFinal,
       templateId,
       floorPlanId: template.floorPlanId,
+      // Seed the couple's editable elements from the template's floor plan.
+      elements: template.floorPlan?.elements ?? null,
       tables: {
         create: templateTables.map((t) => ({
           shape: t.shape,
@@ -135,6 +137,12 @@ export async function createBlankLayout(
 
 export function renameLayout(layoutId: string, name: string): Promise<WeddingLayout> {
   return prisma.weddingLayout.update({ where: { id: layoutId }, data: { name } });
+}
+
+/** Persist the layout's generic decorative elements (bar, dance floor, ...) as a
+ * JSON string (or null when empty). */
+export function saveLayoutElements(layoutId: string, elements: string | null): Promise<WeddingLayout> {
+  return prisma.weddingLayout.update({ where: { id: layoutId }, data: { elements } });
 }
 
 /**

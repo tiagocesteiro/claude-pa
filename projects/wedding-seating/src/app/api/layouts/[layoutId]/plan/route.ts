@@ -35,7 +35,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ layoutI
     getLayoutSeats(layoutId),
   ]);
 
-  // Background: a template's floor plan (image + zones/elements) OR a blank room.
+  // Background: a template's floor plan (image + zones) OR a blank room. The
+  // decorative ELEMENTS come from the layout itself (couple-editable; seeded from
+  // the template on creation), not from the floor plan.
   let background;
   if (layout.floorPlanId) {
     const fp = await getFloorPlan(layout.floorPlanId);
@@ -47,7 +49,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ layoutI
           width: fp.width,
           depth: fp.depth,
           zones: fp.zones,
-          elements: fp.elements,
+          elements: layout.elements,
         }
       : null;
   } else {
@@ -58,7 +60,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ layoutI
       width: layout.width,
       depth: layout.depth,
       zones: null as string | null,
-      elements: null as string | null,
+      elements: layout.elements,
     };
   }
 

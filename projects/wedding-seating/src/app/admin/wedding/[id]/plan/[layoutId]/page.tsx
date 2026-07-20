@@ -9,9 +9,9 @@ import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePl
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
+import ConstraintsPanel from "@/components/guests/ConstraintsPanel";
 import { Button, Badge } from "@/components/ui";
 import type { AttributeKey } from "@/lib/plan/colors";
-import { parseElements } from "@/lib/floorplan/elements";
 import { imageUrlFor } from "@/lib/images";
 
 const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
@@ -83,6 +83,10 @@ export default function LayoutPlanPage() {
     moveTable,
     addTable,
     removeTable,
+    elements,
+    addElement,
+    moveElement,
+    removeElement,
     violations,
     colorAttr,
     setColorAttr,
@@ -93,6 +97,9 @@ export default function LayoutPlanPage() {
   const [editMode, setEditMode] = useState(false);
   const [addMode, setAddMode] = useState(false);
   const [presetId, setPresetId] = useState<string>("");
+  // Element-editing (bar, dance floor, ...) — mutually exclusive with add-table.
+  const [addElMode, setAddElMode] = useState(false);
+  const [elLabel, setElLabel] = useState("Pista de dança");
 
   // Heading meta (name + final badge) — the plan payload carries the background,
   // not the layout's own name/isFinal, so read it from the wedding's layout list.
@@ -113,7 +120,7 @@ export default function LayoutPlanPage() {
   }, [weddingId, layoutId]);
 
   const hasTables = tables.length > 0;
-  const elements = useMemo(() => parseElements(layout?.elements), [layout]);
+  // `elements` now comes from usePlan (mutable + persisted); no local parse.
 
   const tableLabels = useMemo(() => {
     const map = new Map<string, string>();
@@ -185,6 +192,15 @@ export default function LayoutPlanPage() {
         : { shape: "round", capacity: 8 },
       at
     );
+    setAddMode(false);
+  }
+
+  // Places a generic rectangular element (bar, dance floor, ...) at the click.
+  // Default size ~4×3 m converted to natural pixels via the layout's scale.
+  function placeElementAt(at: { x: number; y: number }) {
+    const scale = layout?.scale && layout.scale > 0 ? layout.scale : 50;
+    addElement({ label: elLabel.trim() || "Elemento", w: 4 * scale, h: 3 * scale }, at);
+    setAddElMode(false);
   }
 
   return (
@@ -203,18 +219,25 @@ export default function LayoutPlanPage() {
         <Button
           variant={editMode ? "secondary" : "primary"}
           onClick={() => {
-            // Leaving edit mode also leaves add mode.
+            // Leaving edit mode also leaves the add sub-modes.
             setEditMode((v) => !v);
             setAddMode(false);
+            setAddElMode(false);
           }}
         >
-          {editMode ? "Concluir edição de mesas" : "Editar mesas"}
+          {editMode ? "Concluir edição" : "Editar mesas e elementos"}
         </Button>
 
         {editMode && (
           <>
-            <Button variant={addMode ? "primary" : "secondary"} onClick={() => setAddMode((v) => !v)}>
-              {addMode ? "A adicionar… (clica na sala)" : "Adicionar mesa"}
+            <Button
+              variant={addMode ? "primary" : "secondary"}
+              onClick={() => {
+                setAddMode((v) => !v);
+                setAddElMode(false);
+              }}
+            >
+              {addMode ? "A adicionar mesa… (clica)" : "Adicionar mesa"}
             </Button>
             <label style={{ fontSize: 13 }}>
               Tipo:{" "}
@@ -226,6 +249,20 @@ export default function LayoutPlanPage() {
                   </option>
                 ))}
               </select>
+            </label>
+
+            <Button
+              variant={addElMode ? "primary" : "secondary"}
+              onClick={() => {
+                setAddElMode((v) => !v);
+                setAddMode(false);
+              }}
+            >
+              {addElMode ? "A adicionar elemento… (clica)" : "Adicionar elemento"}
+            </Button>
+            <label style={{ fontSize: 13 }}>
+              Nome:{" "}
+              <input value={elLabel} onChange={(e) => setElLabel(e.target.value)} style={{ width: 130 }} />
             </label>
             {savingTables && <span style={{ color: "var(--text-muted)", fontSize: 13 }}>A guardar…</span>}
           </>
@@ -271,6 +308,20 @@ export default function LayoutPlanPage() {
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
+      {!editMode && (
+        <details style={{ marginBottom: 16, border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "8px 12px", background: "var(--surface)" }}>
+          <summary style={{ cursor: "pointer", fontWeight: 500 }}>
+            Restrições entre convidados{" "}
+            <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 13 }}>
+              (quem fica junto / separado ao gerar)
+            </span>
+          </summary>
+          <div style={{ marginTop: 12 }}>
+            <ConstraintsPanel weddingId={weddingId} guests={guests} />
+          </div>
+        </details>
+      )}
+
       {!hasTables && !editMode && (
         <p>
           Este layout ainda não tem mesas. Carrega em <strong>Editar mesas</strong> para as adicionar.
@@ -301,6 +352,10 @@ export default function LayoutPlanPage() {
             onMoveTable={moveTable}
             onAddTableAt={placeAt}
             onRemoveTable={removeTable}
+            addElementMode={editMode && addElMode}
+            onMoveElement={moveElement}
+            onAddElementAt={placeElementAt}
+            onRemoveElement={removeElement}
           />
 
           {!editMode && (

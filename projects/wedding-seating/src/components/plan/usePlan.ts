@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Warning } from "@/lib/seating";
 import { planViolations, type PlanViolations } from "@/lib/plan/validate";
 import { buildColorMap, type AttributeKey } from "@/lib/plan/colors";
+import { parseElements, type RoomElement } from "@/lib/floorplan/elements";
 
 export interface PlanGuest {
   id: string;
@@ -118,6 +119,7 @@ export function usePlan(weddingId: string, layoutId?: string) {
   const [constraints, setConstraints] = useState<PlanConstraint[]>([]);
   const [groups, setGroups] = useState<PlanGroup[]>([]);
   const [layout, setLayout] = useState<PlanLayout | null>(null);
+  const [elements, setElements] = useState<RoomElement[]>([]);
   const [templates, setTemplates] = useState<PlanTemplate[]>([]);
   const [venueTableTypes, setVenueTableTypes] = useState<PlanTableType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -159,9 +161,11 @@ export function usePlan(weddingId: string, layoutId?: string) {
         const seatBy = new Map((data.seats ?? []).map((s) => [s.guestId, s.tableId]));
         setGuests((data.guests ?? []).map((g) => ({ ...g, assignedTableId: seatBy.get(g.id) ?? null })));
         setLayout(data.background ?? null);
+        setElements(parseElements(data.background?.elements ?? null));
       } else {
         setGuests(data.guests ?? []);
         setLayout(data.layout ?? null);
+        setElements(parseElements(data.layout?.elements ?? null));
       }
       setTables(data.tables ?? []);
       setConstraints(data.constraints ?? []);
@@ -562,6 +566,63 @@ export function usePlan(weddingId: string, layoutId?: string) {
     [tables, persistTables]
   );
 
+  // Generic decorative elements (bar, dance floor, ...) — layout mode only.
+  // Optimistic local update + PUT of the full next set, reverting on failure.
+  const persistElements = useCallback(
+    async (next: RoomElement[], previous: RoomElement[]) => {
+      setElements(next);
+      try {
+        const res = await fetch(`${planBase}/elements`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ elements: next }),
+        });
+        if (!res.ok) throw new Error("save elements failed");
+      } catch {
+        setElements(previous);
+        setError("Não foi possível guardar os elementos.");
+      }
+    },
+    [planBase]
+  );
+
+  const addElement = useCallback(
+    (el: { label: string; w: number; h: number; color?: string }, at: { x: number; y: number }) => {
+      const previous = elements;
+      const next: RoomElement[] = [
+        ...elements,
+        {
+          id: `el-${Date.now()}`,
+          x: at.x - el.w / 2,
+          y: at.y - el.h / 2,
+          w: el.w,
+          h: el.h,
+          label: el.label,
+          color: el.color ?? "#6e8c66",
+        },
+      ];
+      void persistElements(next, previous);
+    },
+    [elements, persistElements]
+  );
+
+  const moveElement = useCallback(
+    (id: string, to: { x: number; y: number }) => {
+      const previous = elements;
+      const next = elements.map((e) => (e.id === id ? { ...e, x: to.x, y: to.y } : e));
+      void persistElements(next, previous);
+    },
+    [elements, persistElements]
+  );
+
+  const removeElement = useCallback(
+    (id: string) => {
+      const previous = elements;
+      void persistElements(elements.filter((e) => e.id !== id), previous);
+    },
+    [elements, persistElements]
+  );
+
   const violations: PlanViolations = useMemo(
     () => planViolations(guests, tables, constraints),
     [guests, tables, constraints]
@@ -602,6 +663,10 @@ export function usePlan(weddingId: string, layoutId?: string) {
     moveTable,
     addTable,
     removeTable,
+    elements,
+    addElement,
+    moveElement,
+    removeElement,
     violations,
     colorAttr,
     setColorAttr,

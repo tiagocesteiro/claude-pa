@@ -2,6 +2,7 @@ import { it, expect, afterAll } from "vitest";
 import {
   listLayouts,
   getFinalLayout,
+  getLayout,
   createLayoutFromTemplate,
   createBlankLayout,
   setFinalLayout,
@@ -12,6 +13,7 @@ import {
   getLayoutSeats,
   saveLayoutAssignment,
   clearLayoutSeats,
+  saveLayoutElements,
 } from "./layouts";
 import { createWedding } from "./weddings";
 import { prisma } from "./client";
@@ -198,6 +200,28 @@ it("listLayouts returns table + seated counts; clearLayoutSeats empties seating"
   summary = (await listLayouts(w.id)).find((l) => l.id === layout.id)!;
   expect(summary.name).toBe("Renomeado");
   expect(summary.seatedCount).toBe(0);
+});
+
+it("createLayoutFromTemplate seeds elements from the template's floor plan; saveLayoutElements round-trips", async () => {
+  const { venueId, floorPlanId, templateId } = await seedTemplate(1);
+  const els = JSON.stringify([{ id: "e1", x: 10, y: 10, w: 200, h: 100, label: "Bar", color: "#6e8c66" }]);
+  await prisma.floorPlan.update({ where: { id: floorPlanId }, data: { elements: els } });
+  const w = await createWedding({ couple: "Elements", venueId });
+
+  const layout = await createLayoutFromTemplate(w.id, templateId, "Com bar");
+  expect(layout.elements).toBe(els); // copied from the template's floor plan
+
+  // Editing the layout's elements is independent of the template.
+  const updated = JSON.stringify([
+    { id: "e1", x: 10, y: 10, w: 200, h: 100, label: "Bar", color: "#6e8c66" },
+    { id: "e2", x: 300, y: 50, w: 250, h: 150, label: "Pista", color: "#6e8c66" },
+  ]);
+  await saveLayoutElements(layout.id, updated);
+  expect((await getLayout(layout.id))?.elements).toBe(updated);
+
+  // A blank layout starts with no elements.
+  const blank = await createBlankLayout(w.id, { name: "Vazio", width: 10, depth: 8, scale: 50 });
+  expect(blank.elements).toBeNull();
 });
 
 afterAll(async () => {
