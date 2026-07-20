@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Field, Input, Select, Button, Stat, Badge } from "@/components/ui";
+import VenueCalendar from "@/components/venue/VenueCalendar";
 
 interface Venue {
   id: string;
@@ -444,6 +445,9 @@ function VenueSection() {
         ))}
       </ul>
 
+      <h2>Calendário</h2>
+      <VenueCalendar bookings={bookings} />
+
       <h2>Casamentos na tua quinta</h2>
       {bookingsLoaded && bookings.length === 0 && (
         <p style={{ color: "var(--text-muted)" }}>Ainda não há casamentos marcados na tua quinta.</p>
@@ -496,6 +500,10 @@ function BookingCard({ booking: b }: { booking: VenueBooking }) {
         <ChecklistItem done={b.arrangementPicked} label="Arranjo escolhido" />
         <ChecklistItem done={b.seatingDone} label="Seating feito" />
         {missingRsvp > 0 && <ChecklistItem done={false} label={`Faltam confirmar ${missingRsvp}`} />}
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <Link href={`/admin/venue-wedding/${b.id}`}>Ver detalhe &amp; material &rarr;</Link>
       </div>
     </Card>
   );

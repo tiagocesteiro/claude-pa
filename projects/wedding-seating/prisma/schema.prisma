@@ -215,27 +215,43 @@ model WeddingInvite {
 /// unique). Each moment keeps a venue arrangement VIEW (`templateId`) and gains a
 /// decoration list + a task list.
 model WeddingMoment {
-  id          String          @id @default(cuid())
+  id          String           @id @default(cuid())
   weddingId   String
-  wedding     Wedding         @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  wedding     Wedding          @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   kind        String? // tag for the seeded defaults (ceremony|cocktail|dinner|dance); null for custom
   title       String? // display name; falls back to the kind label when null
-  order       Int             @default(0)
+  order       Int              @default(0)
   startTime   String? // planned start time of day, "HH:MM" (drives the chronological Visão geral + durations)
   // Whether this moment has a SEATING plan (assigned seats) — typically only the
   // dinner. When false, its layouts are arrangements (tables + elements) with no
   // seated guests.
-  hasSeating  Boolean         @default(false)
+  hasSeating  Boolean          @default(false)
   floorPlanId String?
-  floorPlan   FloorPlan?      @relation(fields: [floorPlanId], references: [id])
+  floorPlan   FloorPlan?       @relation(fields: [floorPlanId], references: [id])
   templateId  String?
-  template    LayoutTemplate? @relation(fields: [templateId], references: [id])
+  template    LayoutTemplate?  @relation(fields: [templateId], references: [id])
   notes       String? // legacy free-text (superseded by tasks); kept, unused by new UI
   tasks       MomentTask[]
   decor       MomentDecor[]
   layouts     WeddingLayout[]
+  materials   MomentMaterial[]
 
   @@index([weddingId])
+}
+
+/// Extra operational material the VENUE needs for a moment (e.g. "tomadas triplas
+/// para o DJ) — added by the venue, visible ONLY to the venue (never the couple).
+/// Distinct from decoration (which the couple picks).
+model MomentMaterial {
+  id        String        @id @default(cuid())
+  momentId  String
+  moment    WeddingMoment @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  name      String
+  quantity  Int           @default(1)
+  note      String?
+  createdAt DateTime      @default(now())
+
+  @@index([momentId])
 }
 
 /// A supplier/vendor for a wedding (catering, fotografia, DJ, ...). Wedding-owned;

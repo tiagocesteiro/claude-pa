@@ -330,6 +330,155 @@ export async function listVenueBookings(actor: Actor): Promise<VenueBookingSumma
   });
 }
 
+// ── Venue's per-wedding operational window (booked weddings only) ────────────
+// Fase E extended: a venue may READ a PII-free operational view of a wedding
+// booked at its venue (overview + tasks + decoration + material) and WRITE its
+// own extra material. Still NEVER guest names/dietary. Couples use their own
+// routes; this channel is venue+admin only.
+
+/** Gate for the venue's window into a booked wedding (read overview / write its
+ * extra material). Venue: only weddings whose `venue.ownerId === actor`. Couple:
+ * denied (they own the wedding via the normal gate). Admin: all. */
+export async function assertVenueBooking(
+  actor: Actor,
+  weddingId: string,
+  _mode: AccessMode = "read"
+): Promise<void> {
+  void _mode;
+  if (actor.role === "admin") {
+    const w = await prisma.wedding.findUnique({ where: { id: weddingId }, select: { id: true } });
+    if (!w) throw notFound("Wedding");
+    return;
+  }
+  if (actor.role === "couple") {
+    throw new AccessError(403, "This channel is for the venue.");
+  }
+  const w = await prisma.wedding.findUnique({
+    where: { id: weddingId },
+    select: { venue: { select: { ownerId: true } } },
+  });
+  if (!w) throw notFound("Wedding");
+  if (w.venue?.ownerId === actor.userId) return;
+  throw notFound("Wedding"); // not booked at a venue they own — hide it
+}
+
+/** A moment's venue-booking gate (resolve moment → wedding). */
+export async function assertMomentVenueAccess(
+  actor: Actor,
+  momentId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const m = await prisma.weddingMoment.findUnique({ where: { id: momentId }, select: { weddingId: true } });
+  if (!m) throw notFound("Moment");
+  await assertVenueBooking(actor, m.weddingId, mode);
+}
+
+/** A material line belongs to a moment → wedding (venue-booking gate). */
+export async function assertMaterialAccess(
+  actor: Actor,
+  materialId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const mat = await prisma.momentMaterial.findUnique({
+    where: { id: materialId },
+    select: { moment: { select: { weddingId: true } } },
+  });
+  if (!mat) throw notFound("Material");
+  await assertVenueBooking(actor, mat.moment.weddingId, mode);
+}
+
+export interface VenueWeddingView {
+  id: string;
+  couple: string;
+  date: Date | null;
+  guestEstimate: number | null;
+  guests: { total: number; confirmed: number; pending: number; declined: number };
+  suppliers: { id: string; name: string }[];
+  moments: {
+    id: string;
+    kind: string | null;
+    title: string | null;
+    startTime: string | null;
+    hasSeating: boolean;
+    finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
+    decor: { name: string; quantity: number }[];
+    materials: { id: string; name: string; quantity: number; note: string | null }[];
+    pendingTasks: { text: string; assignee: string; supplierId: string | null }[];
+  }[];
+}
+
+/**
+ * The venue's PII-free operational view of ONE booked wedding: overview
+ * (guest COUNTS, never names), and per moment the final layout summary, the
+ * decoration the couple chose, the venue's own extra material, and pending
+ * tasks. The route gates this via {@link assertVenueBooking}.
+ */
+export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddingView | null> {
+  const w = await prisma.wedding.findUnique({
+    where: { id: weddingId },
+    select: {
+      id: true,
+      couple: true,
+      date: true,
+      guestEstimate: true,
+      guests: { select: { rsvp: true } }, // counts only — never names/dietary
+      suppliers: { select: { id: true, name: true } },
+      moments: {
+        orderBy: [{ order: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          kind: true,
+          title: true,
+          startTime: true,
+          hasSeating: true,
+          tasks: { where: { done: false }, select: { text: true, assignee: true, supplierId: true } },
+          decor: { select: { name: true, quantity: true, decorItem: { select: { name: true } } } },
+          materials: { select: { id: true, name: true, quantity: true, note: true } },
+          layouts: {
+            where: { isFinal: true },
+            select: { name: true, _count: { select: { tables: true, seats: true } } },
+          },
+        },
+      },
+    },
+  });
+  if (!w) return null;
+
+  let confirmed = 0;
+  let pending = 0;
+  let declined = 0;
+  for (const g of w.guests) {
+    if (g.rsvp === "confirmed") confirmed++;
+    else if (g.rsvp === "declined") declined++;
+    else pending++;
+  }
+
+  return {
+    id: w.id,
+    couple: w.couple,
+    date: w.date,
+    guestEstimate: w.guestEstimate,
+    guests: { total: w.guests.length, confirmed, pending, declined },
+    suppliers: w.suppliers,
+    moments: w.moments.map((m) => {
+      const final = m.layouts[0];
+      return {
+        id: m.id,
+        kind: m.kind,
+        title: m.title,
+        startTime: m.startTime,
+        hasSeating: m.hasSeating,
+        finalLayout: final
+          ? { name: final.name, tableCount: final._count.tables, seatedCount: final._count.seats }
+          : null,
+        decor: m.decor.map((d) => ({ name: d.decorItem?.name ?? d.name ?? "Item", quantity: d.quantity })),
+        materials: m.materials,
+        pendingTasks: m.tasks,
+      };
+    }),
+  };
+}
+
 // ── Platform-admin overview (admin role only) ────────────────────────────────
 
 /** One venue row in the admin overview: identity + owner + child counts. */
