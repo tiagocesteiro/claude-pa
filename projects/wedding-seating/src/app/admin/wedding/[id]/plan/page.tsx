@@ -1,307 +1,256 @@
 "use client";
 
-import { useMemo } from "react";
-import dynamic from "next/dynamic";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import type { Warning } from "@/lib/seating";
-import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePlan";
-import type { PlanTableView } from "@/components/plan/PlanCanvas";
-import UnassignedTray from "@/components/plan/UnassignedTray";
-import TableList, { type TableListRow } from "@/components/plan/TableList";
-import { Button, Badge } from "@/components/ui";
-import type { AttributeKey } from "@/lib/plan/colors";
-import { parseElements } from "@/lib/floorplan/elements";
-import { imageUrlFor } from "@/lib/images";
+import { Button, Card, Badge, Input, Field } from "@/components/ui";
 
-// "Pintar por" control options — label shown to the user vs. the AttributeKey (or ""
-// for "no color") passed to setColorAttr / buildColorMap.
-const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
-  { label: "Nenhum", value: "" },
-  { label: "Faixa etária", value: "ageGroup" },
-  { label: "Género", value: "gender" },
-  { label: "Alimentar", value: "dietary" },
-  { label: "Grupo", value: "group" },
-];
-
-// Same "adult"/"child"/"senior" -> Portuguese mapping as TableList, used for the legend's
-// value labels when coloring by ageGroup (gender/dietary values are shown as stored).
-const AGE_GROUP_LABELS: Record<string, string> = {
-  adult: "adulto",
-  child: "criança",
-  senior: "idoso",
-};
-
-// "group" legend values are groupIds — resolved to the group's name; falls back to the
-// raw id if the group was deleted since the plan was generated (same defensive pattern
-// as resolveWarningText below).
-function legendLabel(attr: AttributeKey, value: string, groups: PlanGroup[]): string {
-  if (attr === "ageGroup") return AGE_GROUP_LABELS[value] ?? value;
-  if (attr === "group") return groups.find((g) => g.id === value)?.name ?? value;
-  return value;
+interface LayoutRow {
+  id: string;
+  name: string;
+  isFinal: boolean;
+  floorPlanId: string | null;
+  tableCount: number;
+  seatedCount: number;
 }
 
-const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), {
-  ssr: false,
-});
-
-// Same on-screen bounds convention as the Plan 2 floor-plan editor; the stage
-// fits inside this box preserving the uploaded image's aspect ratio.
-const CANVAS_WIDTH = 960;
-const CANVAS_HEIGHT = 640;
-
-// Resolves an engine warning to a human-readable, NAME-based message: group-split looks up
-// warning.groupId in the groups list, together-split/separate-unsatisfiable look up both ids
-// in warning.guestIds. Falls back to the engine's raw message if a lookup misses (e.g. group
-// or guest was deleted since the plan was generated).
-function resolveWarningText(w: Warning, groups: PlanGroup[], guests: PlanGuest[]): string {
-  if (w.kind === "group-split" && w.groupId) {
-    const group = groups.find((g) => g.id === w.groupId);
-    if (group) return `O grupo "${group.name}" ficou dividido por mais do que uma mesa.`;
-  }
-  if ((w.kind === "together-split" || w.kind === "separate-unsatisfiable") && w.guestIds) {
-    const [aId, bId] = w.guestIds;
-    const a = guests.find((g) => g.id === aId);
-    const b = guests.find((g) => g.id === bId);
-    if (a && b) {
-      return w.kind === "together-split"
-        ? `${a.name} e ${b.name} deviam ficar juntos mas ficaram em mesas diferentes.`
-        : `${a.name} e ${b.name} deviam ficar separados mas ficaram na mesma mesa.`;
-    }
-  }
-  return w.message;
+interface TemplateRow {
+  id: string;
+  name: string;
+  venueId: string;
+  minGuests: number;
+  maxGuests: number;
 }
 
-export default function PlanPage() {
+export default function LayoutsIndexPage() {
   const params = useParams<{ id: string }>();
   const weddingId = params.id;
 
-  const {
-    guests,
-    tables,
-    groups,
-    layout,
-    loading,
-    generating,
-    error,
-    score,
-    warnings,
-    generate,
-    assign,
-    toggleGuestLock,
-    toggleTableFixed,
-    renameTable,
-    swap,
-    violations,
-    colorAttr,
-    setColorAttr,
-    colorMap,
-  } = usePlan(weddingId);
+  const [layouts, setLayouts] = useState<LayoutRow[]>([]);
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [venueId, setVenueId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const hasTables = tables.length > 0;
+  // Create-form state.
+  const [tplId, setTplId] = useState("");
+  const [tplName, setTplName] = useState("");
+  const [blankName, setBlankName] = useState("");
+  const [blankW, setBlankW] = useState("12");
+  const [blankD, setBlankD] = useState("10");
 
-  // Decorative room elements (Plan 18 Task 8 — dance floor, bar, ...) from the wedding's
-  // applied dinner template's floor plan. Rendered read-only here (they're only editable
-  // in the venue's template editor); never fed into the seating engine or any warning.
-  const elements = useMemo(() => parseElements(layout?.elements), [layout]);
+  const loadLayouts = useCallback(async () => {
+    const res = await fetch(`/api/weddings/${weddingId}/layouts`);
+    if (!res.ok) return;
+    const data = (await res.json()) as { layouts: LayoutRow[] };
+    setLayouts(data.layouts ?? []);
+  }, [weddingId]);
 
-  // Stable, human labels ("Mesa 1", "Mesa 2", ...) derived from table order — used by the
-  // canvas, the warnings list, and the TableList so a table reads the same everywhere
-  // instead of showing a raw id.
-  const tableLabels = useMemo(() => {
-    const map = new Map<string, string>();
-    tables.forEach((t, i) => map.set(t.id, `Mesa ${i + 1}`));
-    return map;
-  }, [tables]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Wedding venueId (to filter the template picker) + templates + layouts.
+      const [wRes, tRes] = await Promise.all([
+        fetch("/api/weddings"),
+        fetch("/api/templates"),
+      ]);
+      if (!cancelled && wRes.ok) {
+        const all = (await wRes.json()) as { id: string; venueId: string | null }[];
+        setVenueId(all.find((w) => w.id === weddingId)?.venueId ?? null);
+      }
+      if (!cancelled && tRes.ok) {
+        setTemplates(((await tRes.json()) as TemplateRow[]) ?? []);
+      }
+      await loadLayouts();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [weddingId, loadLayouts]);
 
-  const tableViews: PlanTableView[] = useMemo(
-    () =>
-      tables.map((t) => ({
-        id: t.id,
-        shape: t.shape,
-        capacity: t.capacity,
-        x: t.x,
-        y: t.y,
-        label: tableLabels.get(t.id),
-        name: t.name,
-        heads: t.heads,
-        fixed: t.fixed,
-        width: t.width,
-        depth: t.depth,
-        guests: guests
-          .filter((g) => g.assignedTableId === t.id)
-          .map((g) => ({ id: g.id, name: g.name, locked: g.locked })),
-      })),
-    [tables, guests, tableLabels]
-  );
+  const venueTemplates = templates.filter((t) => venueId && t.venueId === venueId);
 
-  const unassigned = guests.filter((g) => g.assignedTableId === null);
+  async function post(body: unknown) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/weddings/${weddingId}/layouts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const b = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(b?.error ?? "erro");
+      }
+      await loadLayouts();
+      setTplId("");
+      setTplName("");
+      setBlankName("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível criar o layout.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-  const tableListRows: TableListRow[] = useMemo(
-    () =>
-      tables.map((t) => {
-        const seated = guests.filter((g) => g.assignedTableId === t.id);
-        return {
-          id: t.id,
-          label: tableLabels.get(t.id) ?? t.id.slice(0, 6),
-          occupancy: seated.length,
-          capacity: t.capacity,
-          guests: seated.map((g) => ({
-            id: g.id,
-            name: g.name,
-            ageGroup: g.ageGroup,
-            gender: g.gender,
-            dietary: g.dietary,
-          })),
-          overCapacity: violations.overCapacity.includes(t.id),
-        };
-      }),
-    [tables, guests, tableLabels, violations.overCapacity]
-  );
+  function createFromTemplate() {
+    if (!tplId) return;
+    void post({ source: "template", templateId: tplId, name: tplName.trim() || undefined });
+  }
 
-  const hasWarnings =
-    warnings.length > 0 || violations.overCapacity.length > 0 || violations.separated.length > 0;
+  function createBlank() {
+    const width = Number(blankW);
+    const depth = Number(blankD);
+    if (!(width > 0 && depth > 0)) {
+      setError("Indica comprimento e largura válidos (metros).");
+      return;
+    }
+    void post({ source: "blank", name: blankName.trim() || "Nova sala", width, depth, scale: 50 });
+  }
+
+  async function markFinal(id: string) {
+    setBusy(true);
+    await fetch(`/api/weddings/${weddingId}/layouts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isFinal: true }),
+    });
+    await loadLayouts();
+    setBusy(false);
+  }
+
+  async function rename(id: string, current: string) {
+    const name = window.prompt("Novo nome do layout:", current);
+    if (name == null || !name.trim()) return;
+    setBusy(true);
+    await fetch(`/api/weddings/${weddingId}/layouts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    await loadLayouts();
+    setBusy(false);
+  }
+
+  async function remove(id: string, name: string) {
+    if (!window.confirm(`Apagar o layout "${name}"? A sentada deste layout perde-se.`)) return;
+    setBusy(true);
+    await fetch(`/api/weddings/${weddingId}/layouts/${id}`, { method: "DELETE" });
+    await loadLayouts();
+    setBusy(false);
+  }
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <h1>Seating plan</h1>
-
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
-        <Button variant="primary" onClick={generate} disabled={!hasTables || generating} loading={generating}>
-          {generating ? "A gerar..." : "Gerar plano"}
-        </Button>
-        {score !== null && (
-          <Badge tone="accent" className="app-header-role">
-            <span data-testid="plan-score">Score: {score.toFixed(2)}</span>
-          </Badge>
-        )}
-        {loading && <span style={{ color: "var(--text-muted)" }}>A carregar...</span>}
-        <label>
-          Pintar por:{" "}
-          <select
-            data-testid="color-attr-select"
-            value={colorAttr ?? ""}
-            onChange={(e) => setColorAttr((e.target.value || null) as AttributeKey | null)}
-          >
-            {COLOR_ATTR_OPTIONS.map((o) => (
-              <option key={o.label} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+    <div>
+      <h2>Layouts da sala</h2>
+      <p style={{ color: "var(--text-muted)", maxWidth: 640 }}>
+        Cria uma ou mais disposições de mesas. Cada layout tem a sua própria sentada, e podes marcar
+        um como <strong>final</strong> — é esse que a quinta vê e que sai na visão geral e no PDF.
+      </p>
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>A carregar…</p>}
 
-      {!hasTables && (
-        <p>
-          Define o arranjo do jantar no separador{" "}
-          <Link href={`/admin/wedding/${weddingId}/details`}>Detalhes</Link>.
-        </p>
-      )}
-
-      {hasTables && (
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <PlanCanvas
-            imageUrl={imageUrlFor(layout?.image ?? "")}
-            tables={tableViews}
-            scale={layout?.scale ?? 0}
-            roomWidth={layout?.width ?? 0}
-            roomDepth={layout?.depth ?? 0}
-            zones={[]}
-            elements={elements}
-            overCapacityIds={violations.overCapacity}
-            maxWidth={CANVAS_WIDTH}
-            maxHeight={CANVAS_HEIGHT}
-            onAssign={assign}
-            onToggleGuestLock={toggleGuestLock}
-            onToggleTableFixed={toggleTableFixed}
-            onSwap={swap}
-            onRenameTable={renameTable}
-            colorByGuest={colorMap.colorByGuest}
-          />
-
-          <div style={{ minWidth: 260, flex: "0 0 260px", display: "flex", flexDirection: "column", gap: 16 }}>
-            {colorAttr && colorMap.legend.length > 0 && (
-              <div data-testid="color-legend" style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-                <h3 style={{ marginTop: 0 }}>Legenda</h3>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {colorMap.legend.map((entry) => (
-                    <li
-                      key={entry.value}
-                      data-testid={`legend-entry-${entry.value}`}
-                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}
-                    >
-                      <span
-                        style={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: 3,
-                          background: entry.color,
-                          display: "inline-block",
-                          flexShrink: 0,
-                        }}
-                      />
-                      {legendLabel(colorAttr, entry.value, groups)}
-                    </li>
-                  ))}
-                </ul>
+      {/* Existing layouts */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "16px 0" }}>
+        {layouts.map((l) => (
+          <Card key={l.id}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 220px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <strong style={{ fontSize: 16 }}>{l.name}</strong>
+                  {l.isFinal && <Badge tone="accent">Final</Badge>}
+                  {l.floorPlanId ? (
+                    <Badge tone="neutral">Do template</Badge>
+                  ) : (
+                    <Badge tone="neutral">Sala em branco</Badge>
+                  )}
+                </div>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                  {l.tableCount} mesa{l.tableCount === 1 ? "" : "s"} · {l.seatedCount} sentado
+                  {l.seatedCount === 1 ? "" : "s"}
+                </span>
               </div>
-            )}
-
-            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-              <h3 style={{ marginTop: 0 }}>Avisos</h3>
-              {!hasWarnings && <p style={{ fontSize: 13, color: "#666" }}>Sem avisos.</p>}
-              <ul style={{ paddingLeft: 18, fontSize: 13, margin: 0 }}>
-                {warnings.map((w, i) => (
-                  <li key={`w-${i}`} style={{ color: "#d97706" }}>
-                    {resolveWarningText(w, groups, guests)}
-                  </li>
-                ))}
-                {violations.overCapacity.map((id) => {
-                  const t = tables.find((tb) => tb.id === id);
-                  const occ = t ? guests.filter((g) => g.assignedTableId === id).length : 0;
-                  return (
-                    <li key={`oc-${id}`} style={{ color: "#dc2626" }}>
-                      {tableLabels.get(id) ?? id.slice(0, 6)} está acima da capacidade ({occ}/{t?.capacity ?? "?"}).
-                    </li>
-                  );
-                })}
-                {violations.separated.map((s, i) => {
-                  const nameA = guests.find((g) => g.id === s.a)?.name ?? s.a;
-                  const nameB = guests.find((g) => g.id === s.b)?.name ?? s.b;
-                  return (
-                    <li key={`sep-${i}`} style={{ color: "#dc2626" }}>
-                      Convidados que deviam estar separados partilham mesa ({nameA} / {nameB}).
-                    </li>
-                  );
-                })}
-              </ul>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Link href={`/admin/wedding/${weddingId}/plan/${l.id}`}>
+                  <Button variant="primary">Abrir</Button>
+                </Link>
+                {!l.isFinal && (
+                  <Button variant="secondary" onClick={() => markFinal(l.id)} disabled={busy}>
+                    Marcar final
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={() => rename(l.id, l.name)} disabled={busy}>
+                  Renomear
+                </Button>
+                <Button variant="ghost" onClick={() => remove(l.id, l.name)} disabled={busy}>
+                  Apagar
+                </Button>
+              </div>
             </div>
+          </Card>
+        ))}
+        {!loading && layouts.length === 0 && (
+          <p style={{ color: "var(--text-muted)" }}>Ainda não há layouts. Cria o primeiro abaixo.</p>
+        )}
+      </div>
 
-            <UnassignedTray
-              guests={unassigned.map((g) => ({ id: g.id, name: g.name, locked: g.locked }))}
-              onDrop={(guestId) => assign(guestId, null)}
-              onToggleGuestLock={toggleGuestLock}
-              onSwap={swap}
-            />
+      {/* Create new */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+        <Card>
+          <h3 style={{ marginTop: 0 }}>A partir de um template</h3>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 0 }}>
+            Copia as mesas de um arranjo da quinta. Depois podes adicionar ou remover mesas.
+          </p>
+          {venueTemplates.length === 0 ? (
+            <p style={{ fontSize: 13 }}>Sem templates disponíveis para a tua quinta.</p>
+          ) : (
+            <>
+              <Field label="Template">
+                <select className="input" value={tplId} onChange={(e) => setTplId(e.target.value)}>
+                  <option value="">Escolhe…</option>
+                  {venueTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.minGuests}–{t.maxGuests} convidados)
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Nome (opcional)">
+                <Input value={tplName} onChange={(e) => setTplName(e.target.value)} placeholder="ex.: Plano A" />
+              </Field>
+              <Button variant="primary" onClick={createFromTemplate} disabled={busy || !tplId}>
+                Criar layout
+              </Button>
+            </>
+          )}
+        </Card>
+
+        <Card>
+          <h3 style={{ marginTop: 0 }}>Sala em branco</h3>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 0 }}>
+            Define o tamanho da sala (metros) e adiciona tu as mesas — sem planta.
+          </p>
+          <Field label="Nome (opcional)">
+            <Input value={blankName} onChange={(e) => setBlankName(e.target.value)} placeholder="ex.: Salão" />
+          </Field>
+          <div style={{ display: "flex", gap: 12 }}>
+            <Field label="Comprimento (m)">
+              <Input type="number" min="1" value={blankW} onChange={(e) => setBlankW(e.target.value)} />
+            </Field>
+            <Field label="Largura (m)">
+              <Input type="number" min="1" value={blankD} onChange={(e) => setBlankD(e.target.value)} />
+            </Field>
           </div>
-        </div>
-      )}
-
-      {hasTables && (
-        <TableList
-          rows={tableListRows}
-          unassigned={unassigned.map((g) => ({
-            id: g.id,
-            name: g.name,
-            ageGroup: g.ageGroup,
-            gender: g.gender,
-            dietary: g.dietary,
-          }))}
-        />
-      )}
+          <Button variant="primary" onClick={createBlank} disabled={busy}>
+            Criar layout
+          </Button>
+        </Card>
+      </div>
     </div>
   );
 }

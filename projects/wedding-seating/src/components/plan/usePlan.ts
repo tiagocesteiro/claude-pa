@@ -58,8 +58,8 @@ export interface PlanGroup {
  * `width`/`depth` (metres) feed the blank-room render (Plan 18 Task 7) when `image`
  * is empty — a layout defined by dimensions rather than an uploaded photo. */
 export interface PlanLayout {
-  floorPlanId: string;
-  image: string;
+  floorPlanId: string | null;
+  image: string | null;
   scale: number;
   width: number;
   depth: number;
@@ -101,7 +101,18 @@ export interface TablePlacementPreset {
   depth?: number | null;
 }
 
-export function usePlan(weddingId: string) {
+/**
+ * Drives the seating editor. Two modes, same UI:
+ *  • wedding mode (`layoutId` omitted) — the legacy single dinner arrangement,
+ *    talking to `/api/weddings/[id]/*`.
+ *  • layout mode (`layoutId` given) — one of the couple's multiple layouts,
+ *    talking to `/api/layouts/[layoutId]/*`. The `/plan`, `/generate`,
+ *    `/assignment`, `/tables` suffixes are identical in both, so only the base
+ *    URL differs; the one real difference is the layout `/plan` response, which
+ *    carries seating as a separate `seats` array (merged into each guest's
+ *    `assignedTableId` here) and the background under `background`.
+ */
+export function usePlan(weddingId: string, layoutId?: string) {
   const [guests, setGuests] = useState<PlanGuest[]>([]);
   const [tables, setTables] = useState<PlanTable[]>([]);
   const [constraints, setConstraints] = useState<PlanConstraint[]>([]);
@@ -118,28 +129,48 @@ export function usePlan(weddingId: string) {
   const [warnings, setWarnings] = useState<Warning[]>([]);
   const [colorAttr, setColorAttr] = useState<AttributeKey | null>(null);
 
+  // Only the base differs between the two modes — the /plan, /generate,
+  // /assignment, /tables suffixes are the same on both route trees.
+  const planBase = useMemo(
+    () => (layoutId ? `/api/layouts/${layoutId}` : `/api/weddings/${weddingId}`),
+    [layoutId, weddingId]
+  );
+
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/weddings/${weddingId}/plan`);
+      const res = await fetch(`${planBase}/plan`);
       if (!res.ok) throw new Error("failed to load plan");
       const data = (await res.json()) as {
+        // wedding mode
         guests: PlanGuest[];
         tables: PlanTable[];
         constraints: PlanConstraint[];
-        layout: PlanLayout | null;
+        layout?: PlanLayout | null;
+        // layout mode
+        seats?: { guestId: string; tableId: string }[];
+        background?: PlanLayout | null;
       };
-      setGuests(data.guests ?? []);
+      if (layoutId) {
+        // Layout mode: seating lives in a separate `seats` array — fold each
+        // guest's seat in THIS layout into their assignedTableId so the rest of
+        // the editor (which reads assignedTableId) works unchanged.
+        const seatBy = new Map((data.seats ?? []).map((s) => [s.guestId, s.tableId]));
+        setGuests((data.guests ?? []).map((g) => ({ ...g, assignedTableId: seatBy.get(g.id) ?? null })));
+        setLayout(data.background ?? null);
+      } else {
+        setGuests(data.guests ?? []);
+        setLayout(data.layout ?? null);
+      }
       setTables(data.tables ?? []);
       setConstraints(data.constraints ?? []);
-      setLayout(data.layout ?? null);
     } catch {
       setError("Não foi possível carregar o plano.");
     } finally {
       setLoading(false);
     }
-  }, [weddingId]);
+  }, [planBase, layoutId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount
@@ -253,7 +284,7 @@ export function usePlan(weddingId: string) {
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch(`/api/weddings/${weddingId}/generate`, {
+      const res = await fetch(`${planBase}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -274,7 +305,7 @@ export function usePlan(weddingId: string) {
     } finally {
       setGenerating(false);
     }
-  }, [weddingId, refresh]);
+  }, [planBase, refresh]);
 
   // Optimistic local update + persist via PUT; live `violations` (below) picks
   // up the change on next render. Reverts and surfaces an error if the PUT fails.
@@ -289,7 +320,7 @@ export function usePlan(weddingId: string) {
         })
       );
       try {
-        const res = await fetch(`/api/weddings/${weddingId}/assignment`, {
+        const res = await fetch(`${planBase}/assignment`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ assignments: [{ guestId, tableId }] }),
@@ -302,7 +333,7 @@ export function usePlan(weddingId: string) {
         setError("Não foi possível guardar a alteração.");
       }
     },
-    [weddingId]
+    [planBase]
   );
 
   // Optimistic local update + persist via PATCH. Reverts and surfaces an error if the
@@ -409,7 +440,7 @@ export function usePlan(weddingId: string) {
         })
       );
       try {
-        const res = await fetch(`/api/weddings/${weddingId}/assignment`, {
+        const res = await fetch(`${planBase}/assignment`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -431,7 +462,7 @@ export function usePlan(weddingId: string) {
         setError("Não foi possível trocar os convidados de mesa.");
       }
     },
-    [weddingId, guests]
+    [planBase, guests]
   );
 
   // Shared persist step for move/add/remove: PUTs the full next table set (each
@@ -446,7 +477,7 @@ export function usePlan(weddingId: string) {
       setSavingTables(true);
       setError(null);
       try {
-        const res = await fetch(`/api/weddings/${weddingId}/tables`, {
+        const res = await fetch(`${planBase}/tables`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -478,7 +509,7 @@ export function usePlan(weddingId: string) {
         setSavingTables(false);
       }
     },
-    [weddingId, refresh]
+    [planBase, refresh]
   );
 
   // Drags a table to a new position (natural/image-pixel space) and persists it.

@@ -38,14 +38,15 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
   const isDetailsActive = pathname?.endsWith("/details") ?? false;
   const isGuestsActive = pathname === guestsHref;
   const isConstraintsActive = pathname?.endsWith("/constraints") ?? false;
-  const isPlanActive = pathname?.endsWith("/plan") ?? false;
+  // Active for both the layouts index (/plan) and a specific layout editor (/plan/<id>).
+  const isPlanActive = pathname?.includes("/plan") ?? false;
   const isCoupleActive = pathname?.endsWith("/couple") ?? false;
 
   const tabs = [
     { label: "Detalhes", href: detailsHref, active: isDetailsActive },
     { label: "Convidados", href: guestsHref, active: isGuestsActive },
     { label: "Restrições", href: constraintsHref, active: isConstraintsActive },
-    { label: "Seating plan", href: planHref, active: isPlanActive },
+    { label: "Layouts", href: planHref, active: isPlanActive },
     { label: "Visão geral", href: coupleHref, active: isCoupleActive },
   ];
 
