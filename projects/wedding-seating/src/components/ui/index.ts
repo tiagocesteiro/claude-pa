@@ -11,3 +11,4 @@ export { default as PageShell } from "./PageShell";
 export { default as Badge } from "./Badge";
 export { default as Stat } from "./Stat";
 export { default as AppHeader } from "./AppHeader";
+export { default as Wordmark } from "./Wordmark";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, Field, Input, Button } from "@/components/ui";
+import { Card, Field, Input, Button, Wordmark } from "@/components/ui";
 
 type Role = "venue" | "couple";
 
@@ -52,9 +52,7 @@ export default function RegistarPage() {
     <main className="auth-shell">
       <Card className="auth-card">
         <div className="auth-brand">
-          <span className="wordmark" style={{ fontSize: "1.35rem" }}>
-            Wedding<span className="wordmark-accent">Seating</span>
-          </span>
+          <Wordmark style={{ fontSize: "1.35rem" }} />
         </div>
         <h1 className="auth-title">Criar conta</h1>
         <p className="auth-subtitle">Começa a organizar em minutos.</p>

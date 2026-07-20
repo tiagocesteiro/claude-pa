@@ -22,8 +22,9 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Wedding Seating",
-  description: "Organiza o seating do teu casamento: quintas, plantas, convidados e distribuição automática de mesas.",
+  title: "Aliança — organiza o teu casamento",
+  description:
+    "Aliança liga casais e quintas: gere os convidados, segue as confirmações e monta o seating sobre as plantas reais do espaço, com disposição automática das mesas.",
 };
 
 export default function RootLayout({

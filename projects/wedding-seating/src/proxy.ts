@@ -58,5 +58,5 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   // Everything except Next's static assets (which carry no data).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };

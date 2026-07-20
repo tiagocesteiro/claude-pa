@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Button from "./Button";
 import Badge from "./Badge";
+import Wordmark from "./Wordmark";
 
 interface Me {
   user: { id: string; email: string | null } | null;
@@ -55,9 +55,7 @@ export default function AppHeader() {
 
   return (
     <header className="app-header">
-      <Link href="/admin" className="wordmark">
-        Wedding<span className="wordmark-accent">Seating</span>
-      </Link>
+      <Wordmark href="/admin" />
       <div className="app-header-right">
         {roleLabel && (
           <Badge tone="accent" className="app-header-role">
