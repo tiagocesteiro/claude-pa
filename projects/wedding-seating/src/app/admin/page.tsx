@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 interface Venue {
@@ -10,6 +10,12 @@ interface Venue {
   createdAt: string;
 }
 
+interface PickableVenue {
+  id: string;
+  name: string;
+  location: string | null;
+}
+
 interface Wedding {
   id: string;
   couple: string;
@@ -17,37 +23,66 @@ interface Wedding {
   createdAt: string;
 }
 
-export default function AdminPage() {
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [name, setName] = useState("");
-  const [location, setLocation] = useState("");
-  const [error, setError] = useState<string | null>(null);
+type Role = "venue" | "couple" | "admin";
 
+export default function AdminPage() {
+  const [role, setRole] = useState<Role | null>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadRole() {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return;
+      const data = (await res.json()) as { role?: Role | null };
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+      setRole(data.role ?? null);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+      setRoleLoaded(true);
+    }
+    loadRole();
+  }, []);
+
+  const showVenue = role === "venue" || role === "admin";
+  const showCouple = role === "couple" || role === "admin";
+
+  return (
+    <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+      {!roleLoaded && <p>A carregar...</p>}
+      {showCouple && <CoupleSection />}
+      {showVenue && <VenueSection />}
+      {roleLoaded && !showVenue && !showCouple && (
+        <p>A tua conta não tem um perfil válido. Contacta o suporte.</p>
+      )}
+    </main>
+  );
+}
+
+/** Couple workspace: create + manage the couple's weddings, picking a venue. */
+function CoupleSection() {
   const [weddings, setWeddings] = useState<Wedding[]>([]);
+  const [pickableVenues, setPickableVenues] = useState<PickableVenue[]>([]);
   const [coupleName, setCoupleName] = useState("");
   const [weddingVenueId, setWeddingVenueId] = useState("");
   const [weddingDate, setWeddingDate] = useState("");
   const [weddingError, setWeddingError] = useState<string | null>(null);
   const [creatingWedding, setCreatingWedding] = useState(false);
 
-  async function loadVenues() {
-    const res = await fetch("/api/venues");
-    const data = await res.json();
-    setVenues(data);
-  }
-
-  async function loadWeddings() {
+  const loadWeddings = useCallback(async () => {
     const res = await fetch("/api/weddings");
-    const data = await res.json();
-    setWeddings(data);
-  }
+    if (!res.ok) return;
+    setWeddings(await res.json());
+  }, []);
+
+  const loadPickableVenues = useCallback(async () => {
+    const res = await fetch("/api/venues/pickable");
+    if (!res.ok) return;
+    setPickableVenues(await res.json());
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-    loadVenues();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadWeddings();
-  }, []);
+    loadPickableVenues();
+  }, [loadWeddings, loadPickableVenues]);
 
   async function handleCreateWedding(e: React.FormEvent) {
     e.preventDefault();
@@ -89,55 +124,25 @@ export default function AdminPage() {
     await loadWeddings();
   }
 
-  async function handleDeleteVenue(v: Venue) {
-    if (!window.confirm(`Apagar a quinta "${v.name}" e as suas plantas/mesas/templates? Os casamentos associados ficam sem quinta. Esta ação é irreversível.`)) return;
-    const res = await fetch(`/api/venues/${v.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      setError("Não foi possível apagar a quinta.");
-      return;
-    }
-    await loadVenues();
-  }
-
-  async function handleCreateVenue(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
-    const res = await fetch("/api/venues", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, location: location || undefined }),
-    });
-    if (!res.ok) {
-      setError("Failed to create venue");
-      return;
-    }
-    setName("");
-    setLocation("");
-    await loadVenues();
-  }
-
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <h1>Weddings</h1>
+    <section>
+      <h1>Casamentos</h1>
 
       <form onSubmit={handleCreateWedding} style={{ marginBottom: 24 }}>
-        <h2>New wedding</h2>
+        <h2>Novo casamento</h2>
         <div style={{ marginBottom: 8, display: "flex", gap: 12, flexWrap: "wrap" }}>
           <label>
-            Couple:{" "}
+            Casal:{" "}
             <input value={coupleName} onChange={(e) => setCoupleName(e.target.value)} />
           </label>
           <label>
             Quinta:{" "}
             <select value={weddingVenueId} onChange={(e) => setWeddingVenueId(e.target.value)}>
               <option value="">Sem quinta</option>
-              {venues.map((v) => (
+              {pickableVenues.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
+                  {v.location ? ` — ${v.location}` : ""}
                 </option>
               ))}
             </select>
@@ -152,13 +157,13 @@ export default function AdminPage() {
           </label>
         </div>
         <button type="submit" disabled={creatingWedding}>
-          {creatingWedding ? "Creating..." : "Create wedding"}
+          {creatingWedding ? "A criar..." : "Criar casamento"}
         </button>
         {weddingError && <p style={{ color: "#dc2626" }}>{weddingError}</p>}
       </form>
 
-      <h2>Existing weddings</h2>
-      {weddings.length === 0 && <p>No weddings yet.</p>}
+      <h2>Os teus casamentos</h2>
+      {weddings.length === 0 && <p>Ainda não há casamentos.</p>}
       <ul style={{ listStyle: "none", padding: 0, marginBottom: 32 }}>
         {weddings.map((w) => (
           <li
@@ -191,29 +196,82 @@ export default function AdminPage() {
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
 
-      <h1>Venues</h1>
+/** Venue workspace: create + manage the venue account's venues. */
+function VenueSection() {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const loadVenues = useCallback(async () => {
+    const res = await fetch("/api/venues");
+    if (!res.ok) return;
+    setVenues(await res.json());
+  }, []);
+
+  useEffect(() => {
+    loadVenues();
+  }, [loadVenues]);
+
+  async function handleCreateVenue(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    const res = await fetch("/api/venues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, location: location || undefined }),
+    });
+    if (!res.ok) {
+      setError("Failed to create venue");
+      return;
+    }
+    setName("");
+    setLocation("");
+    await loadVenues();
+  }
+
+  async function handleDeleteVenue(v: Venue) {
+    if (!window.confirm(`Apagar a quinta "${v.name}" e as suas plantas/mesas/templates? Os casamentos associados ficam sem quinta. Esta ação é irreversível.`)) return;
+    const res = await fetch(`/api/venues/${v.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setError("Não foi possível apagar a quinta.");
+      return;
+    }
+    await loadVenues();
+  }
+
+  return (
+    <section>
+      <h1>Quintas</h1>
 
       <form onSubmit={handleCreateVenue} style={{ marginBottom: 24 }}>
-        <h2>New venue</h2>
+        <h2>Nova quinta</h2>
         <div style={{ marginBottom: 8 }}>
           <label>
-            Name:{" "}
+            Nome:{" "}
             <input value={name} onChange={(e) => setName(e.target.value)} />
           </label>
         </div>
         <div style={{ marginBottom: 8 }}>
           <label>
-            Location:{" "}
+            Localização:{" "}
             <input value={location} onChange={(e) => setLocation(e.target.value)} />
           </label>
         </div>
-        <button type="submit">Create venue</button>
+        <button type="submit">Criar quinta</button>
         {error && <p style={{ color: "#dc2626" }}>{error}</p>}
       </form>
 
-      <h2>Existing venues</h2>
-      {venues.length === 0 && <p>No venues yet.</p>}
+      <h2>As tuas quintas</h2>
+      {venues.length === 0 && <p>Ainda não há quintas.</p>}
       <ul style={{ listStyle: "none", padding: 0 }}>
         {venues.map((v) => (
           <li
@@ -240,6 +298,6 @@ export default function AdminPage() {
           </li>
         ))}
       </ul>
-    </main>
+    </section>
   );
 }

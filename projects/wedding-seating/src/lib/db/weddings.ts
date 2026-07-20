@@ -20,6 +20,7 @@ export function createWedding(input: {
   couple: string;
   date?: Date;
   floorPlanId?: string;
+  ownerId?: string | null;
   venueId?: string | null;
   partner1?: string | null;
   partner1Email?: string | null;

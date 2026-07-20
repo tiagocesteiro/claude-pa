@@ -2,43 +2,58 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /**
- * Proxy (Next.js 16's renamed Middleware) — two concerns merged into the one
- * allowed proxy file:
+ * Proxy (Next.js 16's renamed Middleware). Two concerns, in order:
  *
- * 1. INTERIM shared-password gate (HTTP Basic Auth) — kept as-is from before
- *    Fase C. Active ONLY when `SITE_PASSWORD` is set, so local dev stays open.
- *    Remove once Fase D's real route protection is in place.
- * 2. Supabase session refresh (Fase C) — keeps the auth cookie alive so
- *    logged-in users aren't silently signed out. This does NOT redirect or
- *    gate anything by auth state (that's Fase D) — logged-out users can still
- *    reach every page for now.
+ * 1. Refresh the Supabase session cookie (keeps logged-in users signed in).
+ * 2. ENFORCE auth (Fase D1): unauthenticated requests to protected paths are
+ *    redirected to /login (pages) or rejected with 401 JSON (API).
+ *
+ * The interim SITE_PASSWORD Basic-auth gate was removed here — real auth
+ * replaces it.
+ *
+ * Coarse gating only. Per-tenant data scoping (owner filters on reads / leaf
+ * mutations) is Fase D2, not here.
  */
+
+/** Paths reachable without a session. */
+function isPublicPath(pathname: string): boolean {
+  if (pathname === "/") return true; // landing / marketing page
+  return (
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname === "/registar" ||
+    pathname.startsWith("/registar/") ||
+    // Auth callbacks (e.g. email confirmation) — never gate these.
+    pathname === "/auth" ||
+    pathname.startsWith("/auth/") ||
+    // Auth API (login/signup/logout/me) MUST stay open, or a logged-out user
+    // could never sign in.
+    pathname === "/api/auth" ||
+    pathname.startsWith("/api/auth/")
+  );
+}
+
 export async function proxy(req: NextRequest) {
-  const password = process.env.SITE_PASSWORD;
-  if (password) {
-    const auth = req.headers.get("authorization");
-    let authorized = false;
-    if (auth?.startsWith("Basic ")) {
-      try {
-        const decoded = atob(auth.slice("Basic ".length));
-        const sep = decoded.indexOf(":");
-        const supplied = sep >= 0 ? decoded.slice(sep + 1) : "";
-        // Any username is accepted; only the password matters for this interim gate.
-        authorized = supplied === password;
-      } catch {
-        // malformed header → not authorized, falls through to the 401 below
-      }
-    }
-    if (!authorized) {
-      return new NextResponse("Acesso privado.", {
-        status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="Wedding Seating (privado)"' },
-      });
-    }
+  // 1. Refresh session + resolve the current user (cookies written onto `response`).
+  const { response, user } = await updateSession(req);
+
+  const { pathname } = req.nextUrl;
+
+  // Public paths and authenticated requests pass straight through.
+  if (isPublicPath(pathname) || user) return response;
+
+  // 2. Unauthenticated request to a protected path.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  // Basic-auth gate passed (or not configured) — refresh the Supabase session.
-  return updateSession(req);
+  // Page → redirect to login, remembering where they wanted to go.
+  const loginUrl = new URL("/login", req.url);
+  loginUrl.searchParams.set("next", pathname + req.nextUrl.search);
+  const redirect = NextResponse.redirect(loginUrl);
+  // Carry over any refreshed auth cookies so the session isn't dropped.
+  for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+  return redirect;
 }
 
 export const config = {
