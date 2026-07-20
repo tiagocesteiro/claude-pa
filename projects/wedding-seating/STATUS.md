@@ -1,9 +1,9 @@
 ---
-project: Wedding Seating Planner
-status: feature-complete local build (Plans 1-18 done, 239 tests) — NOW PROFESSIONALIZING (local → deployed multi-tenant SaaS). Fase 0 done; Fase A blocked on Tiago's Supabase/.env setup.
-last_updated: 2026-07-15
-branch: feat/wedding-seating-engine (120+ commits ahead of master, NOT merged; needs to move to its OWN GitHub repo — vault has other projects/secrets)
-tags: [wedding-seating, product, nextjs, supabase, going-to-production]
+project: Aliança (Wedding Seating Planner)
+status: LIVE — "Aliança", a deployed/branded/secure multi-tenant SaaS (Supabase Postgres+Auth+Storage + Vercel). Professionalization Fases 0-F COMPLETE (273 tests). Prod https://wedding-seating-jade.vercel.app · repo github.com/tiagocesteiro/wedding-seating. Next: real pilot venue + optional hardening.
+last_updated: 2026-07-20
+branch: PROD work on feat/production-supabase (vault) → synced to github.com/tiagocesteiro/wedding-seating (main). Frozen local SQLite site on feat/wedding-seating-engine.
+tags: [wedding-seating, alianca, product, nextjs, supabase, vercel, live-saas]
 ---
 
 # Wedding Seating Planner — Project Status
@@ -38,7 +38,12 @@ Feature build is essentially done (Plans 1-18, 239 tests, tsc+build clean, all o
 
 **Fase F1 DONE ✅ (2026-07-20) — design-system + polish.** `src/components/ui/` primitives (Button/Card/Input/Select/Textarea/Field/Tabs/PageShell/Badge/Stat/AppHeader), Fraunces serif for the wordmark/titles/stats over the existing tokens. Polished: `/login`, `/registar` (role chooser), admin home (couple + venue — the venue "Casamentos na tua quinta" progress cards render as a real Stat/Badge/✓✗ dashboard), wedding+venue tab navs (shared Tabs + AppHeader), guest-table + plan toolbars. All user copy → **Portuguese** (Wedding→Casamento, Generate→Gerar plano, etc.). Responsive verified at ~375px. konva editor canvases/seating logic untouched. **273 tests green**, build clean. Vault commit `86f8825`; GitHub `b19fd8f`. Wordmark is a placeholder "Wedding Seating" — F2 swaps the real name/logo.
 
-**NEXT: Fase F2** — the real BRAND: product name + logo/wordmark + favicon + a marketing **landing page at `/`** (currently minimal) + swap the placeholder wordmark. BLOCKED on the product NAME (owner decision). Then optional hardening: RLS defense-in-depth; a real venue↔couple booking handshake.
+**Fase F2 DONE ✅ (2026-07-20) — brand + landing.** Product NAME = **Aliança** (owner-chosen; wedding ring + union). Shared `Wordmark` (Fraunces serif + interlocking-rings mark) across header/login/registar/landing; `src/app/icon.svg` favicon (interlocking rings, default favicon removed); `layout.tsx` metadata "Aliança — organiza o teu casamento", lang pt. New marketing **landing at `/`** (public; added to proxy allowlist): hero "O casamento inteiro, reunido num só lugar", Para casais / Para quintas cards, Três passos, Funcionalidades grid, final CTA + footer — bespoke editorial look, natural PT, responsive. **273 tests green**, build clean. Vault commit `fa8a06f`; GitHub `29912c0`.
+
+## 🎉 PROFESSIONALIZATION COMPLETE (Fases 0-F). Aliança is a live, branded, secure, multi-tenant SaaS.
+Prod: https://wedding-seating-jade.vercel.app (Supabase Postgres EU + Storage; real auth; per-account isolation; venue read-only progress oversight; landing + brand). GitHub: github.com/tiagocesteiro/wedding-seating (branch main). Vault dev branch: feat/production-supabase; the frozen local SQLite site stays on feat/wedding-seating-engine.
+**Owner TODOs:** confirm Supabase "Confirm email" OFF (so signup→login works in prod); optionally remove the now-unused `SITE_PASSWORD` Vercel env; end-to-end verify in prod (register a venue + a couple, check isolation + the landing).
+**Backlog / optional hardening (before scaling to paying customers):** RLS defense-in-depth (Prisma bypasses it, so app-layer is the sole net today); a real venue↔couple booking handshake (currently the couple self-sets venueId — venue then sees only PII-free progress, so low risk); external legal/RGPD review + security pentest; custom SMTP + email confirmation for real signups; the `seated` counts-declined nuance; get a real PILOT venue using it.
 
 **(historical) earlier Fase notes** — real route protection in `proxy.ts` (replace/augment the Basic gate with Supabase session redirects) + tenancy `where ownerId` scoping across `src/lib/db/*.ts` + transitive checks on the bare-`[id]` leaf routes + RLS. THE heavy lift; makes the app safe to open to real customers (each venue/couple isolated). Then Fase E (invites), Fase F (brand/landing).
 
