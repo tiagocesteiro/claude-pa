@@ -16,6 +16,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   if (!Array.isArray(b?.assignments)) {
     return NextResponse.json({ error: "assignments[] required" }, { status: 400 });
   }
-  await saveAssignment(b.assignments);
+  await saveAssignment(id, b.assignments);
   return NextResponse.json({ ok: true });
 }

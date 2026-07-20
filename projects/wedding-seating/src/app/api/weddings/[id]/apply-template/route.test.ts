@@ -27,12 +27,13 @@ async function seedTemplate() {
       { templateId: template.id, shape: "round", capacity: 2, x: 1, y: 1, fixed: false },
     ],
   });
-  return { templateId: template.id, floorPlanImage: fp.image };
+  return { templateId: template.id, floorPlanImage: fp.image, venueId: venue.id };
 }
 
 it("applies a template to a wedding, then plan/generate use the wedding's own tables", async () => {
-  const w = await createWedding({ couple: "Apply Route Test" });
-  const { templateId, floorPlanImage } = await seedTemplate();
+  const { templateId, floorPlanImage, venueId } = await seedTemplate();
+  // The wedding must be booked at the template's venue (Fase D H1 check).
+  const w = await createWedding({ couple: "Apply Route Test", venueId });
 
   const res = await POST(
     new Request("http://x/apply-template", {
@@ -90,6 +91,22 @@ it("404s when the template doesn't exist", async () => {
     { params: Promise.resolve({ id: w.id }) }
   );
   expect(res.status).toBe(404);
+});
+
+it("400s when applying a template from ANOTHER venue (security — review H1)", async () => {
+  // A template that belongs to a different venue than the wedding's.
+  const { templateId } = await seedTemplate();
+  const otherVenue = await prisma.venue.create({ data: { name: "Other Venue" } });
+  const w = await createWedding({ couple: "Apply H1", venueId: otherVenue.id });
+
+  const res = await POST(
+    new Request("http://x/apply-template", {
+      method: "POST",
+      body: JSON.stringify({ templateId }),
+    }),
+    { params: Promise.resolve({ id: w.id }) }
+  );
+  expect(res.status).toBe(400); // arranjo não pertence à quinta do casamento
 });
 
 afterAll(async () => {

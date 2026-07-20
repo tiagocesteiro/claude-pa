@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db/client";
 import { createTemplate, listTemplates } from "@/lib/db/templates";
 import { assertVenueAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
@@ -27,6 +28,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const b = await req.json().catch(() => ({}));
   if (!b?.name || typeof b.minGuests !== "number" || typeof b.maxGuests !== "number") {
     return NextResponse.json({ error: "name, minGuests, maxGuests required" }, { status: 400 });
+  }
+  // Security (review L1): a template's floor plan must belong to the SAME venue —
+  // never another venue's plan (which would leak its image via the template list).
+  if (b.floorPlanId) {
+    const fp = await prisma.floorPlan.findUnique({
+      where: { id: b.floorPlanId },
+      select: { venueId: true },
+    });
+    if (!fp || fp.venueId !== id) {
+      return NextResponse.json({ error: "planta não pertence à quinta" }, { status: 400 });
+    }
   }
   const template = await createTemplate({
     venueId: id,

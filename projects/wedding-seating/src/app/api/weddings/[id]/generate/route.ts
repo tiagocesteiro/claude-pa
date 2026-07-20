@@ -41,7 +41,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const updates = guests
     .filter((g) => movableIds.has(g.id))
     .map((g) => ({ guestId: g.id, tableId: result.assignment[g.id] ?? null }));
-  await saveAssignment(updates);
+  await saveAssignment(id, updates);
 
   return NextResponse.json(result);
 }
