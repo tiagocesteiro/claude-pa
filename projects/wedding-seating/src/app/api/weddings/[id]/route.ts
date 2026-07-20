@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { deleteWedding, getWeddingDetail, updateWedding, type WeddingDetailFields } from "@/lib/db/weddings";
+import { assertWeddingAccess } from "@/lib/auth/access";
+import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 const DETAIL_FIELDS = [
   "couple",
@@ -16,14 +18,28 @@ const DETAIL_FIELDS = [
 ] as const;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertWeddingAccess(actor, id, "read");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const wedding = await getWeddingDetail(id);
   if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
   return NextResponse.json(wedding);
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertWeddingAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const existing = await getWeddingDetail(id);
   if (!existing) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
   await deleteWedding(id);
@@ -31,7 +47,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertWeddingAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const b = await req.json().catch(() => ({}));
   if (!b || typeof b !== "object") {
     return NextResponse.json({ error: "no known field present" }, { status: 400 });

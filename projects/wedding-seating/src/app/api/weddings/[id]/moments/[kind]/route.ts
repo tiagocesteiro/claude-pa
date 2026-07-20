@@ -2,12 +2,21 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { getWedding } from "@/lib/db/weddings";
 import { isMomentKind, setMomentFloorPlan, setMomentNotes, setMomentTemplate } from "@/lib/db/moments";
+import { assertWeddingAccess } from "@/lib/auth/access";
+import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string; kind: string }> }
 ) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id, kind } = await params;
+  try {
+    await assertWeddingAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   if (!isMomentKind(kind)) {
     return NextResponse.json({ error: "invalid moment kind" }, { status: 400 });
   }

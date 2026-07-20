@@ -1,4 +1,11 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, vi } from "vitest";
+
+// Fase D2b: route now requires an actor + tenancy check; mock an admin actor so
+// these logic tests bypass ownership (existence still enforced).
+vi.mock("@/lib/auth/actor", () => ({
+  getActor: async () => ({ userId: "test-admin", email: "admin@test.dev", role: "admin" }),
+}));
+
 import { PUT } from "./route";
 import { createWedding } from "@/lib/db/weddings";
 import { prisma } from "@/lib/db/client";

@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { setPlusOne } from "@/lib/db/guests";
+import { assertGuestAccess } from "@/lib/auth/access";
+import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertGuestAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const b = await req.json().catch(() => ({}));
 
   if (b.partnerId !== null && typeof b.partnerId !== "string") {

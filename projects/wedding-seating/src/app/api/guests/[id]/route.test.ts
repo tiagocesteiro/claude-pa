@@ -1,4 +1,12 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, vi } from "vitest";
+
+// Fase D2b: routes now require an actor + tenancy check. These tests exercise the
+// route's business logic, not authz — mock an admin actor (bypasses ownership,
+// existence still enforced). Cross-tenant denial is covered in access.test.ts.
+vi.mock("@/lib/auth/actor", () => ({
+  getActor: async () => ({ userId: "test-admin", email: "admin@test.dev", role: "admin" }),
+}));
+
 import { PATCH } from "./route";
 import { createWedding } from "@/lib/db/weddings";
 import { createGuest } from "@/lib/db/guests";

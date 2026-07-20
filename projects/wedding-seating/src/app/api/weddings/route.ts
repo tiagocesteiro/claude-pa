@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { createWedding, listWeddings } from "@/lib/db/weddings";
+import { createWedding } from "@/lib/db/weddings";
 import { getActor } from "@/lib/auth/actor";
+import { listWeddingsFor } from "@/lib/auth/access";
+import { requireActor } from "@/lib/auth/guard";
 
 export async function GET() {
-  // Fase D1: the proxy already blocks unauthenticated access. Owner-scoping of
-  // this list lands in Fase D2 — for now it returns all weddings.
-  return NextResponse.json(await listWeddings());
+  // Fase D2b: owner-scoped — couple sees only its own weddings, venue sees none,
+  // admin sees all (see listWeddingsFor).
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
+  return NextResponse.json(await listWeddingsFor(actor));
 }
 
 export async function POST(req: Request) {

@@ -5,6 +5,8 @@ import { listWeddingTables } from "@/lib/db/weddingTables";
 import { saveAssignment } from "@/lib/db/assignment";
 import { buildSeatingInput } from "@/lib/plan/buildSeatingInput";
 import { solveSeating } from "@/lib/seating";
+import { assertWeddingAccess } from "@/lib/auth/access";
+import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 // Node runtime (prisma/solver are Node-only); larger serverless timeout for the
 // compute-heavy seating solver (Fase 0 — deploy readiness).
@@ -12,7 +14,14 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertWeddingAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
 
   const [guests, constraints, tables] = await Promise.all([
     listGuests(id),

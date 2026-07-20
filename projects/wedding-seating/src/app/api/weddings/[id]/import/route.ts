@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { parseGuestWorkbook } from "@/lib/import/parseGuests";
 import { importGuests } from "@/lib/import/importGuests";
 import { getWedding } from "@/lib/db/weddings";
+import { assertWeddingAccess } from "@/lib/auth/access";
+import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 // Node runtime (exceljs is Node-only); larger serverless timeout for parsing a
 // large guest workbook (Fase 0 — deploy readiness).
@@ -11,7 +13,14 @@ export const maxDuration = 60;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertWeddingAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
 
   const wedding = await getWedding(id);
   if (!wedding) return NextResponse.json({ error: "wedding not found" }, { status: 404 });
