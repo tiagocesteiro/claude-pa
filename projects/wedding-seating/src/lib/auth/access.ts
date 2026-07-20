@@ -456,6 +456,26 @@ export async function assertConstraintAccess(
 }
 
 /**
+ * A couple-owned WeddingLayout (and its tables + seats) is owned by the couple
+ * who owns the parent wedding — resolve through weddingId and defer to the
+ * wedding gate. Venues have no access to layouts (their only window is the
+ * PII-free progress of the FINAL layout via {@link listVenueBookings}); admin
+ * bypasses as everywhere.
+ */
+export async function assertLayoutAccess(
+  actor: Actor,
+  layoutId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const l = await prisma.weddingLayout.findUnique({
+    where: { id: layoutId },
+    select: { weddingId: true },
+  });
+  if (!l) throw notFound("Layout");
+  await assertWeddingAccess(actor, l.weddingId, mode);
+}
+
+/**
  * Table is polymorphic — it belongs to a wedding, a floor plan, or a template
  * (exactly one FK set). Resolve through whichever is present, then defer to that
  * owner's gate (weddings via {@link assertWeddingAccess}, plan/template via the
@@ -468,9 +488,10 @@ export async function assertTableAccess(
 ): Promise<void> {
   const t = await prisma.table.findUnique({
     where: { id: tableId },
-    select: { weddingId: true, floorPlanId: true, templateId: true },
+    select: { weddingId: true, floorPlanId: true, templateId: true, weddingLayoutId: true },
   });
   if (!t) throw notFound("Table");
+  if (t.weddingLayoutId) return assertLayoutAccess(actor, t.weddingLayoutId, mode);
   if (t.weddingId) return assertWeddingAccess(actor, t.weddingId, mode);
   if (t.floorPlanId) return assertFloorPlanAccess(actor, t.floorPlanId, mode);
   if (t.templateId) return assertTemplateAccess(actor, t.templateId, mode);

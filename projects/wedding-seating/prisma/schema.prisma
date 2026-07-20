@@ -16,99 +16,106 @@ datasource db {
 model Profile {
   id        String   @id // Supabase auth.users.id (uuid)
   email     String
-  role      String   // "venue" | "couple" | "admin"
+  role      String // "venue" | "couple" | "admin"
   createdAt DateTime @default(now())
 }
 
 model Venue {
-  id        String     @id @default(cuid())
-  name      String
-  location  String?
-  photos    String?    // JSON array of file paths
-  ownerId   String?    // Profile.id of the venue account — nullable until Fase D tightens + filters
-  floorPlans FloorPlan[]
-  tableTypes TableType[]
+  id              String           @id @default(cuid())
+  name            String
+  location        String?
+  photos          String? // JSON array of file paths
+  ownerId         String? // Profile.id of the venue account — nullable until Fase D tightens + filters
+  floorPlans      FloorPlan[]
+  tableTypes      TableType[]
   layoutTemplates LayoutTemplate[]
-  weddings  Wedding[]
-  createdAt DateTime   @default(now())
+  weddings        Wedding[]
+  createdAt       DateTime         @default(now())
 }
 
 model TableType {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   venueId   String
-  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
   name      String
-  shape     String  // "round" | "rect"
+  shape     String // "round" | "rect"
   minSeats  Int
   maxSeats  Int
-  width     Float   // metres
-  depth     Float   // metres
-  quantity  Int     @default(1)
+  width     Float // metres
+  depth     Float // metres
+  quantity  Int      @default(1)
   createdAt DateTime @default(now())
 }
 
 model LayoutTemplate {
-  id          String     @id @default(cuid())
+  id          String          @id @default(cuid())
   venueId     String
-  venue       Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue       Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
   floorPlanId String?
-  floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  floorPlan   FloorPlan?      @relation(fields: [floorPlanId], references: [id])
   name        String
   minGuests   Int
   maxGuests   Int
-  lines       String?    // JSON: { tableTypeId: string; quantity: number }[] (legacy/optional)
+  lines       String? // JSON: { tableTypeId: string; quantity: number }[] (legacy/optional)
   tables      Table[]
   moments     WeddingMoment[]
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime        @default(now())
 }
 
 model FloorPlan {
-  id        String   @id @default(cuid())
-  venueId   String
-  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  name      String?  // human label for the layout (e.g. "Salão principal")
-  image     String   // local file path
-  scale     Float    // pixels per metre
-  width     Float    // metres
-  depth     Float    // metres
-  minSpacing Float?  // metres, minimum clearance between tables
-  boundary  String?  // JSON array of {x,y} points, natural pixels
-  zones     String?  // JSON, zone definitions
-  elements  String?  // JSON array of {id,x,y,w,h,label,color} decorative room fixtures (dance floor, bar, ...)
-  tables    Table[]
-  templates LayoutTemplate[]
-  weddings  Wedding[]
-  moments   WeddingMoment[]
-  createdAt DateTime @default(now())
+  id             String           @id @default(cuid())
+  venueId        String
+  venue          Venue            @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name           String? // human label for the layout (e.g. "Salão principal")
+  image          String // local file path
+  scale          Float // pixels per metre
+  width          Float // metres
+  depth          Float // metres
+  minSpacing     Float? // metres, minimum clearance between tables
+  boundary       String? // JSON array of {x,y} points, natural pixels
+  zones          String? // JSON, zone definitions
+  elements       String? // JSON array of {id,x,y,w,h,label,color} decorative room fixtures (dance floor, bar, ...)
+  tables         Table[]
+  templates      LayoutTemplate[]
+  weddings       Wedding[]
+  moments        WeddingMoment[]
+  weddingLayouts WeddingLayout[]
+  createdAt      DateTime         @default(now())
 }
 
 model Table {
-  id          String   @id @default(cuid())
-  floorPlanId String?
-  floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
-  templateId  String?
-  template    LayoutTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  weddingId   String?
-  wedding     Wedding? @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  shape       String   // "round" | "rect"
-  capacity    Int
-  width       Float?   // metres
-  depth       Float?   // metres
-  minCapacity Int?
-  x           Float
-  y           Float
-  fixed       Boolean  @default(false)
-  name        String?  // optional human label ("Mesa dos noivos"); falls back to "Mesa N" when unset
-  heads       Boolean? @default(true) // rect tables only: seats on the two short ends ("cabeceiras")
+  id              String          @id @default(cuid())
+  floorPlanId     String?
+  floorPlan       FloorPlan?      @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+  templateId      String?
+  template        LayoutTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  weddingId       String?
+  wedding         Wedding?        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  // A couple-owned layout's tables live here (the new multi-layout model). The
+  // legacy `weddingId` copy stays for the single-arrangement flow until it's
+  // fully migrated onto layouts (Wave 4). Exactly one parent FK is set.
+  weddingLayoutId String?
+  weddingLayout   WeddingLayout?  @relation(fields: [weddingLayoutId], references: [id], onDelete: Cascade)
+  layoutSeats     LayoutSeat[]
+  shape           String // "round" | "rect"
+  capacity        Int
+  width           Float? // metres
+  depth           Float? // metres
+  minCapacity     Int?
+  x               Float
+  y               Float
+  fixed           Boolean         @default(false)
+  name            String? // optional human label ("Mesa dos noivos"); falls back to "Mesa N" when unset
+  heads           Boolean?        @default(true) // rect tables only: seats on the two short ends ("cabeceiras")
 }
 
 model Wedding {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   couple        String
   date          DateTime?
   venueId       String?
-  venue         Venue?     @relation(fields: [venueId], references: [id])
-  ownerId       String?    // Profile.id of the couple account — nullable (a venue may create the wedding first)
+  venue         Venue?          @relation(fields: [venueId], references: [id])
+  ownerId       String? // Profile.id of the couple account — nullable (a venue may create the wedding first)
   partner1      String?
   partner1Email String?
   partner1Phone String?
@@ -118,7 +125,7 @@ model Wedding {
   guestEstimate Int?
   notes         String?
   floorPlanId   String?
-  floorPlan     FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  floorPlan     FloorPlan?      @relation(fields: [floorPlanId], references: [id])
   templateId    String?
   tables        Table[]
   guests        Guest[]
@@ -126,30 +133,76 @@ model Wedding {
   constraints   Constraint[]
   moments       WeddingMoment[]
   invites       WeddingInvite[]
-  createdAt     DateTime  @default(now())
+  layouts       WeddingLayout[]
+  createdAt     DateTime        @default(now())
+}
+
+/// A couple-owned room layout: a base (a venue template's floor plan as read-only
+/// background, OR a blank room defined by width/depth/scale) + its own set of
+/// tables + its own seating (LayoutSeat). A wedding can have several; exactly one
+/// is `isFinal` (drives the venue progress view, the Visão geral, and the PDF).
+/// The guest list is shared at the wedding level — only tables + seating differ
+/// per layout, so a guest can sit at different tables across layouts.
+model WeddingLayout {
+  id          String       @id @default(cuid())
+  weddingId   String
+  wedding     Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name        String
+  isFinal     Boolean      @default(false)
+  // Background source: EITHER a venue template's floor plan (read-only render
+  // source — image/scale/zones/elements) …
+  floorPlanId String?
+  floorPlan   FloorPlan?   @relation(fields: [floorPlanId], references: [id])
+  templateId  String? // provenance: the template it was created from (informational)
+  // … OR a blank room the couple defined by dimensions (no floorPlanId).
+  width       Float? // metres
+  depth       Float? // metres
+  scale       Float? // pixels per metre
+  tables      Table[]
+  seats       LayoutSeat[]
+  createdAt   DateTime     @default(now())
+
+  @@index([weddingId])
+}
+
+/// A guest's seat within one couple layout. Per-layout (unlike the legacy single
+/// `Guest.assignedTableId`): a guest has at most one seat per layout. Absent row
+/// = unseated in that layout. Both FKs cascade — removing a table or a guest
+/// drops the seat automatically.
+model LayoutSeat {
+  id              String        @id @default(cuid())
+  weddingLayoutId String
+  weddingLayout   WeddingLayout @relation(fields: [weddingLayoutId], references: [id], onDelete: Cascade)
+  guestId         String
+  guest           Guest         @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  tableId         String
+  table           Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([weddingLayoutId, guestId])
+  @@index([weddingLayoutId])
 }
 
 /// Invites a couple/venue account to a Wedding they don't yet own an account
 /// for (issue/accept endpoints land in Fase E — this is just the data model).
 model WeddingInvite {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   weddingId    String
-  wedding      Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  wedding      Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   email        String
-  token        String    @unique
-  role         String    // "venue" | "couple"
+  token        String   @unique
+  role         String // "venue" | "couple"
   acceptedById String?
   expiresAt    DateTime
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 }
 
 model WeddingMoment {
-  id          String     @id @default(cuid())
+  id          String          @id @default(cuid())
   weddingId   String
-  wedding     Wedding    @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  kind        String     // "ceremony" | "cocktail" | "dinner" | "dance"
+  wedding     Wedding         @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  kind        String // "ceremony" | "cocktail" | "dinner" | "dance"
   floorPlanId String?
-  floorPlan   FloorPlan? @relation(fields: [floorPlanId], references: [id])
+  floorPlan   FloorPlan?      @relation(fields: [floorPlanId], references: [id])
   templateId  String?
   template    LayoutTemplate? @relation(fields: [templateId], references: [id])
   notes       String?
@@ -167,29 +220,30 @@ model Group {
 }
 
 model Guest {
-  id             String  @id @default(cuid())
-  weddingId      String
-  wedding        Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  name           String
-  groupId        String?
-  group          Group?  @relation(fields: [groupId], references: [id])
-  extraGroups    String?
+  id              String       @id @default(cuid())
+  weddingId       String
+  wedding         Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name            String
+  groupId         String?
+  group           Group?       @relation(fields: [groupId], references: [id])
+  extraGroups     String?
   assignedTableId String?
-  locked          Boolean  @default(false)
+  locked          Boolean      @default(false)
   ageGroup        String?
   gender          String?
   dietary         String?
-  rsvp            String?  @default("pending")
-  plusOneId       String?  @unique
-  plusOne         Guest?   @relation("PlusOne", fields: [plusOneId], references: [id], onDelete: SetNull)
-  plusOneOf       Guest?   @relation("PlusOne")
+  rsvp            String?      @default("pending")
+  plusOneId       String?      @unique
+  plusOne         Guest?       @relation("PlusOne", fields: [plusOneId], references: [id], onDelete: SetNull)
+  plusOneOf       Guest?       @relation("PlusOne")
+  layoutSeats     LayoutSeat[]
 }
 
 model Constraint {
-  id         String  @id @default(cuid())
-  weddingId  String
-  wedding    Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  type       String  // "together" | "separate"
-  guestAId   String
-  guestBId   String
+  id        String  @id @default(cuid())
+  weddingId String
+  wedding   Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  type      String // "together" | "separate"
+  guestAId  String
+  guestBId  String
 }
