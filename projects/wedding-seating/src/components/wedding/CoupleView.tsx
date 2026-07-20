@@ -43,8 +43,25 @@ interface Moment {
   kind: string | null;
   title: string | null;
   hasSeating: boolean;
+  startTime: string | null;
   tasks: Task[];
   decor: DecorLine[];
+}
+
+/** "HH:MM" → minutes since midnight, or null. */
+function parseHM(s: string | null): number | null {
+  if (!s) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+
+function fmtDuration(min: number): string {
+  if (min <= 0) return "";
+  const h = Math.floor(min / 60);
+  const mm = min % 60;
+  if (h && mm) return `${h}h${String(mm).padStart(2, "0")}`;
+  if (h) return `${h}h`;
+  return `${mm} min`;
 }
 interface WeddingDetail {
   id: string;
@@ -147,6 +164,14 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
   const guestCount = anyPlan?.guests.length ?? 0;
   const confirmedCount = anyPlan?.guests.filter((g) => g.rsvp === "confirmed").length ?? 0;
   const anySeating = wedding.moments.some((m) => m.hasSeating && plans[m.id]);
+
+  // Chronological order: moments with a start time first (ascending), then the
+  // untimed ones in their tab order.
+  const timed = wedding.moments
+    .filter((m) => parseHM(m.startTime) !== null)
+    .sort((a, b) => parseHM(a.startTime)! - parseHM(b.startTime)!);
+  const untimed = wedding.moments.filter((m) => parseHM(m.startTime) === null);
+  const sortedMoments = [...timed, ...untimed];
 
   function tableViewsFor(m: Moment, plan: MomentPlan): PlanTableView[] {
     return plan.tables.map((t, i) => ({
@@ -253,15 +278,28 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
       {wedding.moments.length === 0 && <Placeholder text="Sem momentos definidos." />}
 
-      {wedding.moments.map((m) => {
+      {sortedMoments.map((m, idx) => {
         const plan = plans[m.id] ?? null;
         const openTasks = m.tasks.filter((t) => !t.done).length;
+        // Duration = interval until the next moment's start time (chronological).
+        const startMin = parseHM(m.startTime);
+        const nextMin = parseHM(sortedMoments[idx + 1]?.startTime ?? null);
+        const durationLabel =
+          startMin !== null && nextMin !== null && nextMin > startMin ? fmtDuration(nextMin - startMin) : "";
         const colorMap =
           m.hasSeating && plan && colorAttr ? buildColorMap(plan.guests, colorAttr) : { legend: [], colorByGuest: {} };
         return (
           <section key={m.id} style={sectionStyle()}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <h2 style={{ marginTop: 0, marginBottom: 0, color: "var(--heading)" }}>{momentTitle(m)}</h2>
+              <h2 style={{ marginTop: 0, marginBottom: 0, color: "var(--heading)", display: "flex", alignItems: "baseline", gap: 10 }}>
+                {momentTitle(m)}
+                {m.startTime && (
+                  <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>
+                    {m.startTime}
+                    {durationLabel && ` · ${durationLabel}`}
+                  </span>
+                )}
+              </h2>
               {plan && plan.tables.length > 0 && (
                 <button
                   type="button"

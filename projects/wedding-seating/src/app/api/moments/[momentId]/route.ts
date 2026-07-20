@@ -44,9 +44,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ moment
   if (!moment) return NextResponse.json({ error: "moment não encontrado" }, { status: 404 });
   const b = await req.json().catch(() => ({}));
 
-  const fields: { title?: string; order?: number; templateId?: string | null; floorPlanId?: string | null } = {};
+  const fields: {
+    title?: string;
+    order?: number;
+    templateId?: string | null;
+    floorPlanId?: string | null;
+    hasSeating?: boolean;
+    startTime?: string | null;
+  } = {};
   if (typeof b?.title === "string" && b.title.trim()) fields.title = b.title.trim();
   if (typeof b?.order === "number") fields.order = b.order;
+  if (typeof b?.hasSeating === "boolean") fields.hasSeating = b.hasSeating;
+  // Start time as "HH:MM" (or null to clear); loose validation.
+  if ("startTime" in b) {
+    const s = typeof b.startTime === "string" ? b.startTime.trim() : "";
+    fields.startTime = /^\d{1,2}:\d{2}$/.test(s) ? s.padStart(5, "0") : null;
+  }
 
   // Arrangement (template/floor plan) must belong to the wedding's venue.
   if ("templateId" in b || "floorPlanId" in b) {

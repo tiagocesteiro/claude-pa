@@ -23,6 +23,20 @@ it("createWedding seeds the 4 default moments with titles + order", async () => 
   expect(moments.map((m) => m.order)).toEqual([0, 1, 2, 3]);
 });
 
+it("moments: startTime + hasSeating persist; dinner seeds hasSeating=true", async () => {
+  const w = await createWedding({ couple: "Timings" });
+  const moments = await listMoments(w.id);
+  const dinner = moments.find((m) => m.kind === "dinner")!;
+  const ceremony = moments.find((m) => m.kind === "ceremony")!;
+  expect(dinner.hasSeating).toBe(true);
+  expect(ceremony.hasSeating).toBe(false);
+
+  await updateMoment(ceremony.id, { startTime: "16:00", hasSeating: true });
+  const after = (await listMoments(w.id)).find((m) => m.id === ceremony.id)!;
+  expect(after.startTime).toBe("16:00");
+  expect(after.hasSeating).toBe(true);
+});
+
 it("moments: add a custom one at the end, rename, reorder, delete", async () => {
   const w = await createWedding({ couple: "Custom Moments" });
   const custom = await createMoment(w.id, "Photobooth");

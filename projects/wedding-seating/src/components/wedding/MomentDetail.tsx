@@ -10,6 +10,7 @@ interface MomentMeta {
   title: string | null;
   kind: string | null;
   hasSeating: boolean;
+  startTime: string | null;
 }
 interface Task {
   id: string;
@@ -123,6 +124,16 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     if (res.ok) router.push(`/admin/wedding/${weddingId}/details`);
   }
 
+  async function saveStartTime(startTime: string) {
+    setMoment((m) => (m ? { ...m, startTime: startTime || null } : m)); // optimistic
+    await fetch(`/api/moments/${momentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ startTime: startTime || null }),
+    });
+    await loadMoment();
+  }
+
   async function toggleSeating(hasSeating: boolean) {
     setMoment((m) => (m ? { ...m, hasSeating } : m)); // optimistic
     await fetch(`/api/moments/${momentId}`, {
@@ -210,6 +221,15 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 820 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h2 style={{ margin: 0 }}>{momentTitle(moment)}</h2>
+        <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+          Início{" "}
+          <Input
+            type="time"
+            value={moment.startTime ?? ""}
+            onChange={(e) => saveStartTime(e.target.value)}
+            style={{ width: 120 }}
+          />
+        </label>
         <Button variant="ghost" onClick={rename}>Renomear</Button>
         <Button variant="ghost" onClick={removeMoment}>Remover momento</Button>
       </div>
