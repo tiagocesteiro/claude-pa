@@ -1,7 +1,7 @@
 ---
 project: Aliança (Wedding Seating Planner)
-status: LIVE — "Aliança", a deployed/branded/secure multi-tenant SaaS (Supabase Postgres+Auth+Storage + Vercel). Fases 0-F + COUPLE LAYOUTS + MOMENTS/DECOR/TASKS/SUPPLIERS features (303 tests). Prod https://wedding-seating-jade.vercel.app · repo github.com/tiagocesteiro/wedding-seating. TWO feature branches UNPUSHED on vault (layouts + moments). Next: push to GitHub/Vercel + Visão-geral polish (Wave 5) + real pilot.
-last_updated: 2026-07-20
+status: LIVE — "Aliança", a deployed/branded/secure multi-tenant SaaS (Supabase Postgres+Auth+Storage + Vercel). Fases 0-F + many product features (couple layouts, dynamic moments w/ decoration+tasks+suppliers, per-moment layouts+seating+startTime, template photos, layout generic elements, venue calendar + per-wedding operational view + venue-only extra material, decor-catalog images). 309 tests. Prod https://wedding-seating-jade.vercel.app · repo github.com/tiagocesteiro/wedding-seating (main) — ALL pushed. Next: real pilot venue + optional hardening.
+last_updated: 2026-07-21 (GitHub HEAD bdcddeb)
 branch: PROD work on feat/production-supabase (vault) → synced to github.com/tiagocesteiro/wedding-seating (main). Frozen local SQLite site on feat/wedding-seating-engine.
 tags: [wedding-seating, alianca, product, nextjs, supabase, vercel, live-saas]
 ---
@@ -68,6 +68,14 @@ Feature build is essentially done (Plans 1-18, 239 tests, tsc+build clean, all o
 - **Access (venue window extended, still PII-FREE):** `assertVenueBooking(actor,weddingId)` — a venue may read a wedding booked at ITS venue (`venue.ownerId===actor`); couples denied (own routes); admin all. `assertMomentVenueAccess` + `assertMaterialAccess`. `getVenueWeddingView(weddingId)` returns a PII-free aggregate: guest COUNTS (never names/dietary), per moment {final layout summary, decoration chosen, extra materials, pending tasks (assignee)}. Test proves the payload contains no guest name/dietary.
 - **Routes:** `GET /api/venue/weddings/[id]` (venue window); `GET/POST /api/moments/[id]/materials` + `PATCH/DELETE /api/materials/[id]` (venue-booking gated — couples 403).
 - **UI:** `VenueCalendar` (month/week, weddings as chips → venue wedding page) on the venue home; `/admin/venue-wedding/[id]` page (`VenueWeddingView`): overview stats + material summary (aggregated decoration + extra material) + per-moment (decor, pending tasks, extra-material editor). BookingCard links to it. 309 tests green; tsc + build clean.
+
+**LAYOUT ELEMENT PROPERTIES DIALOG ✅ (2026-07-21).** Double-clicking a generic room element (bar, pista de dança…) in the layout editor opens a properties dialog (name + width/depth in metres; converted via the layout scale). `usePlan.updateElement` persists; `PlanCanvas.onEditElement` on dbl-click/tap in edit mode. (GitHub 258252f)
+
+**TASK/DECOR REFINEMENTS ✅ (2026-07-21).** (1) The table list under the layout editor now shows a table's CUSTOM name (double-click rename), not just "Mesa N". (2) The task "Responsável" dropdown lists the wedding's SUPPLIERS directly (Noivos / Quinta / <supplier by name>) instead of a generic "Fornecedor" + second select (value encoded "s:<id>"). (3) Tasks gained a free-text NOTE field (`MomentTask.note`, additive migration) — add-form field + shown under the task. (GitHub df6edbd)
+
+**DECOR CATALOG IMAGES ✅ (2026-07-21).** Venue decoration catalog items can have photos. **Bulk import**: `POST /api/venues/[id]/decor-items/import` (multipart, multiple files) — each image becomes one catalog item named after its filename (extension stripped). Per-item set/replace: `POST /api/decor-items/[id]/image`. `DecorCatalog` UI: "Importar imagens" multi-select + a Foto column with thumbnails + per-row add/replace. Supabase Storage (`decor-<id>/…`), venue-guarded. `DecorItem.image` already existed. (GitHub bdcddeb). Couple-side decor PICKER still name-only (dropdown) — could show thumbnails later.
+
+**Note — template example photos** live at: venue → **Templates** tab → each template's "Fotos de exemplo" (+ Adicionar foto). Couples see them in the moment's "A partir de um template" picker.
 
 ## 🎉 PROFESSIONALIZATION COMPLETE (Fases 0-F). Aliança is a live, branded, secure, multi-tenant SaaS.
 Prod: https://wedding-seating-jade.vercel.app (Supabase Postgres EU + Storage; real auth; per-account isolation; venue read-only progress oversight; landing + brand). GitHub: github.com/tiagocesteiro/wedding-seating (branch main). Vault dev branch: feat/production-supabase; the frozen local SQLite site stays on feat/wedding-seating-engine.
