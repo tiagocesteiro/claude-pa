@@ -317,6 +317,111 @@ export async function listVenueBookings(actor: Actor): Promise<VenueBookingSumma
   });
 }
 
+// ── Platform-admin overview (admin role only) ────────────────────────────────
+
+/** One venue row in the admin overview: identity + owner + child counts. */
+export interface AdminVenueRow {
+  id: string;
+  name: string;
+  location: string | null;
+  ownerEmail: string | null;
+  floorPlanCount: number;
+  templateCount: number;
+  weddingCount: number;
+}
+
+/** One wedding row in the admin overview: identity + owner + aggregate progress.
+ * (Full guest/seating detail lives on the wedding page, which admin can open.) */
+export interface AdminWeddingRow {
+  id: string;
+  couple: string;
+  date: Date | null;
+  venueName: string | null;
+  ownerEmail: string | null;
+  guests: { total: number; confirmed: number; pending: number; declined: number; seated: number };
+  arrangementPicked: boolean;
+  seatingDone: boolean;
+}
+
+export interface AdminOverview {
+  venues: AdminVenueRow[];
+  weddings: AdminWeddingRow[];
+}
+
+/**
+ * The platform operator's cross-tenant view of EVERY venue and wedding. Only an
+ * `admin` actor may reach this (the route enforces the 403); the admin role
+ * already bypasses tenancy everywhere else, so this is just the aggregation.
+ * `ownerEmail` is resolved by joining Venue/Wedding.ownerId → Profile.email
+ * (there is no Prisma relation, so we build the map ourselves); null if unowned.
+ */
+export async function getAdminOverview(): Promise<AdminOverview> {
+  const [venues, weddings, profiles] = await Promise.all([
+    prisma.venue.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        location: true,
+        ownerId: true,
+        _count: { select: { floorPlans: true, layoutTemplates: true, weddings: true } },
+      },
+    }),
+    prisma.wedding.findMany({
+      orderBy: { date: "asc" },
+      select: {
+        id: true,
+        couple: true,
+        date: true,
+        ownerId: true,
+        templateId: true,
+        venue: { select: { name: true } },
+        guests: { select: { rsvp: true, assignedTableId: true } },
+        _count: { select: { tables: true } },
+      },
+    }),
+    prisma.profile.findMany({ select: { id: true, email: true } }),
+  ]);
+
+  const emailById = new Map(profiles.map((p) => [p.id, p.email]));
+  const ownerEmail = (ownerId: string | null) => (ownerId ? emailById.get(ownerId) ?? null : null);
+
+  return {
+    venues: venues.map((v) => ({
+      id: v.id,
+      name: v.name,
+      location: v.location,
+      ownerEmail: ownerEmail(v.ownerId),
+      floorPlanCount: v._count.floorPlans,
+      templateCount: v._count.layoutTemplates,
+      weddingCount: v._count.weddings,
+    })),
+    weddings: weddings.map((w) => {
+      let confirmed = 0;
+      let pending = 0;
+      let declined = 0;
+      let seated = 0;
+      for (const g of w.guests) {
+        if (g.rsvp === "confirmed") confirmed++;
+        else if (g.rsvp === "declined") declined++;
+        else pending++; // "pending" or null → pending
+        if (g.assignedTableId) seated++;
+      }
+      const total = w.guests.length;
+      return {
+        id: w.id,
+        couple: w.couple,
+        date: w.date,
+        venueName: w.venue?.name ?? null,
+        ownerEmail: ownerEmail(w.ownerId),
+        guests: { total, confirmed, pending, declined, seated },
+        arrangementPicked: w._count.tables > 0 || w.templateId != null,
+        seatingDone: total > 0 && seated === total,
+      };
+    }),
+  };
+}
+
 export async function assertGuestAccess(
   actor: Actor,
   guestId: string,

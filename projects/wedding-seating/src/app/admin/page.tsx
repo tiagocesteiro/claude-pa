@@ -39,6 +39,31 @@ interface VenueBooking {
 
 type Role = "venue" | "couple" | "admin";
 
+/** Cross-tenant admin overview: every venue + wedding on the platform. */
+interface AdminVenueRow {
+  id: string;
+  name: string;
+  location: string | null;
+  ownerEmail: string | null;
+  floorPlanCount: number;
+  templateCount: number;
+  weddingCount: number;
+}
+interface AdminWeddingRow {
+  id: string;
+  couple: string;
+  date: string | null;
+  venueName: string | null;
+  ownerEmail: string | null;
+  guests: { total: number; confirmed: number; pending: number; declined: number; seated: number };
+  arrangementPicked: boolean;
+  seatingDone: boolean;
+}
+interface AdminOverview {
+  venues: AdminVenueRow[];
+  weddings: AdminWeddingRow[];
+}
+
 export default function AdminPage() {
   const [role, setRole] = useState<Role | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
@@ -56,18 +81,119 @@ export default function AdminPage() {
     loadRole();
   }, []);
 
-  const showVenue = role === "venue" || role === "admin";
-  const showCouple = role === "couple" || role === "admin";
+  const isAdmin = role === "admin";
+  const showVenue = role === "venue";
+  const showCouple = role === "couple";
 
   return (
     <PageShell size="md">
       {!roleLoaded && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
+      {isAdmin && <AdminSection />}
       {showCouple && <CoupleSection />}
       {showVenue && <VenueSection />}
-      {roleLoaded && !showVenue && !showCouple && (
+      {roleLoaded && !isAdmin && !showVenue && !showCouple && (
         <p>A tua conta não tem um perfil válido. Contacta o suporte.</p>
       )}
     </PageShell>
+  );
+}
+
+/** Platform-operator view: every venue + wedding across all accounts, with owner
+ * emails + counts, and a link to open each (admin bypasses tenancy on those). */
+function AdminSection() {
+  const [data, setData] = useState<AdminOverview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      const res = await fetch("/api/admin/overview");
+      if (!res.ok) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+        setError("Não foi possível carregar a visão de administrador.");
+        return;
+      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+      setData((await res.json()) as AdminOverview);
+    }
+    load();
+  }, []);
+
+  if (error) return <p className="form-error">{error}</p>;
+  if (!data) return <p style={{ color: "var(--text-muted)" }}>A carregar visão geral...</p>;
+
+  const dash = (v: string | null | undefined) => (v && v.trim() ? v : "—");
+
+  return (
+    <section>
+      <h1>Administração</h1>
+      <p style={{ color: "var(--text-muted)", marginTop: -4 }}>
+        {data.venues.length} {data.venues.length === 1 ? "quinta" : "quintas"} ·{" "}
+        {data.weddings.length} {data.weddings.length === 1 ? "casamento" : "casamentos"}
+      </p>
+
+      <h2>Quintas</h2>
+      {data.venues.length === 0 && <p style={{ color: "var(--text-muted)" }}>Sem quintas.</p>}
+      <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+        {data.venues.map((v) => (
+          <li key={v.id}>
+            <Card pad="sm">
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <span>
+                  <Link href={`/admin/venue/${v.id}`}>
+                    <strong>{v.name}</strong>
+                  </Link>
+                  {v.location && <span style={{ color: "var(--text-muted)" }}> — {v.location}</span>}
+                </span>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>{dash(v.ownerEmail)}</span>
+              </div>
+              <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Badge tone="neutral">{v.weddingCount} casamentos</Badge>
+                <Badge tone="neutral">{v.floorPlanCount} plantas</Badge>
+                <Badge tone="neutral">{v.templateCount} templates</Badge>
+              </div>
+            </Card>
+          </li>
+        ))}
+      </ul>
+
+      <h2>Casamentos</h2>
+      {data.weddings.length === 0 && <p style={{ color: "var(--text-muted)" }}>Sem casamentos.</p>}
+      <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {data.weddings.map((w) => {
+          const { guests: g } = w;
+          const allDone = w.arrangementPicked && w.seatingDone && g.pending === 0;
+          return (
+            <li key={w.id}>
+              <Card pad="sm">
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <span>
+                    <Link href={`/admin/wedding/${w.id}`}>
+                      <strong>{w.couple}</strong>
+                    </Link>
+                    <span style={{ color: "var(--text-muted)" }}>
+                      {" — "}
+                      {dash(w.venueName)}
+                      {w.date ? ` · ${new Date(w.date).toLocaleDateString("pt-PT")}` : ""}
+                    </span>
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>{dash(w.ownerEmail)}</span>
+                    {allDone ? <Badge tone="success">Pronto</Badge> : <Badge tone="warning">Em curso</Badge>}
+                  </span>
+                </div>
+                <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                  <span>{g.total} convidados</span>
+                  <span>· {g.confirmed} confirmados</span>
+                  <span>· {g.pending} pendentes</span>
+                  <span>· {g.declined} recusados</span>
+                  <span>· {g.seated} sentados</span>
+                </div>
+              </Card>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

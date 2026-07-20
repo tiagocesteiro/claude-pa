@@ -1,7 +1,8 @@
 import "server-only";
 
 import { getCurrentUser } from "@/lib/supabase/serverClient";
-import { getOrCreateProfile, type Role } from "@/lib/db/profiles";
+import { getOrCreateProfile, setProfileRole, type Role } from "@/lib/db/profiles";
+import { isAdminEmail } from "./adminEmails";
 
 /**
  * The authenticated caller for the current request: the Supabase user joined
@@ -35,7 +36,14 @@ export class UnauthorizedError extends Error {
 export async function getActor(): Promise<Actor | null> {
   const user = await getCurrentUser();
   if (!user) return null;
-  const profile = await getOrCreateProfile(user);
+  let profile = await getOrCreateProfile(user);
+  // Platform-admin promotion is driven ONLY by the server `ADMIN_EMAILS` env var
+  // (never by request input). An allowlisted user's effective role becomes
+  // "admin" and is persisted so it stays consistent across requests. Emails not
+  // on the list keep their real role — getOrCreateProfile never changes it.
+  if (isAdminEmail(user.email) && profile.role !== "admin") {
+    profile = await setProfileRole(profile.id, "admin");
+  }
   return { userId: user.id, email: user.email ?? null, role: profile.role as Role };
 }
 

@@ -7,6 +7,13 @@ export function getProfile(id: string): Promise<Profile | null> {
   return prisma.profile.findUnique({ where: { id } });
 }
 
+/** Persists a role change on an existing Profile. Used only server-side to
+ * promote an allowlisted user to "admin" (see `isAdminEmail`) — never driven by
+ * request input. */
+export function setProfileRole(id: string, role: Role): Promise<Profile> {
+  return prisma.profile.update({ where: { id }, data: { role } });
+}
+
 /** Creates the Profile on first login, or returns/refreshes it if it already exists. */
 export function upsertProfile(input: { id: string; email: string; role: Role }): Promise<Profile> {
   return prisma.profile.upsert({

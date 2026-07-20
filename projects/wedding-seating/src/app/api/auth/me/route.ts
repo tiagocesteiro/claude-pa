@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/supabase/serverClient";
-import { getProfile } from "@/lib/db/profiles";
+import { getActor } from "@/lib/auth/actor";
 
-/** Returns the logged-in user (email + role) for the shared admin header, or null. */
+/** Returns the logged-in user (email + role) for the shared admin header, or null.
+ * Uses `getActor` so the `ADMIN_EMAILS` promotion is reflected (and persisted). */
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ user: null });
+  const actor = await getActor();
+  if (!actor) return NextResponse.json({ user: null });
 
-  const profile = await getProfile(user.id);
-  return NextResponse.json({ user: { id: user.id, email: user.email }, role: profile?.role ?? null });
+  return NextResponse.json({ user: { id: actor.userId, email: actor.email }, role: actor.role });
 }
