@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db/client";
+import { listTemplatesFor } from "@/lib/auth/access";
+import { requireActor } from "@/lib/auth/guard";
 
 export async function GET() {
-  const templates = await prisma.layoutTemplate.findMany({
-    select: {
-      id: true,
-      name: true,
-      minGuests: true,
-      maxGuests: true,
-      venueId: true,
-      venue: { select: { name: true } },
-      floorPlanId: true,
-      floorPlan: { select: { image: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-  return NextResponse.json(templates);
+  // Fase D2a: venue → own; couple → their weddings' venues' templates; admin → all.
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
+  return NextResponse.json(await listTemplatesFor(actor));
 }

@@ -18,6 +18,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
+      // Next resolves `import "server-only"` natively; vitest doesn't, so stub it
+      // to a no-op (matches how server-only behaves at runtime on the server).
+      "server-only": resolve(__dirname, "./test/stubs/server-only.ts"),
     },
   },
   test: {

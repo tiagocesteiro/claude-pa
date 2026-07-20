@@ -10,15 +10,31 @@ import {
   updateFloorPlanDimensions,
   deleteFloorPlan,
 } from "@/lib/db/floorplans";
+import { assertFloorPlanAccess } from "@/lib/auth/access";
+import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertFloorPlanAccess(actor, id, "read");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const fp = await getFloorPlan(id);
   return fp ? NextResponse.json(fp) : NextResponse.json({ error: "not found" }, { status: 404 });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertFloorPlanAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const b = await req.json().catch(() => ({}));
   if (typeof b?.name === "string" || b?.name === null) {
     return NextResponse.json(await updateFloorPlanName(id, b.name));
@@ -52,7 +68,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
   const { id } = await params;
+  try {
+    await assertFloorPlanAccess(actor, id, "write");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
   const fp = await getFloorPlan(id);
   if (!fp) return NextResponse.json({ error: "not found" }, { status: 404 });
   await deleteFloorPlan(id);

@@ -1,4 +1,12 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, vi } from "vitest";
+
+// Fase D2a: these routes now require an authenticated actor. Mock an admin actor
+// (passes every venue-access check); cross-tenant isolation is covered in
+// src/lib/auth/access.test.ts.
+vi.mock("@/lib/auth/actor", () => ({
+  getActor: async () => ({ userId: "admin-test", email: "admin@test.dev", role: "admin" }),
+}));
+
 import { GET, POST } from "./route";
 import { PATCH } from "@/app/api/table-types/[id]/route";
 import { prisma } from "@/lib/db/client";
