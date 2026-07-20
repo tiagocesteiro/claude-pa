@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { imageUrlFor } from "@/lib/images";
 
 export interface DecorItemRecord {
   id: string;
@@ -8,6 +9,7 @@ export interface DecorItemRecord {
   name: string;
   category: string | null;
   price: number | null;
+  image: string | null;
 }
 
 interface FormValues {
@@ -17,6 +19,14 @@ interface FormValues {
 }
 
 const emptyForm: FormValues = { name: "", category: "", price: "" };
+
+const thumbStyle: React.CSSProperties = {
+  width: 48,
+  height: 36,
+  objectFit: "cover",
+  borderRadius: 4,
+  border: "1px solid var(--border)",
+};
 
 export interface DecorCatalogProps {
   venueId: string;
@@ -116,9 +126,52 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
     if (res.ok) await load();
   }
 
+  const [importing, setImporting] = useState(false);
+
+  /** Bulk import: each image becomes an item named after its filename. */
+  async function importImages(files: FileList) {
+    setImporting(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append("files", f));
+      const res = await fetch(`/api/venues/${venueId}/decor-items/import`, { method: "POST", body: fd });
+      if (!res.ok) throw new Error("import failed");
+      await load();
+    } catch {
+      setError("Não foi possível importar as imagens.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  /** Set/replace one item's image. */
+  async function setItemImage(id: string, file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`/api/decor-items/${id}/image`, { method: "POST", body: fd });
+    if (res.ok) await load();
+  }
+
   return (
     <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface)", padding: 14 }}>
-      <strong>Catálogo de decoração</strong>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <strong>Catálogo de decoração</strong>
+        <label style={{ fontSize: 13, cursor: "pointer", color: "var(--accent-strong, #54704c)" }}>
+          {importing ? "A importar…" : "Importar imagens (1 imagem = 1 produto)"}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: "none" }}
+            disabled={importing}
+            onChange={(e) => {
+              if (e.target.files?.length) void importImages(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
       {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
       {!loading && (
@@ -129,6 +182,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>
                   <tr>
+                    <th style={{ textAlign: "left" }}>Foto</th>
                     <th style={{ textAlign: "left" }}>Nome</th>
                     <th style={{ textAlign: "left" }}>Categoria</th>
                     <th style={{ textAlign: "left" }}>Preço</th>
@@ -139,6 +193,10 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
                   {items.map((it) =>
                     editingId === it.id ? (
                       <tr key={it.id}>
+                        <td>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          {it.image ? <img src={imageUrlFor(it.image)} alt={it.name} style={thumbStyle} /> : "—"}
+                        </td>
                         <td>
                           <input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} style={{ width: 120 }} />
                         </td>
@@ -159,6 +217,26 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
                       </tr>
                     ) : (
                       <tr key={it.id}>
+                        <td>
+                          <label style={{ cursor: "pointer", display: "inline-block" }} title={it.image ? "Trocar foto" : "Adicionar foto"}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            {it.image ? (
+                              <img src={imageUrlFor(it.image)} alt={it.name} style={thumbStyle} />
+                            ) : (
+                              <span style={{ ...thumbStyle, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 11 }}>+ foto</span>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) void setItemImage(it.id, f);
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        </td>
                         <td>{it.name}</td>
                         <td>{it.category ?? "—"}</td>
                         <td>{it.price == null ? "—" : `${it.price} €`}</td>
