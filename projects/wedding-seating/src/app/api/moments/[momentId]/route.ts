@@ -1,10 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { getMoment, updateMoment, deleteMoment } from "@/lib/db/moments";
+import { listMomentTasks } from "@/lib/db/tasks";
+import { listMomentDecor } from "@/lib/db/momentDecor";
 import { assertMomentAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 export const runtime = "nodejs";
+
+/** The moment aggregate the couple's moment page needs: meta + tasks + decor
+ * (+ the template's floor plan for the arrangement thumbnail). */
+export async function GET(_req: Request, { params }: { params: Promise<{ momentId: string }> }) {
+  const actor = await requireActor();
+  if (actor instanceof NextResponse) return actor;
+  const { momentId } = await params;
+  try {
+    await assertMomentAccess(actor, momentId, "read");
+  } catch (e) {
+    return accessErrorResponse(e);
+  }
+  const moment = await prisma.weddingMoment.findUnique({
+    where: { id: momentId },
+    include: { template: { include: { floorPlan: true } } },
+  });
+  if (!moment) return NextResponse.json({ error: "moment não encontrado" }, { status: 404 });
+  const [tasks, decor] = await Promise.all([listMomentTasks(momentId), listMomentDecor(momentId)]);
+  return NextResponse.json({ moment, tasks, decor });
+}
 
 /** Rename / reorder a moment, or set its venue arrangement (template/floor plan,
  * validated against the wedding's venue). */

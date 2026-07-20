@@ -1,47 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import ArrangementThumbnail from "@/components/wedding/ArrangementThumbnail";
-
-// Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
-// client component doesn't pull the server-only Prisma module into the browser bundle.
-const MOMENT_KINDS = ["ceremony", "cocktail", "dinner", "dance"] as const;
-type MomentKind = (typeof MOMENT_KINDS)[number];
-
-const MOMENT_LABELS: Record<MomentKind, string> = {
-  ceremony: "Cerimónia",
-  cocktail: "Cocktail",
-  dinner: "Jantar",
-  dance: "Dança",
-};
+import { useCallback, useEffect, useState } from "react";
+import { Button, Card, Input } from "@/components/ui";
 
 interface Venue {
   id: string;
   name: string;
-  location: string | null;
-  createdAt: string;
 }
 
-interface Template {
+interface Supplier {
   id: string;
   name: string;
-  minGuests: number;
-  maxGuests: number;
-  venueId: string;
-}
-
-interface MomentTemplate {
-  id: string;
-  floorPlan: { image: string | null; scale: number; width: number; depth: number } | null;
-}
-
-interface Moment {
-  id: string;
-  kind: MomentKind;
-  floorPlanId: string | null;
-  templateId: string | null;
-  template: MomentTemplate | null;
-  notes: string | null;
+  service: string | null;
+  contact: string | null;
 }
 
 interface WeddingDetail {
@@ -57,7 +28,6 @@ interface WeddingDetail {
   partner2Phone: string | null;
   guestEstimate: number | null;
   notes: string | null;
-  moments: Moment[];
 }
 
 const label: React.CSSProperties = {
@@ -69,14 +39,12 @@ const label: React.CSSProperties = {
 };
 
 function toDateInputValue(iso: string | null): string {
-  if (!iso) return "";
-  return iso.slice(0, 10);
+  return iso ? iso.slice(0, 10) : "";
 }
 
 export default function WeddingDetails({ weddingId }: { weddingId: string }) {
   const [wedding, setWedding] = useState<WeddingDetail | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -94,23 +62,13 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
   const [guestEstimate, setGuestEstimate] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Per-moment notes drafts (Task 6) — one controlled textarea per moment, saved
-  // independently on blur via PUT .../moments/[kind] { notes }.
-  const [momentNotesDraft, setMomentNotesDraft] = useState<Record<MomentKind, string>>({
-    ceremony: "",
-    cocktail: "",
-    dinner: "",
-    dance: "",
-  });
-  const [notesSavedKind, setNotesSavedKind] = useState<MomentKind | null>(null);
+  // Suppliers
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supName, setSupName] = useState("");
+  const [supService, setSupService] = useState("");
+  const [supContact, setSupContact] = useState("");
 
-  // Number of tables already copied onto the wedding's dinner arrangement — used to
-  // decide whether picking a new dinner template needs a destructive-replace confirm
-  // (mirrors the old Seating-plan template picker's behavior, now triggered from here).
-  const [dinnerTableCount, setDinnerTableCount] = useState(0);
-  const [applyingDinnerTemplate, setApplyingDinnerTemplate] = useState(false);
-
-  async function loadWedding() {
+  const loadWedding = useCallback(async () => {
     const res = await fetch(`/api/weddings/${weddingId}`);
     if (!res.ok) {
       setError("Não foi possível carregar o casamento.");
@@ -128,47 +86,24 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     setPartner2(data.partner2 ?? "");
     setPartner2Email(data.partner2Email ?? "");
     setPartner2Phone(data.partner2Phone ?? "");
-    setGuestEstimate(data.guestEstimate === null || data.guestEstimate === undefined ? "" : String(data.guestEstimate));
+    setGuestEstimate(data.guestEstimate == null ? "" : String(data.guestEstimate));
     setNotes(data.notes ?? "");
-    setMomentNotesDraft({
-      ceremony: data.moments.find((m) => m.kind === "ceremony")?.notes ?? "",
-      cocktail: data.moments.find((m) => m.kind === "cocktail")?.notes ?? "",
-      dinner: data.moments.find((m) => m.kind === "dinner")?.notes ?? "",
-      dance: data.moments.find((m) => m.kind === "dance")?.notes ?? "",
-    });
     setLoading(false);
-  }
+  }, [weddingId]);
 
-  async function loadVenues() {
-    const res = await fetch("/api/venues");
-    if (!res.ok) return;
-    setVenues((await res.json()) as Venue[]);
-  }
-
-  async function loadTemplates() {
-    const res = await fetch("/api/templates");
-    if (!res.ok) return;
-    setTemplates((await res.json()) as Template[]);
-  }
-
-  async function loadDinnerTableCount() {
-    const res = await fetch(`/api/weddings/${weddingId}/plan`);
-    if (!res.ok) return;
-    const data = (await res.json()) as { tables?: unknown[] };
-    setDinnerTableCount(data.tables?.length ?? 0);
-  }
+  const loadSuppliers = useCallback(async () => {
+    const res = await fetch(`/api/weddings/${weddingId}/suppliers`);
+    if (res.ok) setSuppliers(((await res.json()) as { suppliers: Supplier[] }).suppliers ?? []);
+  }, [weddingId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     loadWedding();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-    loadVenues();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-    loadTemplates();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
-    loadDinnerTableCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- weddingId is stable per mount
-  }, [weddingId]);
+    loadSuppliers();
+    (async () => {
+      const res = await fetch("/api/venues");
+      if (res.ok) setVenues((await res.json()) as Venue[]);
+    })();
+  }, [loadWedding, loadSuppliers]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -205,103 +140,33 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
     }
   }
 
-  async function setMomentTemplateChoice(kind: MomentKind, templateId: string | null) {
-    const res = await fetch(`/api/weddings/${weddingId}/moments/${kind}`, {
-      method: "PUT",
+  async function addSupplier() {
+    if (!supName.trim()) return;
+    const res = await fetch(`/api/weddings/${weddingId}/suppliers`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ templateId }),
+      body: JSON.stringify({ name: supName.trim(), service: supService.trim() || null, contact: supContact.trim() || null }),
     });
-    if (!res.ok) {
-      setError("Falha ao guardar o arranjo do momento.");
-      return;
-    }
-    await loadWedding();
-  }
-
-  // Dinner is the one moment whose template choice also seats real guests: picking a
-  // template here must (1) copy that template's tables onto the wedding (the same
-  // apply-template flow the Seating plan used to trigger itself) and (2) record the
-  // choice on the dinner moment so the couple overview/thumbnail render it like any
-  // other moment. Clearing the choice (back to "— (nenhum)") only clears the moment
-  // record — it does not delete the copied tables, same as the other moments.
-  async function handleDinnerTemplateChoice(templateId: string | null) {
-    setError(null);
-    if (templateId && dinnerTableCount > 0) {
-      const confirmed = window.confirm(
-        "Aplicar este arranjo substitui as mesas do jantar atuais e limpa os lugares já atribuídos. Continuar?"
-      );
-      if (!confirmed) return;
-    }
-    setApplyingDinnerTemplate(true);
-    try {
-      if (templateId) {
-        const applyRes = await fetch(`/api/weddings/${weddingId}/apply-template`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId }),
-        });
-        if (!applyRes.ok) {
-          setError("Não foi possível aplicar o arranjo ao jantar.");
-          return;
-        }
-      }
-      await setMomentTemplateChoice("dinner", templateId);
-      await loadDinnerTableCount();
-    } finally {
-      setApplyingDinnerTemplate(false);
+    if (res.ok) {
+      setSupName("");
+      setSupService("");
+      setSupContact("");
+      await loadSuppliers();
     }
   }
 
-  function handleMomentNotesChange(kind: MomentKind, value: string) {
-    setMomentNotesDraft((prev) => ({ ...prev, [kind]: value }));
-  }
-
-  async function handleMomentNotesBlur(kind: MomentKind) {
-    const value = momentNotesDraft[kind] ?? "";
-    const original = wedding?.moments.find((m) => m.kind === kind)?.notes ?? "";
-    if (value === original) return;
-    const res = await fetch(`/api/weddings/${weddingId}/moments/${kind}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: value === "" ? null : value }),
-    });
-    if (!res.ok) {
-      setError("Falha ao guardar as notas do momento.");
-      return;
-    }
-    await loadWedding();
-    setNotesSavedKind(kind);
-    setTimeout(() => setNotesSavedKind((k) => (k === kind ? null : k)), 2000);
+  async function removeSupplier(id: string) {
+    const res = await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
+    if (res.ok) await loadSuppliers();
   }
 
   if (loading) return <p>A carregar...</p>;
   if (!wedding) return <p style={{ color: "#dc2626" }}>{error ?? "Casamento não encontrado."}</p>;
 
-  const venueTemplates = venueId ? templates.filter((t) => t.venueId === venueId) : [];
-
-  const moments = MOMENT_KINDS.map(
-    (kind) =>
-      wedding.moments.find((m) => m.kind === kind) ?? {
-        id: kind,
-        kind,
-        floorPlanId: null,
-        templateId: null,
-        template: null,
-        notes: null,
-      }
-  );
-
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <form onSubmit={handleSubmit} style={{ maxWidth: 640 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 12,
-            marginBottom: 16,
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
           <label style={label}>
             Casal
             <input value={couple} onChange={(e) => setCouple(e.target.value)} required />
@@ -315,22 +180,14 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
             <select value={venueId} onChange={(e) => setVenueId(e.target.value)}>
               <option value="">Sem quinta</option>
               {venues.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
+                <option key={v.id} value={v.id}>{v.name}</option>
               ))}
             </select>
           </label>
           <label style={label}>
             Nº estimado de convidados
-            <input
-              type="number"
-              min={0}
-              value={guestEstimate}
-              onChange={(e) => setGuestEstimate(e.target.value)}
-            />
+            <input type="number" min={0} value={guestEstimate} onChange={(e) => setGuestEstimate(e.target.value)} />
           </label>
-
           <label style={label}>
             Parceiro 1 — nome
             <input value={partner1} onChange={(e) => setPartner1(e.target.value)} />
@@ -341,19 +198,11 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
           </label>
           <label style={label}>
             Parceiro 1 — email
-            <input
-              type="email"
-              value={partner1Email}
-              onChange={(e) => setPartner1Email(e.target.value)}
-            />
+            <input type="email" value={partner1Email} onChange={(e) => setPartner1Email(e.target.value)} />
           </label>
           <label style={label}>
             Parceiro 2 — email
-            <input
-              type="email"
-              value={partner2Email}
-              onChange={(e) => setPartner2Email(e.target.value)}
-            />
+            <input type="email" value={partner2Email} onChange={(e) => setPartner2Email(e.target.value)} />
           </label>
           <label style={label}>
             Parceiro 1 — telefone
@@ -367,89 +216,49 @@ export default function WeddingDetails({ weddingId }: { weddingId: string }) {
 
         <label style={{ ...label, marginBottom: 16 }}>
           Notas
-          <textarea
-            rows={4}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            style={{ resize: "vertical" }}
-          />
+          <textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} style={{ resize: "vertical" }} />
         </label>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button type="submit" disabled={saving}>
-            {saving ? "A guardar..." : "Guardar"}
-          </button>
+          <button type="submit" disabled={saving}>{saving ? "A guardar..." : "Guardar"}</button>
           {saved && <span style={{ color: "var(--accent)" }}>Guardado.</span>}
           {error && <span style={{ color: "#dc2626" }}>{error}</span>}
         </div>
       </form>
 
-      <h2>Momentos &amp; arranjos</h2>
-      {!venueId && (
-        <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Escolhe primeiro a quinta.</p>
-      )}
-      <ul style={{ listStyle: "none", padding: 0, maxWidth: 640 }}>
-        {moments.map((moment) => (
-          <li
-            key={moment.kind}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius)",
-              padding: "10px 14px",
-              marginBottom: 8,
-              background: "var(--surface)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <strong style={{ color: "var(--heading)" }}>{MOMENT_LABELS[moment.kind]}</strong>
-              <select
-                value={moment.templateId ?? ""}
-                disabled={!venueId || (moment.kind === "dinner" && applyingDinnerTemplate)}
-                onChange={(e) => {
-                  const value = e.target.value || null;
-                  if (moment.kind === "dinner") {
-                    void handleDinnerTemplateChoice(value);
-                  } else {
-                    void setMomentTemplateChoice(moment.kind, value);
-                  }
-                }}
-                aria-label={`Arranjo de ${MOMENT_LABELS[moment.kind]}`}
-              >
-                <option value="">— (nenhum)</option>
-                {venueTemplates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} — {t.minGuests}-{t.maxGuests}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {moment.kind === "dinner" && applyingDinnerTemplate && (
-              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>A aplicar arranjo...</span>
-            )}
-
-            {moment.template && <ArrangementThumbnail template={moment.template} />}
-
-            <label style={{ ...label, gap: 4 }}>
-              Notas
-              <textarea
-                rows={2}
-                value={momentNotesDraft[moment.kind] ?? ""}
-                onChange={(e) => handleMomentNotesChange(moment.kind, e.target.value)}
-                onBlur={() => handleMomentNotesBlur(moment.kind)}
-                style={{ resize: "vertical" }}
-                aria-label={`Notas de ${MOMENT_LABELS[moment.kind]}`}
-              />
-            </label>
-            {notesSavedKind === moment.kind && (
-              <span style={{ color: "var(--accent)", fontSize: 12 }}>Guardado.</span>
-            )}
-          </li>
-        ))}
-      </ul>
+      {/* Suppliers */}
+      <Card>
+        <h2 style={{ marginTop: 0 }}>Fornecedores</h2>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
+          Adiciona os fornecedores do casamento. Podes atribuir-lhes tarefas em cada momento.
+        </p>
+        {suppliers.length > 0 && (
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+            {suppliers.map((s) => (
+              <li key={s.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ flex: 1 }}>
+                  <strong>{s.name}</strong>
+                  {s.service && <span style={{ color: "var(--text-muted)" }}> · {s.service}</span>}
+                  {s.contact && <span style={{ color: "var(--text-muted)" }}> · {s.contact}</span>}
+                </span>
+                <Button variant="ghost" onClick={() => removeSupplier(s.id)}>Remover</Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
+          <label style={{ fontSize: 13 }}>
+            Nome <Input value={supName} onChange={(e) => setSupName(e.target.value)} style={{ width: 160 }} />
+          </label>
+          <label style={{ fontSize: 13 }}>
+            Serviço <Input value={supService} onChange={(e) => setSupService(e.target.value)} placeholder="Catering, DJ…" style={{ width: 140 }} />
+          </label>
+          <label style={{ fontSize: 13 }}>
+            Contacto <Input value={supContact} onChange={(e) => setSupContact(e.target.value)} placeholder="email / telefone" style={{ width: 160 }} />
+          </label>
+          <Button variant="primary" onClick={addSupplier} disabled={!supName.trim()}>Adicionar</Button>
+        </div>
+      </Card>
     </div>
   );
 }
