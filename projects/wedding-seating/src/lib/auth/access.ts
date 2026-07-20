@@ -236,6 +236,87 @@ export async function assertWeddingAccess(
   throw notFound("Wedding"); // exists but not yours
 }
 
+/**
+ * Fase E — the venue's ONLY window into weddings booked at its venue(s), and a
+ * strictly PII-free one (RGPD). A venue account may see, per wedding, only the
+ * couple's name, the date, the guest estimate, aggregate RSVP/seating COUNTS,
+ * and two "what's-missing" booleans. It NEVER sees guest names, dietary/allergy
+ * data, or the seating/plan layout — those columns are never selected here, so
+ * they cannot leak through this channel. All existing wedding routes stay
+ * venue-denied (see {@link assertWeddingAccess}); this is the sole exception.
+ */
+export interface VenueBookingSummary {
+  id: string;
+  couple: string;
+  date: Date | null;
+  venueId: string | null;
+  venueName: string | null;
+  guestEstimate: number | null;
+  /** Counts only — never any guest identity. */
+  guests: { total: number; confirmed: number; pending: number; declined: number; seated: number };
+  /** Wedding has dinner tables OR a picked template. */
+  arrangementPicked: boolean;
+  /** Every guest is seated (and there is at least one). */
+  seatingDone: boolean;
+}
+
+/**
+ * Progress summaries for the weddings booked at the actor's venue(s):
+ *   • venue  → weddings whose `venue.ownerId === actor.userId`.
+ *   • admin  → all weddings.
+ *   • couple → not applicable (empty).
+ * Returns ONLY the PII-free fields in {@link VenueBookingSummary}. The guest
+ * select is deliberately limited to `rsvp` + `assignedTableId` — `name`,
+ * `dietary`, and every other identifying column are never read.
+ */
+export async function listVenueBookings(actor: Actor): Promise<VenueBookingSummary[]> {
+  if (actor.role === "couple") return [];
+
+  const where = actor.role === "admin" ? {} : { venue: { ownerId: actor.userId } };
+
+  const weddings = await prisma.wedding.findMany({
+    where,
+    orderBy: { date: "asc" },
+    select: {
+      id: true,
+      couple: true,
+      date: true,
+      venueId: true,
+      guestEstimate: true,
+      templateId: true,
+      venue: { select: { name: true } },
+      // PII-free: only RSVP status + whether the guest is seated. NEVER name/dietary.
+      guests: { select: { rsvp: true, assignedTableId: true } },
+      _count: { select: { tables: true } },
+    },
+  });
+
+  return weddings.map((w) => {
+    const total = w.guests.length;
+    let confirmed = 0;
+    let pending = 0;
+    let declined = 0;
+    let seated = 0;
+    for (const g of w.guests) {
+      if (g.rsvp === "confirmed") confirmed++;
+      else if (g.rsvp === "declined") declined++;
+      else pending++; // "pending" or null → pending
+      if (g.assignedTableId) seated++;
+    }
+    return {
+      id: w.id,
+      couple: w.couple,
+      date: w.date,
+      venueId: w.venueId,
+      venueName: w.venue?.name ?? null,
+      guestEstimate: w.guestEstimate,
+      guests: { total, confirmed, pending, declined, seated },
+      arrangementPicked: w._count.tables > 0 || w.templateId != null,
+      seatingDone: total > 0 && seated === total,
+    };
+  });
+}
+
 export async function assertGuestAccess(
   actor: Actor,
   guestId: string,

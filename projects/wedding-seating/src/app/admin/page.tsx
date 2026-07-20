@@ -23,6 +23,19 @@ interface Wedding {
   createdAt: string;
 }
 
+/** PII-free progress summary of a wedding booked at the venue (Fase E). */
+interface VenueBooking {
+  id: string;
+  couple: string;
+  date: string | null;
+  venueId: string | null;
+  venueName: string | null;
+  guestEstimate: number | null;
+  guests: { total: number; confirmed: number; pending: number; declined: number; seated: number };
+  arrangementPicked: boolean;
+  seatingDone: boolean;
+}
+
 type Role = "venue" | "couple" | "admin";
 
 export default function AdminPage() {
@@ -203,6 +216,8 @@ function CoupleSection() {
 /** Venue workspace: create + manage the venue account's venues. */
 function VenueSection() {
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [bookings, setBookings] = useState<VenueBooking[]>([]);
+  const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -213,9 +228,17 @@ function VenueSection() {
     setVenues(await res.json());
   }, []);
 
+  const loadBookings = useCallback(async () => {
+    const res = await fetch("/api/venue/bookings");
+    if (!res.ok) return;
+    setBookings(await res.json());
+    setBookingsLoaded(true);
+  }, []);
+
   useEffect(() => {
     loadVenues();
-  }, [loadVenues]);
+    loadBookings();
+  }, [loadVenues, loadBookings]);
 
   async function handleCreateVenue(e: React.FormEvent) {
     e.preventDefault();
@@ -298,6 +321,86 @@ function VenueSection() {
           </li>
         ))}
       </ul>
+
+      <h2>Casamentos na tua quinta</h2>
+      {bookingsLoaded && bookings.length === 0 && (
+        <p style={{ color: "var(--text-muted)" }}>Ainda não há casamentos marcados na tua quinta.</p>
+      )}
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {bookings.map((b) => (
+          <BookingCard key={b.id} booking={b} />
+        ))}
+      </ul>
     </section>
+  );
+}
+
+/** Read-only progress card for a wedding booked at the venue. PII-free: shows
+ * only couple, date, estimate, aggregate counts and a "what's missing" checklist
+ * — never guest names, dietary data, or the seating layout, and no link into the
+ * couple's private pages. */
+function BookingCard({ booking: b }: { booking: VenueBooking }) {
+  const { guests: g } = b;
+  const missingRsvp = g.pending;
+  return (
+    <li
+      style={{
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius)",
+        background: "var(--surface)",
+        padding: 14,
+        marginBottom: 10,
+        boxShadow: "var(--shadow)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <strong style={{ fontSize: "1.05rem" }}>{b.couple}</strong>
+        <span style={{ color: "var(--text-muted)" }}>
+          {b.date ? new Date(b.date).toLocaleDateString() : "sem data"}
+          {b.guestEstimate != null ? ` · estimativa ${b.guestEstimate}` : ""}
+        </span>
+      </div>
+
+      <p style={{ marginTop: 6 }}>
+        {g.total} convidados · {g.confirmed} confirmados · {g.pending} pendentes
+        {g.declined > 0 ? ` · ${g.declined} recusaram` : ""}
+      </p>
+
+      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          O que falta
+        </span>
+        <ChecklistItem done={b.arrangementPicked} label="Arranjo escolhido" />
+        <ChecklistItem done={b.seatingDone} label="Seating feito" />
+        {missingRsvp > 0 && (
+          <ChecklistItem done={false} label={`Faltam confirmar ${missingRsvp}`} />
+        )}
+      </div>
+    </li>
+  );
+}
+
+function ChecklistItem({ done, label }: { done: boolean; label: string }) {
+  return (
+    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span
+        aria-hidden
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          color: "#fff",
+          background: done ? "#3f9d6b" : "#c9502f",
+        }}
+      >
+        {done ? "✓" : "✗"}
+      </span>
+      <span>{label}</span>
+    </span>
   );
 }

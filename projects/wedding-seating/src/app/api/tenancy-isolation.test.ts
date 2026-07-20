@@ -24,6 +24,7 @@ import type { Actor } from "@/lib/auth/actor";
 import {
   AccessError,
   listWeddingsFor,
+  listVenueBookings,
   assertWeddingAccess,
   assertGuestAccess,
   assertGroupAccess,
@@ -32,7 +33,9 @@ import {
 } from "@/lib/auth/access";
 import { GET as listWeddings } from "./weddings/route";
 import { GET as getWedding } from "./weddings/[id]/route";
+import { GET as getPlan } from "./weddings/[id]/plan/route";
 import { PATCH as patchGuest } from "./guests/[id]/route";
+import { GET as getVenueBookings } from "./venue/bookings/route";
 
 const X: Actor = { userId: "iso-couple-X", email: "isoX@test.pt", role: "couple" };
 const Y: Actor = { userId: "iso-couple-Y", email: "isoY@test.pt", role: "couple" };
@@ -190,6 +193,112 @@ describe("wedding-side isolation — route handlers", () => {
       params: Promise.resolve({ id: s.xWedding }),
     });
     expect(res.status).toBe(401);
+  });
+});
+
+/**
+ * Fase E — venue read-only PROGRESS oversight of weddings booked at its venue(s).
+ * STRICT RGPD: the venue sees only status/counts, NEVER guest names/dietary/plan.
+ */
+describe("Fase E — venue booking oversight (PII-free)", () => {
+  const VA: Actor = { userId: "fe-venue-A", email: "feVenueA@test.pt", role: "venue" };
+  const VB: Actor = { userId: "fe-venue-B", email: "feVenueB@test.pt", role: "venue" };
+  const CA: Actor = { userId: "fe-couple-A", email: "feCoupleA@test.pt", role: "couple" };
+  const CB: Actor = { userId: "fe-couple-B", email: "feCoupleB@test.pt", role: "couple" };
+  const SECRET = "TopSecretGuestName";
+
+  const fe = { venueA: "", venueB: "", weddingA: "", weddingB: "" };
+
+  beforeAll(async () => {
+    await prisma.profile.createMany({
+      data: [
+        { id: VA.userId, email: VA.email!, role: "venue" },
+        { id: VB.userId, email: VB.email!, role: "venue" },
+        { id: CA.userId, email: CA.email!, role: "couple" },
+        { id: CB.userId, email: CB.email!, role: "couple" },
+      ],
+    });
+    const venueA = await prisma.venue.create({ data: { name: "FE Venue A", ownerId: VA.userId } });
+    const venueB = await prisma.venue.create({ data: { name: "FE Venue B", ownerId: VB.userId } });
+    fe.venueA = venueA.id;
+    fe.venueB = venueB.id;
+
+    // Wedding booked at A: 4 guests (2 confirmed, 1 pending, 1 declined), 2 seated,
+    // plus a dinner table → arrangementPicked true, seatingDone false (2/4).
+    const wA = await prisma.wedding.create({
+      data: { couple: "Alice & Bob", ownerId: CA.userId, venueId: venueA.id, guestEstimate: 80 },
+    });
+    fe.weddingA = wA.id;
+    const table = await prisma.table.create({
+      data: { weddingId: wA.id, shape: "round", capacity: 8, x: 0, y: 0, fixed: false },
+    });
+    await prisma.guest.create({ data: { weddingId: wA.id, name: `${SECRET}1`, rsvp: "confirmed", assignedTableId: table.id, dietary: "vegan" } });
+    await prisma.guest.create({ data: { weddingId: wA.id, name: `${SECRET}2`, rsvp: "confirmed", assignedTableId: table.id } });
+    await prisma.guest.create({ data: { weddingId: wA.id, name: `${SECRET}3`, rsvp: "pending" } });
+    await prisma.guest.create({ data: { weddingId: wA.id, name: `${SECRET}4`, rsvp: "declined" } });
+
+    // Wedding booked at B — must never appear in A's oversight.
+    const wB = await prisma.wedding.create({
+      data: { couple: "Carol & Dan", ownerId: CB.userId, venueId: venueB.id },
+    });
+    fe.weddingB = wB.id;
+    await prisma.guest.create({ data: { weddingId: wB.id, name: "Someone Else", rsvp: "confirmed" } });
+  });
+
+  it("listVenueBookings(A): correct counts + booleans, excludes B's wedding", async () => {
+    const bookings = await listVenueBookings(VA);
+    const ids = bookings.map((b) => b.id);
+    expect(ids).toContain(fe.weddingA);
+    expect(ids).not.toContain(fe.weddingB);
+
+    const a = bookings.find((b) => b.id === fe.weddingA)!;
+    expect(a.couple).toBe("Alice & Bob");
+    expect(a.venueName).toBe("FE Venue A");
+    expect(a.guestEstimate).toBe(80);
+    expect(a.guests).toEqual({ total: 4, confirmed: 2, pending: 1, declined: 1, seated: 2 });
+    expect(a.arrangementPicked).toBe(true);
+    expect(a.seatingDone).toBe(false); // 2 of 4 seated
+  });
+
+  it("payload is counts-only — no guest name/dietary leaks anywhere", async () => {
+    const bookings = await listVenueBookings(VA);
+    const a = bookings.find((b) => b.id === fe.weddingA)!;
+    // The guests summary carries ONLY count keys.
+    expect(Object.keys(a.guests).sort()).toEqual(
+      ["confirmed", "declined", "pending", "seated", "total"]
+    );
+    // No identifying keys on the booking object.
+    expect(a).not.toHaveProperty("name");
+    expect(a).not.toHaveProperty("dietary");
+    // Strongest check: the seeded secret name / dietary never appear in the payload.
+    const serialized = JSON.stringify(bookings);
+    expect(serialized).not.toContain(SECRET);
+    expect(serialized).not.toContain("vegan");
+  });
+
+  it("GET /api/venue/bookings: couple → 403; venue A → only A's bookings", async () => {
+    authState.actor = CA;
+    const denied = await getVenueBookings();
+    expect(denied.status).toBe(403);
+
+    authState.actor = VA;
+    const res = await getVenueBookings();
+    expect(res.status).toBe(200);
+    const ids = (await res.json()).map((b: { id: string }) => b.id);
+    expect(ids).toContain(fe.weddingA);
+    expect(ids).not.toContain(fe.weddingB);
+  });
+
+  it("sanity: venue A is STILL denied the wedding's PII routes (unchanged)", async () => {
+    authState.actor = VA;
+    const wedding = await getWedding(new Request("http://x"), {
+      params: Promise.resolve({ id: fe.weddingA }),
+    });
+    expect(wedding.status).toBe(403);
+    const plan = await getPlan(new Request("http://x"), {
+      params: Promise.resolve({ id: fe.weddingA }),
+    });
+    expect(plan.status).toBe(403);
   });
 });
 
