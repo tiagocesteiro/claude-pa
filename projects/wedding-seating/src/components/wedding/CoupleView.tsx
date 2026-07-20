@@ -11,9 +11,6 @@ import { buildPdfFilename, groupGuestsByTable } from "@/lib/plan/pdfExport";
 import { buildColorMap, type AttributeKey } from "@/lib/plan/colors";
 import { imageUrlFor } from "@/lib/images";
 
-// "Pintar por" control options — same set + labels as the seating plan's (Plan 18
-// Task 4), reused here for the overview's dinner render. Label shown to the user
-// vs. the AttributeKey (or "" for "no color") passed to setColorAttr / buildColorMap.
 const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
   { label: "Nenhum", value: "" },
   { label: "Faixa etária", value: "ageGroup" },
@@ -22,67 +19,70 @@ const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
   { label: "Grupo", value: "group" },
 ];
 
-// Same "adult"/"child"/"senior" -> Portuguese mapping as the seating plan page, used
-// for the legend's value labels when coloring by ageGroup.
-const AGE_GROUP_LABELS: Record<string, string> = {
-  adult: "adulto",
-  child: "criança",
-  senior: "idoso",
-};
+const AGE_GROUP_LABELS: Record<string, string> = { adult: "adulto", child: "criança", senior: "idoso" };
 
-// "group" legend values are groupIds — resolved to the group's name; falls back to
-// the raw id if the group was deleted since the plan was generated.
 function legendLabel(attr: AttributeKey, value: string, groups: PlanGroup[]): string {
   if (attr === "ageGroup") return AGE_GROUP_LABELS[value] ?? value;
   if (attr === "group") return groups.find((g) => g.id === value)?.name ?? value;
   return value;
 }
 
-// Mirrors MOMENT_KINDS in src/lib/db/moments.ts — duplicated (not imported) so this
-// client component doesn't pull the server-only Prisma module into the browser bundle.
-const MOMENT_KINDS = ["ceremony", "cocktail", "dinner", "dance"] as const;
-type MomentKind = (typeof MOMENT_KINDS)[number];
-
-const MOMENT_LABELS: Record<MomentKind, string> = {
+const KIND_LABELS: Record<string, string> = {
   ceremony: "Cerimónia",
   cocktail: "Cocktail",
   dinner: "Jantar",
   dance: "Dança",
 };
 
-// Couple view shows the 4 moments in this fixed order (not the raw moments array order).
-const DISPLAY_ORDER: MomentKind[] = ["ceremony", "cocktail", "dinner", "dance"];
-
 interface FloorPlanRecord {
   id: string;
   image: string;
   scale: number;
-  /** Metres — feeds the blank-room render (Plan 18 Task 7) when `image` is empty. */
   width: number;
   depth: number;
   zones: string | null;
-  /** JSON list of decorative room elements (dance floor, bar, ...) — Plan 18 Task 8. */
   elements: string | null;
 }
-
 interface TemplateRecord {
   id: string;
   floorPlanId: string | null;
   floorPlan: FloorPlanRecord | null;
 }
-
+interface Task {
+  id: string;
+  text: string;
+  done: boolean;
+  assignee: string;
+  supplierId: string | null;
+}
+interface DecorLine {
+  id: string;
+  name: string | null;
+  quantity: number;
+  decorItem: { name: string; category: string | null; price: number | null } | null;
+}
 interface Moment {
   id: string;
-  kind: MomentKind;
+  kind: string | null;
+  title: string | null;
   floorPlanId: string | null;
   floorPlan: FloorPlanRecord | null;
   templateId: string | null;
   template: TemplateRecord | null;
   notes: string | null;
+  tasks: Task[];
+  decor: DecorLine[];
 }
-
-/** Raw row shape returned by GET /api/templates/[id]/tables (Prisma Table) — mapped
- * below into PlanTableView (no seated guests: an arrangement, not a seating plan). */
+interface VenueRecord {
+  id: string;
+  name: string;
+}
+interface WeddingDetail {
+  id: string;
+  couple: string;
+  venue?: VenueRecord | null;
+  moments: Moment[];
+}
 interface TemplateTableRow {
   id: string;
   shape: string;
@@ -96,31 +96,15 @@ interface TemplateTableRow {
   heads: boolean | null;
 }
 
-interface VenueRecord {
-  id: string;
-  name: string;
-}
-
-interface WeddingDetail {
-  id: string;
-  couple: string;
-  venue?: VenueRecord | null;
-  moments: Moment[];
-}
-
-interface PlanResponse {
-  guests: PlanGuest[];
-  tables: PlanTable[];
-  layout: PlanLayout | null;
-}
-
 const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), { ssr: false });
 const FloorPlanCanvas = dynamic(() => import("@/components/editor/FloorPlanCanvas"), { ssr: false });
 
-// Same on-screen bounds convention as the Plan 2 floor-plan editor and the Plano de
-// mesas tab; each moment's canvas fits inside this box preserving its image's aspect ratio.
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 560;
+
+function momentTitle(m: Moment): string {
+  return m.title ?? (m.kind ? KIND_LABELS[m.kind] ?? m.kind : "Momento");
+}
 
 function parseZones(zones: string | null | undefined): Point[][] {
   if (!zones) return [];
@@ -131,9 +115,6 @@ function parseZones(zones: string | null | undefined): Point[][] {
   }
 }
 
-// Required by PlanCanvas/FloorPlanCanvas's prop types even though nothing can trigger
-// them here (readOnly / tables=[] make every interactive path unreachable) — kept as a
-// single shared no-op so the intent ("this view never mutates anything") reads clearly.
 function noop() {}
 
 function sectionStyle(): React.CSSProperties {
@@ -147,32 +128,19 @@ function sectionStyle(): React.CSSProperties {
 }
 
 function Placeholder({ text }: { text: string }) {
-  return (
-    <p style={{ color: "var(--text-muted)", fontStyle: "italic", margin: 0 }}>{text}</p>
-  );
+  return <p style={{ color: "var(--text-muted)", fontStyle: "italic", margin: 0 }}>{text}</p>;
 }
 
 export default function CoupleView({ weddingId }: { weddingId: string }) {
   const [wedding, setWedding] = useState<WeddingDetail | null>(null);
-  const [plan, setPlan] = useState<PlanResponse | null>(null);
+  const [plan, setPlan] = useState<{ guests: PlanGuest[]; tables: PlanTable[]; layout: PlanLayout | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templateTables, setTemplateTables] = useState<Record<string, TemplateTableRow[]>>({});
   const [groups, setGroups] = useState<PlanGroup[]>([]);
-  // "Pintar por" — colors the DINNER's seated guests only (Task 18 Part C); the
-  // other moments stay arrangement-only regardless of this selection.
   const [colorAttr, setColorAttr] = useState<AttributeKey | null>(null);
-  // Per-moment Konva stage instances (Plan 18 Task 10 — "Exportar PDF"), populated via
-  // each canvas's onStageReady as it mounts/unmounts. A ref (not state) because the
-  // stage instance itself never needs to trigger a re-render — it's read on demand
-  // when the export button is clicked.
-  const stageRefs = useRef<Record<MomentKind, Konva.Stage | null>>({
-    ceremony: null,
-    cocktail: null,
-    dinner: null,
-    dance: null,
-  });
-  const [exportingKind, setExportingKind] = useState<MomentKind | null>(null);
+  const stageRefs = useRef<Record<string, Konva.Stage | null>>({});
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -187,15 +155,16 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         if (!weddingRes.ok) throw new Error("wedding not found");
         const weddingData = (await weddingRes.json()) as WeddingDetail;
 
-        // The DINNER render comes from the couple's FINAL layout (its tables +
-        // per-layout seating). Falls back to the legacy wedding arrangement when
-        // no layout is marked final yet, so pre-layout weddings still render.
-        let planData: PlanResponse = { guests: [], tables: [], layout: null };
+        // DINNER render comes from the couple's FINAL layout; fallback to the
+        // legacy wedding arrangement when no layout is marked final yet.
+        let planData: { guests: PlanGuest[]; tables: PlanTable[]; layout: PlanLayout | null } = {
+          guests: [],
+          tables: [],
+          layout: null,
+        };
         let finalId: string | null = null;
         if (layoutsRes.ok) {
-          const { layouts } = (await layoutsRes.json()) as {
-            layouts: { id: string; isFinal: boolean }[];
-          };
+          const { layouts } = (await layoutsRes.json()) as { layouts: { id: string; isFinal: boolean }[] };
           finalId = layouts?.find((l) => l.isFinal)?.id ?? null;
         }
         if (finalId) {
@@ -216,7 +185,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
           }
         } else {
           const planRes = await fetch(`/api/weddings/${weddingId}/plan`);
-          if (planRes.ok) planData = (await planRes.json()) as PlanResponse;
+          if (planRes.ok) planData = (await planRes.json()) as typeof planData;
         }
         if (cancelled) return;
         setWedding(weddingData);
@@ -233,9 +202,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     };
   }, [weddingId]);
 
-  // Each non-dinner moment that has a venue arrangement (templateId) needs that
-  // template's positioned tables to render read-only — fetched once per distinct
-  // template id whenever the wedding's moments change.
+  // Template tables for non-dinner moments that reference a venue arrangement.
   useEffect(() => {
     const templateIds = Array.from(
       new Set((wedding?.moments ?? []).map((m) => m.templateId).filter((id): id is string => Boolean(id)))
@@ -264,9 +231,6 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     };
   }, [wedding?.moments]);
 
-  // Groups aren't floor-plan scoped; fetched once per wedding, used only to resolve
-  // the "Pintar por: Grupo" legend's group names (same pattern as usePlan.ts).
-  // Best-effort — a failed fetch just falls back to raw group ids in the legend.
   useEffect(() => {
     let cancelled = false;
     async function loadGroups() {
@@ -277,7 +241,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount/wedding change
         if (!cancelled) setGroups(data ?? []);
       } catch {
-        // silent — see comment above
+        // silent
       }
     }
     loadGroups();
@@ -295,12 +259,6 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     return map;
   }, [tables]);
 
-  // Non-dinner moments stay arrangement-only (their own `views` built inline below,
-  // guests: []). The DINNER, however, shows its actually seated guests (Task 18
-  // Part C) — mapped the same way the seating plan page does (guests filtered by
-  // assignedTableId) — so occupancy chairs render (Part A) and can be colored by
-  // the "Pintar por" selection below; read-only + no names (readOnly already hides
-  // the name-chip overlay), so this only ever shows colored dots, never text.
   const dinnerGuests = plan?.guests ?? [];
   const dinnerTableViews: PlanTableView[] = useMemo(
     () =>
@@ -323,46 +281,28 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
     [tables, dinnerGuests, tableLabels]
   );
 
-  // Derived color map for the dinner's seated guests, keyed by the "Pintar por"
-  // selection — same pattern as usePlan.ts's colorMap. `null` (Nenhum) yields empty
-  // maps, which PlanCanvas treats as "no tinting" (neutral occupied fill) and the
-  // legend treats as "nothing to render".
   const colorMap = useMemo(
     () => (colorAttr ? buildColorMap(dinnerGuests, colorAttr) : { legend: [], colorByGuest: {} }),
     [dinnerGuests, colorAttr]
   );
 
   const hasDinnerPlan = Boolean(layout) && tables.length > 0;
-
-  // Guest summary header (Task 1, Plan 18): counts over the plan's guest list, which
-  // already carries each guest's rsvp from /api/weddings/[id]/plan.
   const guestCount = plan?.guests.length ?? 0;
   const confirmedCount = plan?.guests.filter((g) => g.rsvp === "confirmed").length ?? 0;
 
   if (loading) return <p>A carregar...</p>;
   if (error || !wedding) return <p style={{ color: "#dc2626" }}>{error ?? "Casamento não encontrado."}</p>;
 
-  const momentByKind = new Map(wedding.moments.map((m) => [m.kind, m]));
-
-  // Mirrors the Placeholder-vs-canvas branching below (dinner/template/legacy-floor-
-  // plan) without duplicating the JSX — used only to enable/disable each section's
-  // "Exportar PDF" button.
-  function momentHasPlan(kind: MomentKind): boolean {
-    if (kind === "dinner") return hasDinnerPlan;
-    const moment = momentByKind.get(kind);
-    const template = moment?.template ?? null;
-    if (template) return Boolean(template.floorPlan);
-    return Boolean(moment?.floorPlan);
+  function momentHasPlan(m: Moment): boolean {
+    if (m.kind === "dinner") return hasDinnerPlan;
+    if (m.template) return Boolean(m.template.floorPlan);
+    return Boolean(m.floorPlan);
   }
 
-  // Exports the given moment's rendered plan as a PDF: a header (couple + moment +
-  // venue), the room's Konva stage captured as a PNG, and — dinner only — a
-  // per-table seated-guest name list. Client-side and self-contained: jsPDF is
-  // bundled (no CDN) and imported dynamically so it never enters the SSR bundle.
-  async function handleExportPdf(kind: MomentKind) {
-    const stage = stageRefs.current[kind];
+  async function handleExportPdf(m: Moment) {
+    const stage = stageRefs.current[m.id];
     if (!stage || !wedding) return;
-    setExportingKind(kind);
+    setExportingId(m.id);
     try {
       const { jsPDF } = await import("jspdf");
       const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
@@ -371,7 +311,7 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
       const margin = 40;
 
       doc.setFontSize(16);
-      doc.text(`${wedding.couple} — ${MOMENT_LABELS[kind]}`, margin, margin);
+      doc.text(`${wedding.couple} — ${momentTitle(m)}`, margin, margin);
       let y = margin;
       if (wedding.venue?.name) {
         doc.setFontSize(11);
@@ -379,8 +319,6 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         y += 18;
       }
 
-      // Fit the captured stage image to the page width, preserving aspect ratio;
-      // shrink further only if that would overflow the remaining page height.
       const dataUrl = stage.toDataURL({ pixelRatio: 2 });
       const stageWidth = stage.width();
       const stageHeight = stage.height();
@@ -395,13 +333,13 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
       }
       doc.addImage(dataUrl, "PNG", margin, imgTop, imgWidth, imgHeight);
 
-      if (kind === "dinner" && plan) {
-        const groups = groupGuestsByTable(plan.guests, plan.tables);
-        if (groups.length > 0) {
+      if (m.kind === "dinner" && plan) {
+        const grouped = groupGuestsByTable(plan.guests, plan.tables);
+        if (grouped.length > 0) {
           let textY = imgTop + imgHeight + 24;
           doc.setFontSize(11);
           const maxTextWidth = pageWidth - margin * 2;
-          for (const g of groups) {
+          for (const g of grouped) {
             const lines = doc.splitTextToSize(`${g.label}: ${g.names.join(", ")}`, maxTextWidth) as string[];
             for (const line of lines) {
               if (textY > pageHeight - margin) {
@@ -415,9 +353,9 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         }
       }
 
-      doc.save(buildPdfFilename(wedding.couple, MOMENT_LABELS[kind]));
+      doc.save(buildPdfFilename(wedding.couple, momentTitle(m)));
     } finally {
-      setExportingKind(null);
+      setExportingId(null);
     }
   }
 
@@ -438,23 +376,15 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
         </p>
         {hasDinnerPlan && (
           <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Pintar por:{" "}
+            Pintar por (jantar):{" "}
             <select
               data-testid="couple-color-attr-select"
               value={colorAttr ?? ""}
               onChange={(e) => setColorAttr((e.target.value || null) as AttributeKey | null)}
-              style={{
-                padding: "4px 8px",
-                borderRadius: "var(--radius)",
-                border: "1px solid var(--border)",
-                background: "var(--surface)",
-                color: "var(--heading)",
-              }}
+              style={{ padding: "4px 8px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--surface)", color: "var(--heading)" }}
             >
               {COLOR_ATTR_OPTIONS.map((o) => (
-                <option key={o.label} value={o.value}>
-                  {o.label}
-                </option>
+                <option key={o.label} value={o.value}>{o.label}</option>
               ))}
             </select>
           </label>
@@ -462,124 +392,87 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
       </div>
 
       {hasDinnerPlan && colorAttr && colorMap.legend.length > 0 && (
-        <div
-          data-testid="couple-color-legend"
-          style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}
-        >
+        <div data-testid="couple-color-legend" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
           {colorMap.legend.map((entry) => (
-            <span
-              key={entry.value}
-              data-testid={`couple-legend-entry-${entry.value}`}
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}
-            >
-              <span
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 3,
-                  background: entry.color,
-                  display: "inline-block",
-                  flexShrink: 0,
-                }}
-              />
+            <span key={entry.value} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: entry.color, display: "inline-block", flexShrink: 0 }} />
               {legendLabel(colorAttr, entry.value, groups)}
             </span>
           ))}
         </div>
       )}
 
-      {DISPLAY_ORDER.map((kind) => (
-        <section key={kind} style={sectionStyle()}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <h2 style={{ marginTop: 0, marginBottom: 0, color: "var(--heading)" }}>{MOMENT_LABELS[kind]}</h2>
-            {momentHasPlan(kind) && (
-              <button
-                type="button"
-                onClick={() => handleExportPdf(kind)}
-                disabled={exportingKind === kind}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "var(--radius)",
-                  border: "1px solid var(--border)",
-                  background: "var(--surface)",
-                  color: "var(--heading)",
-                  cursor: exportingKind === kind ? "default" : "pointer",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  opacity: exportingKind === kind ? 0.6 : 1,
-                }}
-              >
-                {exportingKind === kind ? "A exportar..." : "Exportar PDF"}
-              </button>
-            )}
-          </div>
-          {momentByKind.get(kind)?.notes && (
-            <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: -8, marginBottom: 16 }}>
-              {momentByKind.get(kind)?.notes}
-            </p>
-          )}
+      {wedding.moments.length === 0 && <Placeholder text="Sem momentos definidos." />}
 
-          {kind === "dinner" ? (
-            hasDinnerPlan ? (
-              <PlanCanvas
-                imageUrl={imageUrlFor(layout?.image)}
-                tables={dinnerTableViews}
-                scale={layout?.scale ?? 0}
-                roomWidth={layout?.width ?? 0}
-                roomDepth={layout?.depth ?? 0}
-                zones={[]}
-                elements={parseElements(layout?.elements)}
-                overCapacityIds={[]}
-                maxWidth={CANVAS_WIDTH}
-                maxHeight={CANVAS_HEIGHT}
-                onAssign={noop}
-                onToggleGuestLock={noop}
-                onToggleTableFixed={noop}
-                onSwap={noop}
-                colorByGuest={colorMap.colorByGuest}
-                readOnly
-                onStageReady={(stage) => {
-                  stageRefs.current.dinner = stage;
-                }}
-              />
-            ) : (
-              <Placeholder text="Plano de mesas por definir." />
-            )
-          ) : (
-            (() => {
-              const moment = momentByKind.get(kind);
-              const template = moment?.template ?? null;
+      {wedding.moments.map((m) => {
+        const openTasks = m.tasks.filter((t) => !t.done).length;
+        return (
+          <section key={m.id} style={sectionStyle()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <h2 style={{ marginTop: 0, marginBottom: 0, color: "var(--heading)" }}>{momentTitle(m)}</h2>
+              {momentHasPlan(m) && (
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf(m)}
+                  disabled={exportingId === m.id}
+                  style={{ padding: "6px 14px", borderRadius: "var(--radius)", border: "1px solid var(--border)", background: "var(--surface)", color: "var(--heading)", cursor: exportingId === m.id ? "default" : "pointer", fontSize: 13, fontWeight: 500, opacity: exportingId === m.id ? 0.6 : 1 }}
+                >
+                  {exportingId === m.id ? "A exportar..." : "Exportar PDF"}
+                </button>
+              )}
+            </div>
 
-              // Preferred path: a venue-designed table arrangement — its own floor plan
-              // (image/scale/zones) with that template's positioned tables rendered
-              // read-only, no seated guests (an arrangement, not a seating plan).
-              if (template) {
-                const templateFloorPlan = template.floorPlan;
-                if (!templateFloorPlan) return <Placeholder text="Arranjo sem planta associada." />;
-                const rows = templateTables[template.id] ?? [];
-                const views: PlanTableView[] = rows.map((t, i) => ({
-                  id: t.id,
-                  shape: t.shape,
-                  capacity: t.capacity,
-                  x: t.x,
-                  y: t.y,
-                  label: `Mesa ${i + 1}`,
-                  name: t.name,
-                  heads: t.heads,
-                  fixed: t.fixed,
-                  width: t.width,
-                  depth: t.depth,
-                  guests: [],
-                }));
-                return (
+            {/* Arrangement */}
+            <div style={{ marginTop: 12 }}>
+              {m.kind === "dinner" ? (
+                hasDinnerPlan ? (
                   <PlanCanvas
-                    imageUrl={imageUrlFor(templateFloorPlan.image)}
-                    tables={views}
-                    scale={templateFloorPlan.scale}
-                    roomWidth={templateFloorPlan.width}
-                    roomDepth={templateFloorPlan.depth}
-                    zones={parseZones(templateFloorPlan.zones)}
-                    elements={parseElements(templateFloorPlan.elements)}
+                    imageUrl={imageUrlFor(layout?.image)}
+                    tables={dinnerTableViews}
+                    scale={layout?.scale ?? 0}
+                    roomWidth={layout?.width ?? 0}
+                    roomDepth={layout?.depth ?? 0}
+                    zones={[]}
+                    elements={parseElements(layout?.elements)}
+                    overCapacityIds={[]}
+                    maxWidth={CANVAS_WIDTH}
+                    maxHeight={CANVAS_HEIGHT}
+                    onAssign={noop}
+                    onToggleGuestLock={noop}
+                    onToggleTableFixed={noop}
+                    onSwap={noop}
+                    colorByGuest={colorMap.colorByGuest}
+                    readOnly
+                    onStageReady={(stage) => {
+                      stageRefs.current[m.id] = stage;
+                    }}
+                  />
+                ) : (
+                  <Placeholder text="Plano de mesas por definir (marca um layout como final)." />
+                )
+              ) : m.template ? (
+                m.template.floorPlan ? (
+                  <PlanCanvas
+                    imageUrl={imageUrlFor(m.template.floorPlan.image)}
+                    tables={(templateTables[m.template.id] ?? []).map((t, i) => ({
+                      id: t.id,
+                      shape: t.shape,
+                      capacity: t.capacity,
+                      x: t.x,
+                      y: t.y,
+                      label: `Mesa ${i + 1}`,
+                      name: t.name,
+                      heads: t.heads,
+                      fixed: t.fixed,
+                      width: t.width,
+                      depth: t.depth,
+                      guests: [],
+                    }))}
+                    scale={m.template.floorPlan.scale}
+                    roomWidth={m.template.floorPlan.width}
+                    roomDepth={m.template.floorPlan.depth}
+                    zones={parseZones(m.template.floorPlan.zones)}
+                    elements={parseElements(m.template.floorPlan.elements)}
                     overCapacityIds={[]}
                     maxWidth={CANVAS_WIDTH}
                     maxHeight={CANVAS_HEIGHT}
@@ -589,41 +482,74 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
                     onSwap={noop}
                     readOnly
                     onStageReady={(stage) => {
-                      stageRefs.current[kind] = stage;
+                      stageRefs.current[m.id] = stage;
                     }}
                   />
-                );
-              }
-
-              // Legacy path: a bare floor plan (room only, no tables) assigned before
-              // templates existed for this moment.
-              const floorPlan = moment?.floorPlan ?? null;
-              if (!floorPlan) return <Placeholder text="Arranjo por definir." />;
-              return (
+                ) : (
+                  <Placeholder text="Arranjo sem planta associada." />
+                )
+              ) : m.floorPlan ? (
                 <FloorPlanCanvas
-                  imageUrl={imageUrlFor(floorPlan.image)}
+                  imageUrl={imageUrlFor(m.floorPlan.image)}
                   tables={[]}
-                  scale={floorPlan.scale}
-                  roomWidth={floorPlan.width}
-                  roomDepth={floorPlan.depth}
+                  scale={m.floorPlan.scale}
+                  roomWidth={m.floorPlan.width}
+                  roomDepth={m.floorPlan.depth}
                   selectedId={null}
                   mode="select"
-                  zones={parseZones(floorPlan.zones)}
-                  elements={parseElements(floorPlan.elements)}
+                  zones={parseZones(m.floorPlan.zones)}
+                  elements={parseElements(m.floorPlan.elements)}
                   maxWidth={CANVAS_WIDTH}
                   maxHeight={CANVAS_HEIGHT}
                   onAddTable={noop}
                   onMoveTable={noop}
                   onSelect={noop}
                   onStageReady={(stage) => {
-                    stageRefs.current[kind] = stage;
+                    stageRefs.current[m.id] = stage;
                   }}
                 />
-              );
-            })()
-          )}
-        </section>
-      ))}
+              ) : (
+                <Placeholder text="Arranjo por definir." />
+              )}
+            </div>
+
+            {/* Decoration summary */}
+            {m.decor.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <h3 style={{ margin: "0 0 6px", fontSize: 14, color: "var(--heading)" }}>Decoração</h3>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--text-muted)" }}>
+                  {m.decor.map((d) => (
+                    <li key={d.id}>
+                      {d.decorItem?.name ?? d.name ?? "Item"}
+                      {d.quantity > 1 ? ` ×${d.quantity}` : ""}
+                      {d.decorItem ? "" : " (próprio)"}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Tasks summary */}
+            {m.tasks.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <h3 style={{ margin: "0 0 6px", fontSize: 14, color: "var(--heading)" }}>
+                  Tarefas{" "}
+                  <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>
+                    ({m.tasks.length - openTasks}/{m.tasks.length} concluídas)
+                  </span>
+                </h3>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
+                  {m.tasks.map((t) => (
+                    <li key={t.id} style={{ color: t.done ? "var(--text-muted)" : "inherit", textDecoration: t.done ? "line-through" : "none" }}>
+                      {t.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

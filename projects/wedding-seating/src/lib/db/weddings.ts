@@ -47,7 +47,18 @@ export function getWeddingDetail(id: string) {
     where: { id },
     include: {
       venue: true,
-      moments: { include: { floorPlan: true, template: { include: { floorPlan: true } } } },
+      moments: {
+        orderBy: [{ order: "asc" }, { id: "asc" }],
+        include: {
+          floorPlan: true,
+          template: { include: { floorPlan: true } },
+          tasks: { orderBy: [{ order: "asc" }, { id: "asc" }] },
+          decor: {
+            orderBy: { id: "asc" },
+            include: { decorItem: { select: { name: true, category: true, price: true } } },
+          },
+        },
+      },
     },
   });
 }
