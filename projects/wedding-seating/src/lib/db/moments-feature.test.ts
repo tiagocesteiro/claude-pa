@@ -5,6 +5,14 @@ import { listSuppliers, createSupplier, updateSupplier, deleteSupplier } from ".
 import { listMomentTasks, createTask, updateTask, deleteTask } from "./tasks";
 import { listMomentDecor, addDecorFromCatalog, addCustomDecor, deleteMomentDecor } from "./momentDecor";
 import { listDecorItems, createDecorItem, updateDecorItem, deleteDecorItem } from "./decorCatalog";
+import {
+  AccessError,
+  assertMomentAccess,
+  assertSupplierAccess,
+  assertTaskAccess,
+  assertDecorItemAccess,
+} from "@/lib/auth/access";
+import type { Actor } from "@/lib/auth/actor";
 import { prisma } from "./client";
 
 it("createWedding seeds the 4 default moments with titles + order", async () => {
@@ -130,6 +138,38 @@ it("deleting a moment cascades its tasks + decor", async () => {
   await deleteMoment(moment.id);
   expect(await prisma.momentTask.findUnique({ where: { id: task.id } })).toBeNull();
   expect(await prisma.momentDecor.findUnique({ where: { id: decor.id } })).toBeNull();
+});
+
+it("tenancy: another couple / venue cannot reach a wedding's moments/tasks/suppliers", async () => {
+  const CA: Actor = { userId: "mf-couple-A", email: "a@test.pt", role: "couple" };
+  const CB: Actor = { userId: "mf-couple-B", email: "b@test.pt", role: "couple" };
+  const VB: Actor = { userId: "mf-venue-B", email: "vb@test.pt", role: "venue" };
+
+  const w = await createWedding({ couple: "Owned by A" });
+  await prisma.wedding.update({ where: { id: w.id }, data: { ownerId: CA.userId } });
+  const moment = (await listMoments(w.id))[0];
+  const supplier = await createSupplier(w.id, { name: "A's supplier" });
+  const task = await createTask(moment.id, { text: "A's task" });
+
+  // Owner A: allowed.
+  await expect(assertMomentAccess(CA, moment.id, "write")).resolves.toBeUndefined();
+  await expect(assertSupplierAccess(CA, supplier.id, "write")).resolves.toBeUndefined();
+  await expect(assertTaskAccess(CA, task.id, "write")).resolves.toBeUndefined();
+
+  // Another couple B: denied (404 — hidden).
+  await expect(assertMomentAccess(CB, moment.id, "read")).rejects.toBeInstanceOf(AccessError);
+  await expect(assertSupplierAccess(CB, supplier.id, "read")).rejects.toBeInstanceOf(AccessError);
+  await expect(assertTaskAccess(CB, task.id, "read")).rejects.toBeInstanceOf(AccessError);
+
+  // A venue: denied on wedding-owned data (403).
+  await expect(assertMomentAccess(VB, moment.id, "read")).rejects.toBeInstanceOf(AccessError);
+
+  // A venue may NOT write another venue's decor catalog item.
+  const venueB = await prisma.venue.create({ data: { name: "V B", ownerId: VB.userId } });
+  const item = await createDecorItem(venueB.id, { name: "B item" });
+  await expect(assertDecorItemAccess(VB, item.id, "write")).resolves.toBeUndefined();
+  const VC: Actor = { userId: "mf-venue-C", email: "vc@test.pt", role: "venue" };
+  await expect(assertDecorItemAccess(VC, item.id, "write")).rejects.toBeInstanceOf(AccessError);
 });
 
 afterAll(async () => {
