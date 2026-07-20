@@ -33,20 +33,22 @@ export default function WeddingWorkspacePage() {
       <AddGuestForm groups={groups} addGuest={addGuest} />
 
       {loading && guests.length === 0 ? (
-        <p>Loading guests...</p>
+        <p style={{ color: "var(--text-muted)" }}>A carregar convidados...</p>
       ) : (
-        <GuestTable
-          guests={guests}
-          groups={groups}
-          error={error}
-          assign={assign}
-          addGroup={addGroup}
-          renameGroup={renameGroup}
-          removeGroup={removeGroup}
-          setGuestGroups={setGuestGroups}
-          updateGuestAttrs={updateGuestAttrs}
-          setPlusOne={setPlusOne}
-        />
+        <div className="table-scroll">
+          <GuestTable
+            guests={guests}
+            groups={groups}
+            error={error}
+            assign={assign}
+            addGroup={addGroup}
+            renameGroup={renameGroup}
+            removeGroup={removeGroup}
+            setGuestGroups={setGuestGroups}
+            updateGuestAttrs={updateGuestAttrs}
+            setPlusOne={setPlusOne}
+          />
+        </div>
       )}
     </div>
   );

@@ -136,3 +136,398 @@ button:focus-visible {
 label {
   color: var(--text);
 }
+
+/* =========================================================================
+   Design system — Fase F1
+   Token-driven component classes consumed by src/components/ui/*.
+   Keep everything calm, warm, elegant. One accent, one heading style.
+   ========================================================================= */
+
+:root {
+  --font-serif-stack: var(--font-serif), Georgia, "Times New Roman", serif;
+
+  /* spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+
+  --danger: #c0392b;
+  --danger-soft: #fbeceb;
+  --danger-border: #f0cfcb;
+  --success: #3f9d6b;
+  --warning: #d97706;
+}
+
+/* Elegant serif for the main page titles + wordmark. */
+h1 {
+  font-family: var(--font-serif-stack);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  font-size: 1.7rem;
+}
+
+/* --- Layout: page shell ------------------------------------------------- */
+.page-shell {
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-5);
+}
+@media (max-width: 640px) {
+  .page-shell {
+    padding: var(--sp-5) var(--sp-4);
+  }
+}
+
+/* --- App header --------------------------------------------------------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: saturate(1.1) blur(6px);
+}
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4ch;
+  font-family: var(--font-serif-stack);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--heading);
+}
+.wordmark:hover {
+  text-decoration: none;
+  color: var(--heading);
+}
+.wordmark .wordmark-accent {
+  color: var(--accent);
+  font-style: italic;
+}
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.app-header-email {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 42vw;
+}
+.app-header-role {
+  font-family: var(--font-serif-stack);
+}
+@media (max-width: 520px) {
+  .app-header {
+    padding: var(--sp-3) var(--sp-4);
+  }
+  .app-header-email {
+    display: none;
+  }
+}
+
+/* --- Buttons ------------------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-family: inherit;
+  font-size: 0.925rem;
+  font-weight: 500;
+  line-height: 1.2;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
+    opacity 0.12s ease, box-shadow 0.12s ease;
+  white-space: nowrap;
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-sm {
+  padding: 5px 11px;
+  font-size: 0.85rem;
+}
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-primary:not(:disabled):hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-secondary:not(:disabled):hover {
+  background: var(--surface-2);
+  border-color: #d8cfc1;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--accent);
+}
+.btn-ghost:not(:disabled):hover {
+  background: var(--accent-soft);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.btn-danger:not(:disabled):hover {
+  background: var(--danger-soft);
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btn-spin 0.6s linear infinite;
+}
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Cards -------------------------------------------------------------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--sp-5);
+}
+.card-pad-sm {
+  padding: var(--sp-4);
+}
+.card + .card {
+  margin-top: var(--sp-4);
+}
+
+/* --- Form controls / fields -------------------------------------------- */
+.input,
+.select,
+.textarea {
+  width: 100%;
+}
+.textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.field-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.field-error {
+  font-size: 0.82rem;
+  color: var(--danger);
+}
+.form-error {
+  color: var(--danger);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* --- Tabs --------------------------------------------------------------- */
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-5);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  padding: 9px 16px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.925rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.tab:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+.tab-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-active:hover {
+  color: var(--accent);
+}
+
+/* --- Badges + stats ----------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge-neutral {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.badge-accent {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent-strong);
+}
+.badge-success {
+  background: #e9f5ee;
+  border-color: #c7e6d4;
+  color: #2f7d54;
+}
+.badge-warning {
+  background: #fdf2e3;
+  border-color: #f3ddb8;
+  color: #b46c12;
+}
+.badge-danger {
+  background: var(--danger-soft);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-value {
+  font-family: var(--font-serif-stack);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--heading);
+}
+.stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.stat-row {
+  display: flex;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+/* --- Checklist dot (progress cards) ------------------------------------ */
+.check-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.check-dot-done {
+  background: var(--success);
+}
+.check-dot-todo {
+  background: #c9502f;
+}
+
+/* --- Auth screens ------------------------------------------------------- */
+.auth-shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-5);
+  background:
+    radial-gradient(1200px 500px at 50% -10%, #fbf9f5 0%, transparent 70%),
+    var(--bg);
+}
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+}
+.auth-brand {
+  text-align: center;
+  margin-bottom: var(--sp-5);
+}
+.auth-title {
+  margin: 0 0 4px;
+}
+.auth-subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* --- Utility: horizontal scroll for wide tables ------------------------- */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- Section list rows -------------------------------------------------- */
+.list-reset {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}

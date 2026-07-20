@@ -144,7 +144,7 @@ export default function GroupBoard({
                     title="Delete group"
                     style={{ fontSize: 12 }}
                   >
-                    {removingId === col.group.id ? "Deleting..." : "Delete"}
+                    {removingId === col.group.id ? "A apagar..." : "Apagar"}
                   </button>
                 )}
               </div>

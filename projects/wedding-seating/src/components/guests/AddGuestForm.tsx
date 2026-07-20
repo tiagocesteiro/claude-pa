@@ -55,8 +55,8 @@ export default function AddGuestForm({
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 24 }}>
-      <h2>Adicionar convidado</h2>
+    <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface)", padding: 14, marginBottom: 24 }}>
+      <h2 style={{ marginTop: 0 }}>Adicionar convidado</h2>
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <input
           value={name}

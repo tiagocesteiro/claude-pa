@@ -119,7 +119,7 @@ export default function ConstraintsPanel({
         </select>
 
         <button type="submit" disabled={saving || sameGuest || !guestAId || !guestBId}>
-          {saving ? "A adicionar..." : "Add"}
+          {saving ? "A adicionar..." : "Adicionar"}
         </button>
 
         <button
@@ -156,7 +156,7 @@ export default function ConstraintsPanel({
               disabled={deletingId !== null}
               style={{ fontSize: 12 }}
             >
-              {deletingId === c.id ? "Deleting..." : "Delete"}
+              {deletingId === c.id ? "A apagar..." : "Apagar"}
             </button>
           </li>
         ))}

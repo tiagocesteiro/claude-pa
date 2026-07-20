@@ -466,7 +466,7 @@ export default function TemplateTableEditor({
         )}
       </div>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
       {loadError && <p style={{ color: "#dc2626" }}>{loadError}</p>}
 
       {!loading && !loadError && (

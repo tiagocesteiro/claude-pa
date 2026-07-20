@@ -103,12 +103,12 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
   }
 
   function validate(values: FormValues): string | null {
-    if (!values.name.trim()) return "Name is required";
+    if (!values.name.trim()) return "O nome é obrigatório.";
     const { minSeats, maxSeats, width, depth } = parsedPayload(values);
-    if (!Number.isFinite(minSeats) || minSeats <= 0) return "Min seats must be greater than 0";
-    if (!Number.isFinite(maxSeats) || maxSeats < minSeats) return "Max seats must be ≥ min seats";
-    if (!Number.isFinite(width) || width <= 0) return "Width must be greater than 0";
-    if (!Number.isFinite(depth) || depth <= 0) return "Depth must be greater than 0";
+    if (!Number.isFinite(minSeats) || minSeats <= 0) return "Os lugares mínimos têm de ser maiores que 0.";
+    if (!Number.isFinite(maxSeats) || maxSeats < minSeats) return "Os lugares máximos têm de ser ≥ mínimos.";
+    if (!Number.isFinite(width) || width <= 0) return "A largura tem de ser maior que 0.";
+    if (!Number.isFinite(depth) || depth <= 0) return "A profundidade tem de ser maior que 0.";
     return null;
   }
 
@@ -192,24 +192,25 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-      <strong>Table type catalog</strong>
+    <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface)", padding: 14 }}>
+      <strong>Catálogo de mesas</strong>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
       {!loading && (
         <>
-          {tableTypes.length === 0 && <p>No table types yet.</p>}
+          {tableTypes.length === 0 && <p style={{ color: "var(--text-muted)" }}>Ainda não há tipos de mesa.</p>}
           {tableTypes.length > 0 && (
+            <div className="table-scroll">
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left" }}>Name</th>
-                  <th style={{ textAlign: "left" }}>Shape</th>
-                  <th style={{ textAlign: "left" }}>Min</th>
-                  <th style={{ textAlign: "left" }}>Max</th>
-                  <th style={{ textAlign: "left" }} colSpan={2}>Dimensions</th>
-                  <th style={{ textAlign: "left" }}>Qty</th>
+                  <th style={{ textAlign: "left" }}>Nome</th>
+                  <th style={{ textAlign: "left" }}>Forma</th>
+                  <th style={{ textAlign: "left" }}>Mín</th>
+                  <th style={{ textAlign: "left" }}>Máx</th>
+                  <th style={{ textAlign: "left" }} colSpan={2}>Dimensões</th>
+                  <th style={{ textAlign: "left" }}>Qtd</th>
                   <th />
                 </tr>
               </thead>
@@ -316,10 +317,10 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                           onClick={() => handleSaveEdit(t.id)}
                           disabled={savingEdit}
                         >
-                          {savingEdit ? "Saving..." : "Save"}
+                          {savingEdit ? "A guardar..." : "Guardar"}
                         </button>
                         <button type="button" onClick={cancelEdit} style={{ marginLeft: 4 }}>
-                          Cancel
+                          Cancelar
                         </button>
                       </td>
                     </tr>
@@ -333,14 +334,14 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                       <td>{t.quantity}</td>
                       <td>
                         <button type="button" onClick={() => startEdit(t)}>
-                          Edit
+                          Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(t.id)}
                           style={{ marginLeft: 4, color: "#dc2626" }}
                         >
-                          Delete
+                          Apagar
                         </button>
                       </td>
                     </tr>
@@ -348,16 +349,17 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
                 )}
               </tbody>
             </table>
+            </div>
           )}
           {rowError && <p style={{ color: "#dc2626" }}>{rowError}</p>}
         </>
       )}
 
       <form onSubmit={handleCreate} style={{ marginTop: 16 }}>
-        <strong>Add table type</strong>
+        <strong>Adicionar tipo de mesa</strong>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
           <label>
-            Name{" "}
+            Nome{" "}
             <input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -365,7 +367,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
             />
           </label>
           <label>
-            Shape{" "}
+            Forma{" "}
             <select
               value={form.shape}
               onChange={(e) => {
@@ -379,7 +381,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
             </select>
           </label>
           <label>
-            Min seats{" "}
+            Lugares mín.{" "}
             <input
               type="number"
               min={1}
@@ -389,7 +391,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
             />
           </label>
           <label>
-            Max seats{" "}
+            Lugares máx.{" "}
             <input
               type="number"
               min={1}
@@ -437,7 +439,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
             </>
           )}
           <label>
-            Quantity{" "}
+            Quantidade{" "}
             <input
               type="number"
               min={1}
@@ -448,7 +450,7 @@ export default function TableTypeCatalog({ venueId, onChange }: TableTypeCatalog
           </label>
         </div>
         <button type="submit" disabled={creating} style={{ marginTop: 8 }}>
-          {creating ? "Adding..." : "Add table type"}
+          {creating ? "A adicionar..." : "Adicionar tipo de mesa"}
         </button>
         {error && <p style={{ color: "#dc2626" }}>{error}</p>}
       </form>

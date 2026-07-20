@@ -261,7 +261,7 @@ export default function FloorPlanEditorPage() {
       </p>
       <h1>Layout editor</h1>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
       {!loading && (
         <>
@@ -395,7 +395,7 @@ export default function FloorPlanEditorPage() {
             >
               Limpar zonas
             </button>
-            {savingZones && <span style={{ marginLeft: 8 }}>Saving...</span>}
+            {savingZones && <span style={{ marginLeft: 8 }}>A guardar...</span>}
             <p style={{ color: "var(--text-muted)", marginTop: 6 }}>
               Desenha os limites da sala (paredes). Mesas colocadas fora das zonas são assinaladas.
               Podes ter várias zonas se a sala tiver divisões.

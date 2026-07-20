@@ -23,7 +23,7 @@ export default function ImportPanel({
     e.preventDefault();
     setError(null);
     if (!file) {
-      setError("Choose an .xlsx file first");
+      setError("Escolhe primeiro um ficheiro .xlsx.");
       return;
     }
     setImporting(true);
@@ -49,7 +49,7 @@ export default function ImportPanel({
       setError(
         err instanceof DOMException && err.name === "AbortError"
           ? "A importação demorou demasiado. Verifica a ligação e tenta novamente."
-          : "Failed to import guest list"
+          : "Não foi possível importar a lista de convidados."
       );
     } finally {
       clearTimeout(timeout);
@@ -58,19 +58,19 @@ export default function ImportPanel({
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 24 }}>
-      <h2>Import guest list</h2>
-      <p style={{ fontSize: 13, color: "#666" }}>
-        Template columns: <code>nome</code> and <code>grupo</code> (grupo optional).
+    <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface)", padding: 14, marginBottom: 24 }}>
+      <h2 style={{ marginTop: 0 }}>Importar lista de convidados</h2>
+      <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+        Colunas do modelo: <code>nome</code> e <code>grupo</code> (grupo opcional).
       </p>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <input
           type="file"
           accept=".xlsx"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
-        <button type="submit" disabled={importing} style={{ marginLeft: 8 }}>
-          {importing ? "Importing..." : "Import"}
+        <button type="submit" className="btn btn-secondary btn-sm" disabled={importing}>
+          {importing ? "A importar..." : "Importar"}
         </button>
       </form>
       {result && result.guests === 0 && (
@@ -81,7 +81,7 @@ export default function ImportPanel({
       )}
       {result && result.guests > 0 && (
         <p style={{ color: "#16a34a" }}>
-          Imported {result.guests} guest(s), {result.groups} new group(s).
+          Importados {result.guests} convidado(s), {result.groups} grupo(s) novo(s).
         </p>
       )}
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}

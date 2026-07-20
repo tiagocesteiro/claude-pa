@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { PageShell, Card, Field, Input, Select, Button, Stat, Badge } from "@/components/ui";
 
 interface Venue {
   id: string;
@@ -59,14 +60,14 @@ export default function AdminPage() {
   const showCouple = role === "couple" || role === "admin";
 
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      {!roleLoaded && <p>A carregar...</p>}
+    <PageShell size="md">
+      {!roleLoaded && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
       {showCouple && <CoupleSection />}
       {showVenue && <VenueSection />}
       {roleLoaded && !showVenue && !showCouple && (
         <p>A tua conta não tem um perfil válido. Contacta o suporte.</p>
       )}
-    </main>
+    </PageShell>
   );
 }
 
@@ -101,7 +102,7 @@ function CoupleSection() {
     e.preventDefault();
     setWeddingError(null);
     if (!coupleName.trim()) {
-      setWeddingError("Couple name is required");
+      setWeddingError("Indica o nome do casal.");
       return;
     }
     setCreatingWedding(true);
@@ -121,7 +122,7 @@ function CoupleSection() {
       setWeddingDate("");
       await loadWeddings();
     } catch {
-      setWeddingError("Failed to create wedding");
+      setWeddingError("Não foi possível criar o casamento.");
     } finally {
       setCreatingWedding(false);
     }
@@ -141,71 +142,65 @@ function CoupleSection() {
     <section>
       <h1>Casamentos</h1>
 
-      <form onSubmit={handleCreateWedding} style={{ marginBottom: 24 }}>
-        <h2>Novo casamento</h2>
-        <div style={{ marginBottom: 8, display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <label>
-            Casal:{" "}
-            <input value={coupleName} onChange={(e) => setCoupleName(e.target.value)} />
-          </label>
-          <label>
-            Quinta:{" "}
-            <select value={weddingVenueId} onChange={(e) => setWeddingVenueId(e.target.value)}>
-              <option value="">Sem quinta</option>
-              {pickableVenues.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                  {v.location ? ` — ${v.location}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Data:{" "}
-            <input
-              type="date"
-              value={weddingDate}
-              onChange={(e) => setWeddingDate(e.target.value)}
-            />
-          </label>
-        </div>
-        <button type="submit" disabled={creatingWedding}>
-          {creatingWedding ? "A criar..." : "Criar casamento"}
-        </button>
-        {weddingError && <p style={{ color: "#dc2626" }}>{weddingError}</p>}
-      </form>
-
-      <h2>Os teus casamentos</h2>
-      {weddings.length === 0 && <p>Ainda não há casamentos.</p>}
-      <ul style={{ listStyle: "none", padding: 0, marginBottom: 32 }}>
-        {weddings.map((w) => (
-          <li
-            key={w.id}
+      <Card style={{ marginBottom: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Novo casamento</h2>
+        <form onSubmit={handleCreateWedding}>
+          <div
             style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: 12,
+              marginBottom: 16,
             }}
           >
-            <span>
-              <Link href={`/admin/wedding/${w.id}`}>
-                <strong>{w.couple}</strong>
-              </Link>
-              {w.date && <span> — {new Date(w.date).toLocaleDateString()}</span>}
-            </span>
-            <button
-              type="button"
-              onClick={() => handleDeleteWedding(w)}
-              title="Apagar casamento"
-              style={{ color: "#dc2626", flexShrink: 0 }}
+            <Field label="Casal">
+              <Input value={coupleName} onChange={(e) => setCoupleName(e.target.value)} placeholder="Ana & João" />
+            </Field>
+            <Field label="Quinta">
+              <Select value={weddingVenueId} onChange={(e) => setWeddingVenueId(e.target.value)}>
+                <option value="">Sem quinta</option>
+                {pickableVenues.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                    {v.location ? ` — ${v.location}` : ""}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Data">
+              <Input type="date" value={weddingDate} onChange={(e) => setWeddingDate(e.target.value)} />
+            </Field>
+          </div>
+          <Button type="submit" variant="primary" loading={creatingWedding}>
+            {creatingWedding ? "A criar..." : "Criar casamento"}
+          </Button>
+          {weddingError && <p className="form-error" style={{ marginTop: 10 }}>{weddingError}</p>}
+        </form>
+      </Card>
+
+      <h2>Os teus casamentos</h2>
+      {weddings.length === 0 && (
+        <p style={{ color: "var(--text-muted)" }}>Ainda não há casamentos.</p>
+      )}
+      <ul className="list-reset" style={{ marginBottom: 32, display: "flex", flexDirection: "column", gap: 10 }}>
+        {weddings.map((w) => (
+          <li key={w.id}>
+            <Card
+              pad="sm"
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}
             >
-              Apagar
-            </button>
+              <span>
+                <Link href={`/admin/wedding/${w.id}`}>
+                  <strong>{w.couple}</strong>
+                </Link>
+                {w.date && (
+                  <span style={{ color: "var(--text-muted)" }}> — {new Date(w.date).toLocaleDateString("pt-PT")}</span>
+                )}
+              </span>
+              <Button variant="danger" size="sm" onClick={() => handleDeleteWedding(w)} title="Apagar casamento">
+                Apagar
+              </Button>
+            </Card>
           </li>
         ))}
       </ul>
@@ -244,7 +239,7 @@ function VenueSection() {
     e.preventDefault();
     setError(null);
     if (!name.trim()) {
-      setError("Name is required");
+      setError("Indica o nome da quinta.");
       return;
     }
     const res = await fetch("/api/venues", {
@@ -253,7 +248,7 @@ function VenueSection() {
       body: JSON.stringify({ name, location: location || undefined }),
     });
     if (!res.ok) {
-      setError("Failed to create venue");
+      setError("Não foi possível criar a quinta.");
       return;
     }
     setName("");
@@ -275,49 +270,50 @@ function VenueSection() {
     <section>
       <h1>Quintas</h1>
 
-      <form onSubmit={handleCreateVenue} style={{ marginBottom: 24 }}>
-        <h2>Nova quinta</h2>
-        <div style={{ marginBottom: 8 }}>
-          <label>
-            Nome:{" "}
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-        </div>
-        <div style={{ marginBottom: 8 }}>
-          <label>
-            Localização:{" "}
-            <input value={location} onChange={(e) => setLocation(e.target.value)} />
-          </label>
-        </div>
-        <button type="submit">Criar quinta</button>
-        {error && <p style={{ color: "#dc2626" }}>{error}</p>}
-      </form>
+      <Card style={{ marginBottom: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Nova quinta</h2>
+        <form onSubmit={handleCreateVenue}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Field label="Nome">
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Quinta do Vale" />
+            </Field>
+            <Field label="Localização">
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Sintra" />
+            </Field>
+          </div>
+          <Button type="submit" variant="primary">Criar quinta</Button>
+          {error && <p className="form-error" style={{ marginTop: 10 }}>{error}</p>}
+        </form>
+      </Card>
 
       <h2>As tuas quintas</h2>
-      {venues.length === 0 && <p>Ainda não há quintas.</p>}
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      {venues.length === 0 && (
+        <p style={{ color: "var(--text-muted)" }}>Ainda não há quintas.</p>
+      )}
+      <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {venues.map((v) => (
-          <li
-            key={v.id}
-            style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 8 }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <span>
-                <strong>{v.name}</strong>
-                {v.location && <span> — {v.location}</span>}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleDeleteVenue(v)}
-                title="Apagar quinta"
-                style={{ color: "#dc2626", flexShrink: 0 }}
-              >
-                Apagar
-              </button>
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <Link href={`/admin/venue/${v.id}`}>Abrir quinta</Link>
-            </div>
+          <li key={v.id}>
+            <Card pad="sm">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span>
+                  <strong>{v.name}</strong>
+                  {v.location && <span style={{ color: "var(--text-muted)" }}> — {v.location}</span>}
+                </span>
+                <Button variant="danger" size="sm" onClick={() => handleDeleteVenue(v)} title="Apagar quinta">
+                  Apagar
+                </Button>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <Link href={`/admin/venue/${v.id}`}>Abrir quinta &rarr;</Link>
+              </div>
+            </Card>
           </li>
         ))}
       </ul>
@@ -326,9 +322,11 @@ function VenueSection() {
       {bookingsLoaded && bookings.length === 0 && (
         <p style={{ color: "var(--text-muted)" }}>Ainda não há casamentos marcados na tua quinta.</p>
       )}
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {bookings.map((b) => (
-          <BookingCard key={b.id} booking={b} />
+          <li key={b.id}>
+            <BookingCard booking={b} />
+          </li>
         ))}
       </ul>
     </section>
@@ -342,62 +340,45 @@ function VenueSection() {
 function BookingCard({ booking: b }: { booking: VenueBooking }) {
   const { guests: g } = b;
   const missingRsvp = g.pending;
+  const allDone = b.arrangementPicked && b.seatingDone && missingRsvp === 0;
+
   return (
-    <li
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius)",
-        background: "var(--surface)",
-        padding: 14,
-        marginBottom: 10,
-        boxShadow: "var(--shadow)",
-      }}
-    >
+    <Card>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <strong style={{ fontSize: "1.05rem" }}>{b.couple}</strong>
-        <span style={{ color: "var(--text-muted)" }}>
-          {b.date ? new Date(b.date).toLocaleDateString() : "sem data"}
-          {b.guestEstimate != null ? ` · estimativa ${b.guestEstimate}` : ""}
+        <span style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: "0.85rem" }}>
+          {b.date ? new Date(b.date).toLocaleDateString("pt-PT") : "sem data"}
+          {allDone ? (
+            <Badge tone="success">Pronto</Badge>
+          ) : (
+            <Badge tone="warning">Em curso</Badge>
+          )}
         </span>
       </div>
 
-      <p style={{ marginTop: 6 }}>
-        {g.total} convidados · {g.confirmed} confirmados · {g.pending} pendentes
-        {g.declined > 0 ? ` · ${g.declined} recusaram` : ""}
-      </p>
+      <div className="stat-row" style={{ margin: "16px 0", gap: 20 }}>
+        <Stat value={g.total} label="Convidados" />
+        <Stat value={g.confirmed} label="Confirmados" />
+        <Stat value={g.pending} label="Pendentes" />
+        {b.guestEstimate != null && <Stat value={b.guestEstimate} label="Estimativa" />}
+      </div>
 
-      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
           O que falta
         </span>
         <ChecklistItem done={b.arrangementPicked} label="Arranjo escolhido" />
         <ChecklistItem done={b.seatingDone} label="Seating feito" />
-        {missingRsvp > 0 && (
-          <ChecklistItem done={false} label={`Faltam confirmar ${missingRsvp}`} />
-        )}
+        {missingRsvp > 0 && <ChecklistItem done={false} label={`Faltam confirmar ${missingRsvp}`} />}
       </div>
-    </li>
+    </Card>
   );
 }
 
 function ChecklistItem({ done, label }: { done: boolean; label: string }) {
   return (
     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span
-        aria-hidden
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          fontSize: "0.7rem",
-          fontWeight: 700,
-          color: "#fff",
-          background: done ? "#3f9d6b" : "#c9502f",
-        }}
-      >
+      <span aria-hidden className={`check-dot ${done ? "check-dot-done" : "check-dot-todo"}`}>
         {done ? "✓" : "✗"}
       </span>
       <span>{label}</span>

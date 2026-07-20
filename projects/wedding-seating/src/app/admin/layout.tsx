@@ -1,9 +1,9 @@
-import AuthHeader from "@/components/auth/AuthHeader";
+import { AppHeader } from "@/components/ui";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <AuthHeader />
+      <AppHeader />
       {children}
     </>
   );

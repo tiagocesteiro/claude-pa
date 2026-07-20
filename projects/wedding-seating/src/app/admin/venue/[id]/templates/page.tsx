@@ -97,11 +97,11 @@ export default function VenueTemplatesPage() {
   }
 
   function validate(values: FormValues): string | null {
-    if (!values.name.trim()) return "Name is required";
+    if (!values.name.trim()) return "O nome é obrigatório.";
     const minGuests = Number(values.minGuests);
     const maxGuests = Number(values.maxGuests);
-    if (!Number.isFinite(minGuests) || minGuests <= 0) return "Min guests must be greater than 0";
-    if (!Number.isFinite(maxGuests) || maxGuests < minGuests) return "Max guests must be ≥ min guests";
+    if (!Number.isFinite(minGuests) || minGuests <= 0) return "Os convidados mínimos têm de ser maiores que 0.";
+    if (!Number.isFinite(maxGuests) || maxGuests < minGuests) return "Os convidados máximos têm de ser ≥ mínimos.";
     if (!values.floorPlanId) return "Escolhe uma planta (layout)";
     return null;
   }
@@ -232,7 +232,7 @@ export default function VenueTemplatesPage() {
     <div>
       <h2>Templates</h2>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
       {!loading && (
         <>
@@ -278,7 +278,7 @@ export default function VenueTemplatesPage() {
                     </div>
                     <div style={{ marginTop: 8 }}>
                       <button type="button" onClick={() => handleSaveEdit(t.id)} disabled={savingEdit}>
-                        {savingEdit ? "Saving..." : "Save"}
+                        {savingEdit ? "A guardar..." : "Guardar"}
                       </button>
                       <button type="button" onClick={cancelEdit} style={{ marginLeft: 4 }}>
                         Cancel

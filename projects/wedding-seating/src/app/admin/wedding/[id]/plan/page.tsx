@@ -9,6 +9,7 @@ import { usePlan, type PlanGroup, type PlanGuest } from "@/components/plan/usePl
 import type { PlanTableView } from "@/components/plan/PlanCanvas";
 import UnassignedTray from "@/components/plan/UnassignedTray";
 import TableList, { type TableListRow } from "@/components/plan/TableList";
+import { Button, Badge } from "@/components/ui";
 import type { AttributeKey } from "@/lib/plan/colors";
 import { parseElements } from "@/lib/floorplan/elements";
 import { imageUrlFor } from "@/lib/images";
@@ -166,11 +167,15 @@ export default function PlanPage() {
       <h1>Seating plan</h1>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
-        <button type="button" onClick={generate} disabled={!hasTables || generating}>
-          {generating ? "A gerar..." : "Generate"}
-        </button>
-        {score !== null && <span data-testid="plan-score">Score: {score.toFixed(2)}</span>}
-        {loading && <span style={{ color: "#666" }}>A carregar...</span>}
+        <Button variant="primary" onClick={generate} disabled={!hasTables || generating} loading={generating}>
+          {generating ? "A gerar..." : "Gerar plano"}
+        </Button>
+        {score !== null && (
+          <Badge tone="accent" className="app-header-role">
+            <span data-testid="plan-score">Score: {score.toFixed(2)}</span>
+          </Badge>
+        )}
+        {loading && <span style={{ color: "var(--text-muted)" }}>A carregar...</span>}
         <label>
           Pintar por:{" "}
           <select

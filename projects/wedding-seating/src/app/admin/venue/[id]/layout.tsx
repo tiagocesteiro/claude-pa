@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
+import { PageShell, Tabs } from "@/components/ui";
 
 interface Venue {
   id: string;
@@ -43,44 +44,18 @@ export default function VenueLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <main style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+    <PageShell size="lg">
       <p style={{ marginBottom: 8 }}>
         <Link href="/admin" style={{ color: "var(--text-muted)" }}>
           &larr; Início
         </Link>
       </p>
-      <h1>{venue ? venue.name : "Venue"}</h1>
-      {venue?.location && <p>{venue.location}</p>}
+      <h1>{venue ? venue.name : "Quinta"}</h1>
+      {venue?.location && <p style={{ color: "var(--text-muted)" }}>{venue.location}</p>}
 
-      <nav
-        style={{
-          display: "flex",
-          gap: 4,
-          borderBottom: "1px solid var(--border)",
-          marginBottom: 24,
-        }}
-      >
-        {tabs.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            style={{
-              padding: "8px 16px",
-              textDecoration: "none",
-              color: tab.active ? "var(--accent)" : "var(--text-muted)",
-              fontWeight: tab.active ? 600 : 400,
-              borderBottom: tab.active
-                ? "2px solid var(--accent)"
-                : "2px solid transparent",
-              marginBottom: -1,
-            }}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
+      <Tabs tabs={tabs} />
 
       {children}
-    </main>
+    </PageShell>
   );
 }

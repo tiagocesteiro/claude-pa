@@ -3,8 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Card, Field, Input, Button } from "@/components/ui";
 
 type Role = "venue" | "couple";
+
+const ROLE_OPTIONS: { value: Role; title: string; desc: string; icon: string }[] = [
+  { value: "couple", title: "Sou um Casal", desc: "Organizo o seating do meu casamento.", icon: "💍" },
+  { value: "venue", title: "Sou uma Quinta", desc: "Recebo casamentos no meu espaço.", icon: "🏛️" },
+];
 
 export default function RegistarPage() {
   const router = useRouter();
@@ -43,75 +49,84 @@ export default function RegistarPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius)",
-          boxShadow: "var(--shadow)",
-          padding: 28,
-        }}
-      >
-        <h1 style={{ marginBottom: 4 }}>Criar conta</h1>
-        <p style={{ color: "var(--text-muted)", marginBottom: 20 }}>
-          Wedding Seating Planner
-        </p>
+    <main className="auth-shell">
+      <Card className="auth-card">
+        <div className="auth-brand">
+          <span className="wordmark" style={{ fontSize: "1.35rem" }}>
+            Wedding<span className="wordmark-accent">Seating</span>
+          </span>
+        </div>
+        <h1 className="auth-title">Criar conta</h1>
+        <p className="auth-subtitle">Começa a organizar em minutos.</p>
 
         {needsConfirmation ? (
-          <p>
+          <p style={{ marginTop: 24 }}>
             Confirma o teu email para entrar. Enviámos um link de confirmação para{" "}
             <strong>{email}</strong>.
           </p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <fieldset style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: 12 }}>
-              <legend style={{ padding: "0 6px", color: "var(--text-muted)" }}>Eu sou...</legend>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <input
-                  type="radio"
-                  name="role"
-                  value="venue"
-                  checked={role === "venue"}
-                  onChange={() => setRole("venue")}
-                />
-                Sou uma Quinta
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="radio"
-                  name="role"
-                  value="couple"
-                  checked={role === "couple"}
-                  onChange={() => setRole("couple")}
-                />
-                Sou um Casal
-              </label>
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}
+          >
+            <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
+              <legend className="field-label" style={{ marginBottom: 8 }}>
+                Eu sou...
+              </legend>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {ROLE_OPTIONS.map((opt) => {
+                  const selected = role === opt.value;
+                  return (
+                    <label
+                      key={opt.value}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "12px 14px",
+                        border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`,
+                        background: selected ? "var(--accent-soft)" : "var(--surface)",
+                        borderRadius: "var(--radius)",
+                        cursor: "pointer",
+                        boxShadow: selected ? "0 0 0 3px var(--ring)" : "none",
+                        transition: "border-color .12s ease, background .12s ease, box-shadow .12s ease",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value={opt.value}
+                        checked={selected}
+                        onChange={() => setRole(opt.value)}
+                        style={{ width: "auto" }}
+                      />
+                      <span style={{ fontSize: "1.3rem", lineHeight: 1 }} aria-hidden>
+                        {opt.icon}
+                      </span>
+                      <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <strong style={{ fontWeight: 600 }}>{opt.title}</strong>
+                        <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                          {opt.desc}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </fieldset>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              Email
-              <input
+            <Field label="Email">
+              <Input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                placeholder="tu@exemplo.pt"
               />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              Password
-              <input
+            </Field>
+            <Field label="Palavra-passe" hint="Mínimo 6 caracteres.">
+              <Input
                 type="password"
                 required
                 minLength={6}
@@ -119,20 +134,20 @@ export default function RegistarPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
               />
-            </label>
+            </Field>
 
-            {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+            {error && <p className="form-error">{error}</p>}
 
-            <button type="submit" disabled={submitting} style={{ marginTop: 8 }}>
+            <Button type="submit" variant="primary" block loading={submitting}>
               {submitting ? "A criar conta..." : "Criar conta"}
-            </button>
+            </Button>
           </form>
         )}
 
         <p style={{ marginTop: 20, textAlign: "center", color: "var(--text-muted)" }}>
           Já tens conta? <Link href="/login">Entrar</Link>
         </p>
-      </div>
+      </Card>
     </main>
   );
 }

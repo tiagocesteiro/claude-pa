@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Card, Field, Input, Button } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,64 +35,51 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius)",
-          boxShadow: "var(--shadow)",
-          padding: 28,
-        }}
-      >
-        <h1 style={{ marginBottom: 4 }}>Entrar</h1>
-        <p style={{ color: "var(--text-muted)", marginBottom: 20 }}>
-          Wedding Seating Planner
-        </p>
+    <main className="auth-shell">
+      <Card className="auth-card">
+        <div className="auth-brand">
+          <span className="wordmark" style={{ fontSize: "1.35rem" }}>
+            Wedding<span className="wordmark-accent">Seating</span>
+          </span>
+        </div>
+        <h1 className="auth-title">Bem-vindo de volta</h1>
+        <p className="auth-subtitle">Entra para organizar o teu seating.</p>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            Email
-            <input
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}
+        >
+          <Field label="Email">
+            <Input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              placeholder="tu@exemplo.pt"
             />
-          </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            Password
-            <input
+          </Field>
+          <Field label="Palavra-passe">
+            <Input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
-          </label>
+          </Field>
 
-          {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+          {error && <p className="form-error">{error}</p>}
 
-          <button type="submit" disabled={submitting} style={{ marginTop: 8 }}>
+          <Button type="submit" variant="primary" block loading={submitting}>
             {submitting ? "A entrar..." : "Entrar"}
-          </button>
+          </Button>
         </form>
 
         <p style={{ marginTop: 20, textAlign: "center", color: "var(--text-muted)" }}>
           Ainda não tens conta? <Link href="/registar">Regista-te</Link>
         </p>
-      </div>
+      </Card>
     </main>
   );
 }

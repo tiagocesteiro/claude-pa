@@ -26,7 +26,7 @@ export default function ConstraintsPage() {
     loadGuests();
   }, [weddingId]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p style={{ color: "var(--text-muted)" }}>A carregar...</p>;
 
   return <ConstraintsPanel weddingId={weddingId} guests={guests} />;
 }
