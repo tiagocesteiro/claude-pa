@@ -1,9 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ArrangementThumbnail from "@/components/wedding/ArrangementThumbnail";
+import type { PlanTableView } from "@/components/plan/PlanCanvas";
+import { parseElements } from "@/lib/floorplan/elements";
+import { imageUrlFor } from "@/lib/images";
 import { Button, Card, Input, Badge } from "@/components/ui";
+
+const PlanCanvas = dynamic(() => import("@/components/plan/PlanCanvas"), { ssr: false });
+
+// The dinner moment's arrangement is the couple's FINAL layout (from the Layouts
+// tab), not a venue template — mirrors what the Visão geral / venue progress use.
+interface DinnerLayout {
+  id: string;
+  name: string;
+  image: string | null;
+  scale: number;
+  width: number;
+  depth: number;
+  elements: string | null;
+  tables: {
+    id: string;
+    shape: string;
+    capacity: number;
+    x: number;
+    y: number;
+    name: string | null;
+    heads: boolean | null;
+    fixed: boolean;
+    width: number | null;
+    depth: number | null;
+  }[];
+  seats: { guestId: string; tableId: string }[];
+  guests: { id: string; name: string }[];
+}
 
 interface MomentMeta {
   id: string;
@@ -66,6 +99,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [venueId, setVenueId] = useState<string | null>(null);
+  const [dinnerLayout, setDinnerLayout] = useState<DinnerLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,6 +155,72 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       cancelled = true;
     };
   }, [weddingId, loadMoment, loadSuppliers]);
+
+  // The dinner moment shows the couple's FINAL layout (from the Layouts tab), not
+  // a venue template. Fetch it whenever this moment is the dinner.
+  const isDinner = moment?.kind === "dinner";
+  useEffect(() => {
+    if (!isDinner) {
+      setDinnerLayout(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const lRes = await fetch(`/api/weddings/${weddingId}/layouts`);
+      if (!lRes.ok) return;
+      const { layouts } = (await lRes.json()) as { layouts: { id: string; name: string; isFinal: boolean }[] };
+      const final = layouts?.find((l) => l.isFinal);
+      if (!final) {
+        if (!cancelled) setDinnerLayout(null);
+        return;
+      }
+      const pRes = await fetch(`/api/layouts/${final.id}/plan`);
+      if (!pRes.ok) return;
+      const d = (await pRes.json()) as {
+        tables: DinnerLayout["tables"];
+        seats?: { guestId: string; tableId: string }[];
+        guests: { id: string; name: string }[];
+        background?: { image: string | null; scale: number; width: number; depth: number; elements: string | null } | null;
+      };
+      if (cancelled) return;
+      setDinnerLayout({
+        id: final.id,
+        name: final.name,
+        image: d.background?.image ?? null,
+        scale: d.background?.scale ?? 0,
+        width: d.background?.width ?? 0,
+        depth: d.background?.depth ?? 0,
+        elements: d.background?.elements ?? null,
+        tables: d.tables ?? [],
+        seats: d.seats ?? [],
+        guests: d.guests ?? [],
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isDinner, weddingId]);
+
+  const dinnerTableViews: PlanTableView[] = useMemo(() => {
+    if (!dinnerLayout) return [];
+    return dinnerLayout.tables.map((t, i) => ({
+      id: t.id,
+      shape: t.shape,
+      capacity: t.capacity,
+      x: t.x,
+      y: t.y,
+      label: `Mesa ${i + 1}`,
+      name: t.name,
+      heads: t.heads,
+      fixed: t.fixed,
+      width: t.width,
+      depth: t.depth,
+      guests: (dinnerLayout.seats.filter((s) => s.tableId === t.id)).map((s) => {
+        const g = dinnerLayout.guests.find((x) => x.id === s.guestId);
+        return { id: s.guestId, name: g?.name ?? "", locked: false };
+      }),
+    }));
+  }, [dinnerLayout]);
 
   const venueTemplates = templates.filter((t) => venueId && t.venueId === venueId);
 
@@ -241,8 +341,44 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
 
       {/* Arrangement */}
       <Card>
-        <h3 style={{ marginTop: 0 }}>Arranjo da sala</h3>
-        {!venueId ? (
+        <h3 style={{ marginTop: 0 }}>{isDinner ? "Plano de mesas" : "Arranjo da sala"}</h3>
+        {isDinner ? (
+          // The dinner's arrangement IS the couple's final layout (managed in the
+          // Layouts tab). Show it read-only here with a link to edit.
+          dinnerLayout ? (
+            <>
+              <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
+                Layout final: <strong>{dinnerLayout.name}</strong> · {dinnerLayout.tables.length} mesas ·{" "}
+                {dinnerLayout.seats.length} sentados{" "}
+                <Link href={`/admin/wedding/${weddingId}/plan/${dinnerLayout.id}`}>Editar</Link>
+              </p>
+              {dinnerLayout.tables.length > 0 && (
+                <PlanCanvas
+                  imageUrl={imageUrlFor(dinnerLayout.image)}
+                  tables={dinnerTableViews}
+                  scale={dinnerLayout.scale}
+                  roomWidth={dinnerLayout.width}
+                  roomDepth={dinnerLayout.depth}
+                  zones={[]}
+                  elements={parseElements(dinnerLayout.elements)}
+                  overCapacityIds={[]}
+                  maxWidth={860}
+                  maxHeight={520}
+                  onAssign={() => {}}
+                  onToggleGuestLock={() => {}}
+                  onToggleTableFixed={() => {}}
+                  onSwap={() => {}}
+                  readOnly
+                />
+              )}
+            </>
+          ) : (
+            <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
+              Ainda não há um layout marcado como final. Cria e marca um no separador{" "}
+              <Link href={`/admin/wedding/${weddingId}/plan`}>Layouts</Link>.
+            </p>
+          )
+        ) : !venueId ? (
           <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Escolhe primeiro a quinta em Detalhes.</p>
         ) : (
           <>
