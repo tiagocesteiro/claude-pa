@@ -173,7 +173,9 @@ export default function LayoutPlanPage() {
         const seated = guests.filter((g) => g.assignedTableId === t.id);
         return {
           id: t.id,
-          label: tableLabels.get(t.id) ?? t.id.slice(0, 6),
+          // Prefer the table's custom name (double-click rename) — same as the
+          // canvas — falling back to the positional "Mesa N" label.
+          label: t.name?.trim() ? t.name : tableLabels.get(t.id) ?? t.id.slice(0, 6),
           occupancy: seated.length,
           capacity: t.capacity,
           guests: seated.map((g) => ({

@@ -276,6 +276,7 @@ model MomentTask {
   momentId   String
   moment     WeddingMoment @relation(fields: [momentId], references: [id], onDelete: Cascade)
   text       String
+  note       String? // free-text notes about the task
   done       Boolean       @default(false)
   assignee   String        @default("couple") // "couple" | "venue" | "supplier"
   supplierId String? // set when assignee == "supplier"

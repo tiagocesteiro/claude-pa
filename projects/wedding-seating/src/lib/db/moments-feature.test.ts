@@ -66,9 +66,15 @@ it("tasks: create with a supplier assignee; changing assignee clears the supplie
   const moment = (await listMoments(w.id))[0];
   const supplier = await createSupplier(w.id, { name: "Florista" });
 
-  const t = await createTask(moment.id, { text: "Encomendar flores", assignee: "supplier", supplierId: supplier.id });
+  const t = await createTask(moment.id, {
+    text: "Encomendar flores",
+    note: "brancas e verdes",
+    assignee: "supplier",
+    supplierId: supplier.id,
+  });
   expect(t.assignee).toBe("supplier");
   expect(t.supplierId).toBe(supplier.id);
+  expect(t.note).toBe("brancas e verdes");
 
   await updateTask(t.id, { done: true });
   expect((await listMomentTasks(moment.id))[0].done).toBe(true);

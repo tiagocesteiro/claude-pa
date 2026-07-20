@@ -20,12 +20,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ taskId
 
   const fields: {
     text?: string;
+    note?: string | null;
     done?: boolean;
     assignee?: TaskAssignee;
     supplierId?: string | null;
     dueDate?: Date | null;
   } = {};
   if (typeof b?.text === "string" && b.text.trim()) fields.text = b.text.trim();
+  if ("note" in b) fields.note = b.note ? String(b.note) : null;
   if (typeof b?.done === "boolean") fields.done = b.done;
   if ("dueDate" in b) fields.dueDate = b.dueDate ? new Date(b.dueDate) : null;
   if ("assignee" in b) {

@@ -26,7 +26,7 @@ export function getTask(id: string): Promise<MomentTask | null> {
  * supplierId; anything else stores no supplier. */
 export async function createTask(
   momentId: string,
-  input: { text: string; assignee?: TaskAssignee; supplierId?: string | null; dueDate?: Date | null }
+  input: { text: string; note?: string | null; assignee?: TaskAssignee; supplierId?: string | null; dueDate?: Date | null }
 ): Promise<MomentTask> {
   const last = await prisma.momentTask.findFirst({
     where: { momentId },
@@ -38,6 +38,7 @@ export async function createTask(
     data: {
       momentId,
       text: input.text,
+      note: input.note ?? null,
       assignee,
       supplierId: assignee === "supplier" ? input.supplierId ?? null : null,
       dueDate: input.dueDate ?? null,
@@ -50,6 +51,7 @@ export function updateTask(
   id: string,
   fields: {
     text?: string;
+    note?: string | null;
     done?: boolean;
     assignee?: TaskAssignee;
     supplierId?: string | null;
@@ -59,6 +61,7 @@ export function updateTask(
 ): Promise<MomentTask> {
   const data: Record<string, unknown> = {};
   if ("text" in fields) data.text = fields.text;
+  if ("note" in fields) data.note = fields.note;
   if ("done" in fields) data.done = fields.done;
   if ("order" in fields) data.order = fields.order;
   if ("dueDate" in fields) data.dueDate = fields.dueDate;

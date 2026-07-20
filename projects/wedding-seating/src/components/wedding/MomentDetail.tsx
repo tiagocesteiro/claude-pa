@@ -15,6 +15,7 @@ interface MomentMeta {
 interface Task {
   id: string;
   text: string;
+  note: string | null;
   done: boolean;
   assignee: string;
   supplierId: string | null;
@@ -61,8 +62,9 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const [error, setError] = useState<string | null>(null);
 
   const [taskText, setTaskText] = useState("");
+  // Combined responsible value: "couple" | "venue" | "s:<supplierId>".
   const [taskAssignee, setTaskAssignee] = useState("couple");
-  const [taskSupplier, setTaskSupplier] = useState("");
+  const [taskNote, setTaskNote] = useState("");
   const [taskDue, setTaskDue] = useState("");
   const [catalogPick, setCatalogPick] = useState("");
   const [catalogQty, setCatalogQty] = useState("1");
@@ -147,8 +149,14 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   // ── Tasks ──
   async function addTask() {
     if (!taskText.trim()) return;
-    const body: Record<string, unknown> = { text: taskText.trim(), assignee: taskAssignee };
-    if (taskAssignee === "supplier") body.supplierId = taskSupplier || null;
+    const body: Record<string, unknown> = { text: taskText.trim() };
+    if (taskAssignee.startsWith("s:")) {
+      body.assignee = "supplier";
+      body.supplierId = taskAssignee.slice(2);
+    } else {
+      body.assignee = taskAssignee; // "couple" | "venue"
+    }
+    if (taskNote.trim()) body.note = taskNote.trim();
     if (taskDue) body.dueDate = taskDue;
     const res = await fetch(`/api/moments/${momentId}/tasks`, {
       method: "POST",
@@ -157,6 +165,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     });
     if (res.ok) {
       setTaskText("");
+      setTaskNote("");
       setTaskDue("");
       await loadMoment();
     }
@@ -300,12 +309,15 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
         <h3 style={{ marginTop: 0 }}>Tarefas</h3>
         {tasks.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Sem tarefas ainda.</p>}
         {tasks.length > 0 && (
-          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px", display: "flex", flexDirection: "column", gap: 8 }}>
             {tasks.map((t) => (
-              <li key={t.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input type="checkbox" checked={t.done} onChange={() => toggleTask(t)} />
-                <span style={{ flex: 1, textDecoration: t.done ? "line-through" : "none", color: t.done ? "var(--text-muted)" : "inherit" }}>
-                  {t.text}
+              <li key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <input type="checkbox" checked={t.done} onChange={() => toggleTask(t)} style={{ marginTop: 3 }} />
+                <span style={{ flex: 1 }}>
+                  <span style={{ textDecoration: t.done ? "line-through" : "none", color: t.done ? "var(--text-muted)" : "inherit" }}>
+                    {t.text}
+                  </span>
+                  {t.note && <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)" }}>{t.note}</span>}
                 </span>
                 <Badge tone="neutral">{assigneeLabel(t)}</Badge>
                 {t.dueDate && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t.dueDate.slice(0, 10)}</span>}
@@ -315,7 +327,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
           </ul>
         )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
-          <label style={{ fontSize: 13, flex: "1 1 200px" }}>
+          <label style={{ fontSize: 13, flex: "1 1 180px" }}>
             Nova tarefa{" "}
             <Input value={taskText} onChange={(e) => setTaskText(e.target.value)} placeholder="ex.: Confirmar flores" />
           </label>
@@ -324,27 +336,25 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
             <select className="input" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value)}>
               <option value="couple">Noivos</option>
               <option value="venue">Quinta</option>
-              <option value="supplier">Fornecedor</option>
-            </select>
-          </label>
-          {taskAssignee === "supplier" && (
-            <select className="input" value={taskSupplier} onChange={(e) => setTaskSupplier(e.target.value)}>
-              <option value="">Escolhe…</option>
               {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={`s:${s.id}`}>{s.name}</option>
               ))}
             </select>
-          )}
+          </label>
+          <label style={{ fontSize: 13, flex: "1 1 160px" }}>
+            Nota{" "}
+            <Input value={taskNote} onChange={(e) => setTaskNote(e.target.value)} placeholder="opcional" />
+          </label>
           <label style={{ fontSize: 13 }}>
             Data{" "}
             <Input type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} style={{ width: 150 }} />
           </label>
-          <Button variant="primary" onClick={addTask} disabled={!taskText.trim() || (taskAssignee === "supplier" && !taskSupplier)}>
+          <Button variant="primary" onClick={addTask} disabled={!taskText.trim()}>
             Adicionar
           </Button>
         </div>
-        {suppliers.length === 0 && taskAssignee === "supplier" && (
-          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Adiciona fornecedores em Detalhes primeiro.</p>
+        {suppliers.length === 0 && (
+          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Adiciona fornecedores em Detalhes para os poderes atribuir.</p>
         )}
       </Card>
     </div>

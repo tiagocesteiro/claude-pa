@@ -48,6 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ momentI
   }
 
   const dueDate = typeof b?.dueDate === "string" && b.dueDate ? new Date(b.dueDate) : null;
-  const task = await createTask(momentId, { text, assignee, supplierId, dueDate });
+  const note = typeof b?.note === "string" && b.note.trim() ? b.note.trim() : null;
+  const task = await createTask(momentId, { text, note, assignee, supplierId, dueDate });
   return NextResponse.json({ task }, { status: 201 });
 }
