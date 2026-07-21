@@ -1,8 +1,9 @@
 :root {
-  /* Warm, light, elegant theme — cohesive with the seating-plan palette. */
-  --bg: #f6f3ee;            /* warm ivory page background */
+  /* Warm, light, elegant theme — cohesive with the seating-plan palette.
+     Evolved (2026): warmer champagne ground + softer depth, same sage accent. */
+  --bg: #f4efe6;            /* warm champagne page background */
   --surface: #ffffff;       /* cards / panels */
-  --surface-2: #fbf9f5;     /* subtle raised areas */
+  --surface-2: #faf7f1;     /* subtle raised areas */
   --text: #3f3b36;          /* warm charcoal body text */
   --text-muted: #8b8379;    /* secondary text */
   --heading: #33302c;       /* headings */
@@ -10,12 +11,14 @@
 
   --accent: #6e8c66;        /* sage green — links, active tab, primary */
   --accent-strong: #54704c; /* hover / emphasis */
-  --accent-soft: #eef2ea;   /* soft button / hover background */
+  --accent-soft: #edf1e9;   /* soft button / hover background */
   --accent-border: #d4e0cd; /* soft accent border */
   --ring: rgba(110, 140, 102, 0.35);
 
   --radius: 9px;
-  --shadow: 0 1px 2px rgba(60, 50, 40, 0.05), 0 2px 8px rgba(60, 50, 40, 0.05);
+  /* Softer, lifted depth (light source top, warm shadow) */
+  --shadow: 0 1px 2px rgba(60, 50, 40, 0.04), 0 8px 24px -12px rgba(60, 50, 40, 0.14);
+  --shadow-md: 0 2px 4px rgba(60, 50, 40, 0.05), 0 16px 34px -14px rgba(60, 50, 40, 0.2);
 
   color-scheme: light;
 }
@@ -36,9 +39,9 @@ body {
   flex-direction: column;
   color: var(--text);
   background: var(--bg);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -101,11 +104,11 @@ button {
   transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
 }
 button:hover:not(:disabled) {
-  background: #e3edf7;
-  border-color: #bfd3ea;
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
 }
 button:active:not(:disabled) {
-  background: #d8e6f4;
+  background: #e4ebe0;
 }
 button:disabled {
   opacity: 0.5;
@@ -410,11 +413,12 @@ h1 {
   text-decoration: none;
 }
 .tab-active {
-  color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
   border-bottom-color: var(--accent);
 }
 .tab-active:hover {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 /* --- Badges + stats ----------------------------------------------------- */

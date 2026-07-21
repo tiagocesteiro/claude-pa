@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body/UI face — a warm, geometric-humanist sans. Pairs with Fraunces for a
+// premium, boutique feel (2025-26 luxury-wedding pairing) instead of an admin tool.
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Elegant, warm display serif for the wordmark and page titles — gives the
-// product a boutique, editorial feel rather than a generic admin tool.
+// Elegant, warm display serif for the wordmark and page titles.
 const fraunces = Fraunces({
   variable: "--font-serif",
   subsets: ["latin"],
@@ -35,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable}`}
+      className={`${jakarta.variable} ${fraunces.variable}`}
     >
       <body>{children}</body>
     </html>
