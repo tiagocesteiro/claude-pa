@@ -17,7 +17,7 @@ interface Moment {
   startTime: string | null;
   hasSeating: boolean;
   finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
-  decor: { name: string; quantity: number }[];
+  decor: { name: string; category: string | null; quantity: number }[];
   materials: Material[];
   pendingTasks: { text: string; assignee: string; supplierId: string | null }[];
 }
@@ -41,10 +41,16 @@ function parseHM(s: string | null): number | null {
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 }
 
+/** Item label = "categoria - nome" (falls back to the name when no category). */
+function decorLabel(d: { name: string; category: string | null }): string {
+  return d.category ? `${d.category} - ${d.name}` : d.name;
+}
+
 export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
   const [view, setView] = useState<View | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeMomentId, setActiveMomentId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, { name: string; qty: string; note: string }>>({});
 
   const load = useCallback(async () => {
@@ -110,7 +116,7 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
   const decorTotals = new Map<string, number>();
   const materialTotals = new Map<string, number>();
   for (const m of view.moments) {
-    for (const d of m.decor) decorTotals.set(d.name, (decorTotals.get(d.name) ?? 0) + d.quantity);
+    for (const d of m.decor) decorTotals.set(decorLabel(d), (decorTotals.get(decorLabel(d)) ?? 0) + d.quantity);
     for (const mat of m.materials) materialTotals.set(mat.name, (materialTotals.get(mat.name) ?? 0) + mat.quantity);
   }
 
@@ -171,10 +177,38 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
         </div>
       </Card>
 
-      {/* Per moment */}
+      {/* Per moment — one tab per moment */}
       <h2>Momentos</h2>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+        {moments.map((m) => {
+          const active = (activeMomentId ?? moments[0]?.id) === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => setActiveMomentId(m.id)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: active ? "1px solid var(--accent)" : "1px solid var(--border)",
+                background: active ? "var(--accent)" : "var(--surface)",
+                color: active ? "#fff" : "var(--text)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: active ? 600 : 400,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {momentTitle(m)}
+              {m.startTime ? ` · ${m.startTime}` : ""}
+            </button>
+          );
+        })}
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {moments.map((m) => (
+        {moments
+          .filter((m) => (activeMomentId ?? moments[0]?.id) === m.id)
+          .map((m) => (
           <Card key={m.id}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
               <h3 style={{ margin: 0 }}>{momentTitle(m)}</h3>
@@ -196,7 +230,7 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
                   <p style={{ color: "var(--text-muted)", fontSize: 13 }}>—</p>
                 ) : (
                   <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13 }}>
-                    {m.decor.map((d, i) => <li key={i}>{d.name}{d.quantity > 1 ? ` ×${d.quantity}` : ""}</li>)}
+                    {m.decor.map((d, i) => <li key={i}>{decorLabel(d)}{d.quantity > 1 ? ` ×${d.quantity}` : ""}</li>)}
                   </ul>
                 )}
               </div>

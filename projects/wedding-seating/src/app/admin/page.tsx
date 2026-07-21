@@ -340,6 +340,7 @@ function VenueSection() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [bookings, setBookings] = useState<VenueBooking[]>([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
+  const [bookingsView, setBookingsView] = useState<"calendar" | "list">("calendar");
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -445,20 +446,39 @@ function VenueSection() {
         ))}
       </ul>
 
-      <h2>Calendário</h2>
-      <VenueCalendar bookings={bookings} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: "1.4em" }}>
+        <h2 style={{ margin: 0 }}>Casamentos na tua quinta</h2>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Button variant={bookingsView === "calendar" ? "primary" : "secondary"} size="sm" onClick={() => setBookingsView("calendar")}>
+            Calendário
+          </Button>
+          <Button variant={bookingsView === "list" ? "primary" : "secondary"} size="sm" onClick={() => setBookingsView("list")}>
+            Lista
+          </Button>
+        </div>
+      </div>
 
-      <h2>Casamentos na tua quinta</h2>
       {bookingsLoaded && bookings.length === 0 && (
         <p style={{ color: "var(--text-muted)" }}>Ainda não há casamentos marcados na tua quinta.</p>
       )}
-      <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {bookings.map((b) => (
-          <li key={b.id}>
-            <BookingCard booking={b} />
-          </li>
-        ))}
-      </ul>
+
+      {bookingsView === "calendar" ? (
+        <VenueCalendar bookings={bookings} />
+      ) : (
+        <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+          {[...bookings]
+            .sort(
+              (a, b) =>
+                (a.date ? new Date(a.date).getTime() : Infinity) -
+                (b.date ? new Date(b.date).getTime() : Infinity)
+            )
+            .map((b) => (
+              <li key={b.id}>
+                <BookingCard booking={b} />
+              </li>
+            ))}
+        </ul>
+      )}
     </section>
   );
 }

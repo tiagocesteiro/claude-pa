@@ -229,7 +229,10 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     await loadMoment();
   }
   function decorName(d: DecorLine): string {
-    return d.decorItem?.name ?? d.name ?? "Item";
+    if (d.decorItem) {
+      return d.decorItem.category ? `${d.decorItem.category} - ${d.decorItem.name}` : d.decorItem.name;
+    }
+    return d.name ?? "Item";
   }
 
   if (loading) return <p>A carregar...</p>;

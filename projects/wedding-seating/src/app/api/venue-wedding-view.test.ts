@@ -53,7 +53,7 @@ it("getVenueWeddingView is PII-free and includes layout/decor/material/pending t
 
   const dm = view.moments.find((m) => m.kind === "dinner")!;
   expect(dm.finalLayout).toEqual({ name: "Salão", tableCount: 1, seatedCount: 0 });
-  expect(dm.decor).toEqual([{ name: "Velas", quantity: 20 }]);
+  expect(dm.decor).toEqual([{ name: "Velas", category: null, quantity: 20 }]);
   expect(dm.materials.map((x) => x.name)).toContain("Extensão elétrica");
   // pending tasks only (the done one is excluded)
   expect(dm.pendingTasks.map((t) => t.text)).toEqual(["Levar tomadas triplas"]);
