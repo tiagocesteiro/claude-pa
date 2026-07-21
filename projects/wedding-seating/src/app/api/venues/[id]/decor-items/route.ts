@@ -31,11 +31,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const name = typeof b?.name === "string" && b.name.trim() ? b.name.trim() : null;
   if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
   const price = b?.price === "" || b?.price == null ? null : Number(b.price);
+  const quantity = b?.quantity === "" || b?.quantity == null ? null : Number(b.quantity);
   const item = await createDecorItem(id, {
     name,
     category: typeof b?.category === "string" && b.category.trim() ? b.category.trim() : null,
     image: typeof b?.image === "string" && b.image.trim() ? b.image.trim() : null,
     price: price != null && Number.isFinite(price) ? price : null,
+    quantity: quantity != null && Number.isFinite(quantity) ? Math.floor(quantity) : null,
   });
   return NextResponse.json({ item }, { status: 201 });
 }

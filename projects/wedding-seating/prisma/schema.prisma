@@ -315,6 +315,7 @@ model DecorItem {
   category    String?
   image       String? // optional Supabase Storage object path
   price       Float?
+  quantity    Int? // how many the venue has available (informational)
   createdAt   DateTime      @default(now())
   momentDecor MomentDecor[]
 

@@ -8,12 +8,12 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /** Set/replace the image of a decoration catalog item (venue only). */
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ itemId: string }> }) {
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
-  const { id } = await params;
+  const { itemId } = await params;
   try {
-    await assertDecorItemAccess(actor, id, "write");
+    await assertDecorItemAccess(actor, itemId, "write");
   } catch (e) {
     return accessErrorResponse(e);
   }
@@ -21,7 +21,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "file required" }, { status: 400 });
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const image = await saveUploadedImage(`decor-${id}`, `${Date.now()}-${file.name}`, bytes);
-  await updateDecorItem(id, { image });
+  const image = await saveUploadedImage(`decor-${itemId}`, `${Date.now()}-${file.name}`, bytes);
+  await updateDecorItem(itemId, { image });
   return NextResponse.json({ image });
 }

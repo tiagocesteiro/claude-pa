@@ -9,6 +9,7 @@ export interface DecorItemRecord {
   name: string;
   category: string | null;
   price: number | null;
+  quantity: number | null;
   image: string | null;
 }
 
@@ -16,9 +17,10 @@ interface FormValues {
   name: string;
   category: string;
   price: string;
+  quantity: string;
 }
 
-const emptyForm: FormValues = { name: "", category: "", price: "" };
+const emptyForm: FormValues = { name: "", category: "", price: "", quantity: "" };
 
 const thumbStyle: React.CSSProperties = {
   width: 48,
@@ -72,6 +74,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
       name: v.name.trim(),
       category: v.category.trim() || null,
       price: v.price === "" ? null : Number(v.price),
+      quantity: v.quantity === "" ? null : Number(v.quantity),
     };
   }
 
@@ -101,7 +104,12 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
 
   function startEdit(it: DecorItemRecord) {
     setEditingId(it.id);
-    setEditForm({ name: it.name, category: it.category ?? "", price: it.price == null ? "" : String(it.price) });
+    setEditForm({
+      name: it.name,
+      category: it.category ?? "",
+      price: it.price == null ? "" : String(it.price),
+      quantity: it.quantity == null ? "" : String(it.quantity),
+    });
   }
 
   async function saveEdit(id: string) {
@@ -165,6 +173,26 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
     void importImages(files, names);
   }
 
+  /** Import from an .xlsx with columns: image (embedded) + name + quantity. */
+  async function importExcel(file: File) {
+    setImporting(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/venues/${venueId}/decor-items/import-excel`, { method: "POST", body: fd });
+      if (!res.ok) {
+        const b = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(b?.error ?? "erro");
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error && e.message ? `Excel: ${e.message}` : "Não foi possível importar o Excel.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   /** Set/replace one item's image. */
   async function setItemImage(id: string, file: File) {
     const fd = new FormData();
@@ -205,6 +233,20 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
             }}
           />
         </label>
+        <label style={{ fontSize: 13, cursor: "pointer", color: "var(--accent-strong, #54704c)" }}>
+          {importing ? "" : "Importar de Excel (imagem + nome + qtd)"}
+          <input
+            type="file"
+            accept=".xlsx"
+            style={{ display: "none" }}
+            disabled={importing}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void importExcel(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
       </div>
       {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
@@ -220,6 +262,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
                     <th style={{ textAlign: "left" }}>Nome</th>
                     <th style={{ textAlign: "left" }}>Categoria</th>
                     <th style={{ textAlign: "left" }}>Preço</th>
+                    <th style={{ textAlign: "left" }}>Qtd</th>
                     <th />
                   </tr>
                 </thead>
@@ -239,6 +282,9 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
                         </td>
                         <td>
                           <input type="number" step="0.01" min={0} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))} style={{ width: 70 }} />
+                        </td>
+                        <td>
+                          <input type="number" min={0} value={editForm.quantity} onChange={(e) => setEditForm((f) => ({ ...f, quantity: e.target.value }))} style={{ width: 56 }} />
                         </td>
                         <td>
                           <button type="button" onClick={() => saveEdit(it.id)} disabled={savingEdit}>
@@ -274,6 +320,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
                         <td>{it.name}</td>
                         <td>{it.category ?? "—"}</td>
                         <td>{it.price == null ? "—" : `${it.price} €`}</td>
+                        <td>{it.quantity ?? "—"}</td>
                         <td>
                           <button type="button" onClick={() => startEdit(it)}>Editar</button>
                           <button type="button" onClick={() => remove(it.id)} style={{ marginLeft: 4, color: "#dc2626" }}>Apagar</button>
@@ -299,6 +346,9 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
           </label>
           <label>
             Preço (€) <input type="number" step="0.01" min={0} value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} style={{ width: 80 }} />
+          </label>
+          <label>
+            Qtd <input type="number" min={0} value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))} style={{ width: 64 }} />
           </label>
         </div>
         <button type="submit" disabled={creating} style={{ marginTop: 8 }}>

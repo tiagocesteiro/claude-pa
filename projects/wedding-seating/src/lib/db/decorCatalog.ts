@@ -14,7 +14,7 @@ export function getDecorItem(id: string): Promise<DecorItem | null> {
 
 export function createDecorItem(
   venueId: string,
-  input: { name: string; category?: string | null; image?: string | null; price?: number | null }
+  input: { name: string; category?: string | null; image?: string | null; price?: number | null; quantity?: number | null }
 ): Promise<DecorItem> {
   return prisma.decorItem.create({
     data: {
@@ -23,19 +23,21 @@ export function createDecorItem(
       category: input.category ?? null,
       image: input.image ?? null,
       price: input.price ?? null,
+      quantity: input.quantity ?? null,
     },
   });
 }
 
 export function updateDecorItem(
   id: string,
-  fields: { name?: string; category?: string | null; image?: string | null; price?: number | null }
+  fields: { name?: string; category?: string | null; image?: string | null; price?: number | null; quantity?: number | null }
 ): Promise<DecorItem> {
   const data: Record<string, unknown> = {};
   if ("name" in fields) data.name = fields.name;
   if ("category" in fields) data.category = fields.category;
   if ("image" in fields) data.image = fields.image;
   if ("price" in fields) data.price = fields.price;
+  if ("quantity" in fields) data.quantity = fields.quantity;
   return prisma.decorItem.update({ where: { id }, data });
 }
 
