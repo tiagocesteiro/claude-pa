@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MomentLayouts from "@/components/wedding/MomentLayouts";
+import { imageUrlFor } from "@/lib/images";
 import { Button, Card, Input, Badge } from "@/components/ui";
 
 interface MomentMeta {
@@ -27,7 +28,7 @@ interface DecorLine {
   name: string | null;
   note: string | null;
   quantity: number;
-  decorItem: { name: string; category: string | null; price: number | null } | null;
+  decorItem: { name: string; category: string | null; price: number | null; image: string | null } | null;
 }
 interface Supplier {
   id: string;
@@ -38,6 +39,8 @@ interface CatalogItem {
   name: string;
   category: string | null;
   price: number | null;
+  image: string | null;
+  quantity: number | null;
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -67,6 +70,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const [taskNote, setTaskNote] = useState("");
   const [taskDue, setTaskDue] = useState("");
   const [catalogPick, setCatalogPick] = useState("");
+  const [catalogCat, setCatalogCat] = useState("");
   const [catalogQty, setCatalogQty] = useState("1");
   const [customName, setCustomName] = useState("");
   const [customQty, setCustomQty] = useState("1");
@@ -191,6 +195,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   // ── Decor ──
   async function addFromCatalog() {
     if (!catalogPick) return;
+    setError(null);
     const res = await fetch(`/api/moments/${momentId}/decor`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -200,6 +205,9 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       setCatalogPick("");
       setCatalogQty("1");
       await loadMoment();
+    } else {
+      const b = (await res.json().catch(() => null)) as { error?: string } | null;
+      setError(b?.error ?? "Não foi possível adicionar a decoração.");
     }
   }
   async function addCustom() {
@@ -225,6 +233,12 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
 
   if (loading) return <p>A carregar...</p>;
   if (!moment) return <p style={{ color: "#dc2626" }}>{error ?? "Momento não encontrado."}</p>;
+
+  const catalogCategories = Array.from(
+    new Set(catalog.map((c) => c.category).filter((c): c is string => Boolean(c)))
+  ).sort();
+  const filteredCatalog = catalog.filter((c) => !catalogCat || c.category === catalogCat);
+  const selectedCatalogItem = catalog.find((c) => c.id === catalogPick) ?? null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 820 }}>
@@ -266,9 +280,15 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
         <h3 style={{ marginTop: 0 }}>Decoração</h3>
         {decor.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Sem decoração ainda.</p>}
         {decor.length > 0 && (
-          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px", display: "flex", flexDirection: "column", gap: 8 }}>
             {decor.map((d) => (
-              <li key={d.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <li key={d.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {d.decorItem?.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imageUrlFor(d.decorItem.image)} alt={decorName(d)} style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)", flexShrink: 0 }} />
+                ) : (
+                  <span style={{ width: 40, height: 40, borderRadius: 6, border: "1px solid var(--border)", flexShrink: 0, background: "var(--surface-2)" }} />
+                )}
                 <span style={{ flex: 1 }}>
                   {decorName(d)} {d.quantity > 1 && <span style={{ color: "var(--text-muted)" }}>×{d.quantity}</span>}{" "}
                   {d.decorItem ? <Badge tone="neutral">Quinta</Badge> : <Badge tone="accent">Próprio</Badge>}
@@ -281,25 +301,111 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
             ))}
           </ul>
         )}
+
+        {/* Catalog picker — image gallery + optional category filter */}
+        <h4 style={{ margin: "4px 0 6px", fontSize: 13, color: "var(--text-muted)" }}>Do catálogo da quinta</h4>
+        {catalog.length === 0 ? (
+          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>A tua quinta ainda não tem catálogo de decoração.</p>
+        ) : (
+          <>
+            {catalogCategories.length > 0 && (
+              <select
+                className="input"
+                value={catalogCat}
+                onChange={(e) => setCatalogCat(e.target.value)}
+                style={{ maxWidth: 220, marginBottom: 8 }}
+              >
+                <option value="">Todas as categorias</option>
+                {catalogCategories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                gap: 8,
+                maxHeight: 300,
+                overflowY: "auto",
+                padding: 4,
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius)",
+              }}
+            >
+              {filteredCatalog.map((c) => {
+                const selected = c.id === catalogPick;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCatalogPick(c.id)}
+                    title={c.name}
+                    style={{
+                      textAlign: "left",
+                      padding: 6,
+                      borderRadius: 8,
+                      border: selected ? "2px solid var(--accent)" : "1px solid var(--border)",
+                      background: selected ? "var(--accent-soft)" : "var(--surface)",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                    }}
+                  >
+                    {c.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={imageUrlFor(c.image)} alt={c.name} style={{ width: "100%", height: 84, objectFit: "cover", borderRadius: 4 }} />
+                    ) : (
+                      <span style={{ width: "100%", height: 84, borderRadius: 4, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 11 }}>sem foto</span>
+                    )}
+                    <span style={{ fontSize: 12, lineHeight: 1.2, color: "var(--heading)" }}>{c.name}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      {c.quantity != null ? `disp. ${c.quantity}` : ""}
+                      {c.price != null ? `${c.quantity != null ? " · " : ""}${c.price} €` : ""}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end", marginTop: 8 }}>
+              <span style={{ fontSize: 13, flex: "1 1 auto" }}>
+                {selectedCatalogItem ? (
+                  <>
+                    Selecionado: <strong>{selectedCatalogItem.name}</strong>
+                    {selectedCatalogItem.quantity != null && (
+                      <span style={{ color: "var(--text-muted)" }}> (disponível: {selectedCatalogItem.quantity})</span>
+                    )}
+                  </>
+                ) : (
+                  <span style={{ color: "var(--text-muted)" }}>Escolhe um item acima.</span>
+                )}
+              </span>
+              <label style={{ fontSize: 13 }}>
+                Qtd{" "}
+                <Input
+                  type="number"
+                  min="1"
+                  max={selectedCatalogItem?.quantity ?? undefined}
+                  value={catalogQty}
+                  onChange={(e) => setCatalogQty(e.target.value)}
+                  style={{ width: 64 }}
+                />
+              </label>
+              <Button variant="secondary" onClick={addFromCatalog} disabled={!catalogPick}>Adicionar</Button>
+            </div>
+          </>
+        )}
+
+        <h4 style={{ margin: "14px 0 6px", fontSize: 13, color: "var(--text-muted)" }}>Ou item próprio</h4>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
           <label style={{ fontSize: 13 }}>
-            Do catálogo da quinta{" "}
-            <select className="input" value={catalogPick} onChange={(e) => setCatalogPick(e.target.value)} style={{ minWidth: 160 }}>
-              <option value="">Escolhe…</option>
-              {catalog.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}{c.category ? ` (${c.category})` : ""}</option>
-              ))}
-            </select>
-          </label>
-          <Input type="number" min="1" value={catalogQty} onChange={(e) => setCatalogQty(e.target.value)} style={{ width: 64 }} />
-          <Button variant="secondary" onClick={addFromCatalog} disabled={!catalogPick}>Adicionar</Button>
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end", marginTop: 8 }}>
-          <label style={{ fontSize: 13 }}>
-            Item próprio{" "}
+            Nome{" "}
             <Input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="ex.: Velas" style={{ width: 180 }} />
           </label>
-          <Input type="number" min="1" value={customQty} onChange={(e) => setCustomQty(e.target.value)} style={{ width: 64 }} />
+          <label style={{ fontSize: 13 }}>
+            Qtd <Input type="number" min="1" value={customQty} onChange={(e) => setCustomQty(e.target.value)} style={{ width: 64 }} />
+          </label>
           <Button variant="secondary" onClick={addCustom} disabled={!customName.trim()}>Adicionar</Button>
         </div>
       </Card>

@@ -39,9 +39,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ momentI
     const wedding = moment
       ? await prisma.wedding.findUnique({ where: { id: moment.weddingId }, select: { venueId: true } })
       : null;
-    const item = await prisma.decorItem.findUnique({ where: { id: b.decorItemId }, select: { venueId: true } });
+    const item = await prisma.decorItem.findUnique({
+      where: { id: b.decorItemId },
+      select: { venueId: true, quantity: true, name: true },
+    });
     if (!item || item.venueId !== wedding?.venueId) {
       return NextResponse.json({ error: "item de decoração inválido" }, { status: 400 });
+    }
+    // Stock guard: never let the couple request more than the venue has available.
+    if (item.quantity != null && quantity > item.quantity) {
+      return NextResponse.json(
+        { error: `Stock insuficiente para "${item.name}" — disponível: ${item.quantity}.` },
+        { status: 400 }
+      );
     }
     return NextResponse.json({ decor: await addDecorFromCatalog(momentId, b.decorItemId, quantity) }, { status: 201 });
   }
