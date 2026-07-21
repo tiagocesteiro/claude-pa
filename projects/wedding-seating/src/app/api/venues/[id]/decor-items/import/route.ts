@@ -23,12 +23,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const form = await req.formData();
   const files = form.getAll("files").filter((f): f is File => f instanceof File);
   if (files.length === 0) return NextResponse.json({ error: "files required" }, { status: 400 });
+  // Optional parallel names (folder import sends "<folder> <n>"); when absent or
+  // empty for a given file, we fall back to the file's own name (extension stripped).
+  const names = form.getAll("names").map((n) => (typeof n === "string" ? n : ""));
 
   let created = 0;
-  for (const file of files) {
-    const name = file.name.replace(/\.[^.]+$/, "").trim() || "Item";
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const provided = (names[i] ?? "").trim();
+    const name = provided || file.name.replace(/\.[^.]+$/, "").trim() || "Item";
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const image = await saveUploadedImage(`decor-${id}`, `${Date.now()}-${file.name}`, bytes);
+    const image = await saveUploadedImage(`decor-${id}`, `${Date.now()}-${i}-${file.name}`, bytes);
     await createDecorItem(id, { name, image });
     created++;
   }

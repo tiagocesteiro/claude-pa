@@ -128,13 +128,18 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
 
   const [importing, setImporting] = useState(false);
 
-  /** Bulk import: each image becomes an item named after its filename. */
-  async function importImages(files: FileList) {
+  /** Bulk import: one item per image. `names` (parallel to `files`) overrides the
+   * per-file name — used by the folder import ("<folder> <n>"). */
+  async function importImages(files: File[], names?: string[]) {
+    if (files.length === 0) return;
     setImporting(true);
     setError(null);
     try {
       const fd = new FormData();
-      Array.from(files).forEach((f) => fd.append("files", f));
+      files.forEach((f, i) => {
+        fd.append("files", f);
+        fd.append("names", names?.[i] ?? "");
+      });
       const res = await fetch(`/api/venues/${venueId}/decor-items/import`, { method: "POST", body: fd });
       if (!res.ok) throw new Error("import failed");
       await load();
@@ -143,6 +148,21 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
     } finally {
       setImporting(false);
     }
+  }
+
+  /** Folder import: each image is named after its immediate (sub)folder + a
+   * running sequential number, e.g. "Arcos florais 1", "Arcos florais 2". */
+  function importFolder(fileList: FileList) {
+    const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+    const counters: Record<string, number> = {};
+    const names = files.map((f) => {
+      const rel = (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name;
+      const parts = rel.split("/");
+      const folder = parts.length >= 2 ? parts[parts.length - 2] : "Item";
+      counters[folder] = (counters[folder] ?? 0) + 1;
+      return `${folder} ${counters[folder]}`;
+    });
+    void importImages(files, names);
   }
 
   /** Set/replace one item's image. */
@@ -158,7 +178,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <strong>Catálogo de decoração</strong>
         <label style={{ fontSize: 13, cursor: "pointer", color: "var(--accent-strong, #54704c)" }}>
-          {importing ? "A importar…" : "Importar imagens (1 imagem = 1 produto)"}
+          {importing ? "A importar…" : "Importar imagens (nome = ficheiro)"}
           <input
             type="file"
             accept="image/*"
@@ -166,7 +186,21 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
             style={{ display: "none" }}
             disabled={importing}
             onChange={(e) => {
-              if (e.target.files?.length) void importImages(e.target.files);
+              const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith("image/"));
+              if (files.length) void importImages(files);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <label style={{ fontSize: 13, cursor: "pointer", color: "var(--accent-strong, #54704c)" }}>
+          {importing ? "" : "Importar pasta (nome = pasta + nº)"}
+          <input
+            type="file"
+            style={{ display: "none" }}
+            disabled={importing}
+            {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+            onChange={(e) => {
+              if (e.target.files?.length) importFolder(e.target.files);
               e.target.value = "";
             }}
           />
