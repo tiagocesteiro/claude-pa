@@ -135,6 +135,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
   }
 
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
 
   /** Bulk import: one item per image. `names` (parallel to `files`) overrides the
    * per-file name — used by the folder import ("<folder> <n>"). */
@@ -173,23 +174,59 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
     void importImages(files, names);
   }
 
-  /** Import from an .xlsx with columns: image (embedded) + name + quantity. */
+  /**
+   * Import from an .xlsx (columns: embedded image + name + quantity). Parsed IN
+   * THE BROWSER — an image-heavy workbook (10+ MB) can't be POSTed to a Vercel
+   * serverless function (≈4.5 MB body limit), so we create each item and upload
+   * its image with small individual requests. exceljs is dynamically imported so
+   * it never bloats the main bundle.
+   */
   async function importExcel(file: File) {
     setImporting(true);
     setError(null);
+    setImportProgress("A ler o Excel…");
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch(`/api/venues/${venueId}/decor-items/import-excel`, { method: "POST", body: fd });
-      if (!res.ok) {
-        const b = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(b?.error ?? "erro");
+      const { parseDecorWorkbook } = await import("@/lib/import/parseDecorWorkbook");
+      const rows = await parseDecorWorkbook(await file.arrayBuffer());
+      if (rows.length === 0) {
+        setError("Excel: nenhum item encontrado.");
+        return;
+      }
+      let done = 0;
+      let failed = 0;
+      for (const row of rows) {
+        try {
+          const res = await fetch(`/api/venues/${venueId}/decor-items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: row.name, category: row.category ?? null, quantity: row.quantity ?? null }),
+          });
+          if (res.ok && row.image) {
+            const { item } = (await res.json()) as { item?: { id?: string } };
+            if (item?.id) {
+              const f = new File([row.image.bytes as unknown as BlobPart], `img.${row.image.extension}`, {
+                type: `image/${row.image.extension === "jpg" ? "jpeg" : row.image.extension}`,
+              });
+              const fd = new FormData();
+              fd.append("file", f);
+              await fetch(`/api/decor-items/${item.id}/image`, { method: "POST", body: fd }).catch(() => {});
+            }
+          } else if (!res.ok) {
+            failed++;
+          }
+        } catch {
+          failed++;
+        }
+        done++;
+        setImportProgress(`A importar… ${done}/${rows.length}`);
       }
       await load();
-    } catch (e) {
-      setError(e instanceof Error && e.message ? `Excel: ${e.message}` : "Não foi possível importar o Excel.");
+      if (failed) setError(`Importado com ${failed} falha(s) de ${rows.length}.`);
+    } catch {
+      setError("Não foi possível ler o Excel.");
     } finally {
       setImporting(false);
+      setImportProgress(null);
     }
   }
 
@@ -206,7 +243,7 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <strong>Catálogo de decoração</strong>
         <label style={{ fontSize: 13, cursor: "pointer", color: "var(--accent-strong, #54704c)" }}>
-          {importing ? "A importar…" : "Importar imagens (nome = ficheiro)"}
+          {importing ? "" : "Importar imagens (nome = ficheiro)"}
           <input
             type="file"
             accept="image/*"
@@ -247,6 +284,9 @@ export default function DecorCatalog({ venueId, onChange }: DecorCatalogProps) {
             }}
           />
         </label>
+        {importing && (
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{importProgress ?? "A importar…"}</span>
+        )}
       </div>
       {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
