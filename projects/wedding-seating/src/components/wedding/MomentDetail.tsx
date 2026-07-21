@@ -71,6 +71,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const [taskDue, setTaskDue] = useState("");
   const [catalogPick, setCatalogPick] = useState("");
   const [catalogCat, setCatalogCat] = useState("");
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [catalogQty, setCatalogQty] = useState("1");
   const [customName, setCustomName] = useState("");
   const [customQty, setCustomQty] = useState("1");
@@ -195,7 +196,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   // ── Decor ──
   async function addFromCatalog() {
     if (!catalogPick) return;
-    setError(null);
+    setCatalogError(null);
     const res = await fetch(`/api/moments/${momentId}/decor`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -207,7 +208,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       await loadMoment();
     } else {
       const b = (await res.json().catch(() => null)) as { error?: string } | null;
-      setError(b?.error ?? "Não foi possível adicionar a decoração.");
+      setCatalogError(b?.error ?? "Não foi possível adicionar a decoração.");
     }
   }
   async function addCustom() {
@@ -237,7 +238,9 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const catalogCategories = Array.from(
     new Set(catalog.map((c) => c.category).filter((c): c is string => Boolean(c)))
   ).sort();
-  const filteredCatalog = catalog.filter((c) => !catalogCat || c.category === catalogCat);
+  const filteredCatalog = catalog
+    .filter((c) => !catalogCat || c.category === catalogCat)
+    .sort((a, b) => a.name.localeCompare(b.name, "pt", { sensitivity: "base" }));
   const selectedCatalogItem = catalog.find((c) => c.id === catalogPick) ?? null;
 
   return (
@@ -394,6 +397,9 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
               </label>
               <Button variant="secondary" onClick={addFromCatalog} disabled={!catalogPick}>Adicionar</Button>
             </div>
+            {catalogError && (
+              <p style={{ color: "#dc2626", fontSize: 13, margin: "6px 0 0" }}>{catalogError}</p>
+            )}
           </>
         )}
 

@@ -5,7 +5,7 @@ import { prisma } from "./client";
  * moment. Tenancy gated by the route (venue writes; couple reads its booked venue). */
 
 export function listDecorItems(venueId: string): Promise<DecorItem[]> {
-  return prisma.decorItem.findMany({ where: { venueId }, orderBy: { createdAt: "asc" } });
+  return prisma.decorItem.findMany({ where: { venueId }, orderBy: { name: "asc" } });
 }
 
 export function getDecorItem(id: string): Promise<DecorItem | null> {
