@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Badge, Button, Input, Stat } from "@/components/ui";
 import WeddingParticipantsCard from "@/components/venue/WeddingParticipantsCard";
+import WeddingServicesCard from "@/components/venue/WeddingServicesCard";
 
 interface Material {
   id: string;
@@ -149,6 +150,9 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
 
       {/* Participants & invites */}
       <WeddingParticipantsCard weddingId={view.id} />
+
+      {/* Services & responsibility matrix */}
+      <WeddingServicesCard weddingId={view.id} />
 
       {/* Material summary */}
       <Card style={{ marginBottom: 20 }}>

@@ -138,7 +138,31 @@ model Wedding {
   layouts       WeddingLayout[]
   suppliers     Supplier[]
   participants  WeddingParticipant[]
+  services      WeddingService[]
   createdAt     DateTime             @default(now())
+}
+
+/// The responsibility matrix of a wedding: which services it needs (catering, DJ,
+/// decoração…) and WHO provides each — the venue in-house (`venue`, using its own
+/// catalog/team), an external supplier slot (`supplier`), or the couple (`couple`).
+/// This is what generalizes the platform: decoration may be venue-provided at one
+/// venue and an external decorator at another. Drives the venue's coordination UI
+/// and (later) which requirements/interactions belong to whom. Venue-managed.
+model WeddingService {
+  id           String    @id @default(cuid())
+  weddingId    String
+  wedding      Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  kind         String // catering | dj | band | photo | video | decor | flowers | cake | transport | other
+  name         String? // optional label; falls back to the kind's default label
+  providerType String    @default("venue") // "venue" | "supplier" | "couple"
+  supplierId   String? // the Supplier slot, when providerType == "supplier"
+  supplier     Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  status       String    @default("planned") // "planned" | "confirmed" | "done"
+  note         String?
+  createdAt    DateTime  @default(now())
+
+  @@index([weddingId])
+  @@index([supplierId])
 }
 
 /// A couple-owned room layout: a base (a venue template's floor plan as read-only
@@ -295,6 +319,7 @@ model Supplier {
   acceptedAt  DateTime?
   createdAt   DateTime     @default(now())
   tasks       MomentTask[]
+  services    WeddingService[]
 
   @@index([weddingId])
   @@index([profileId])

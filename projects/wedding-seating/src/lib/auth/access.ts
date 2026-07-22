@@ -840,6 +840,30 @@ export async function assertMomentDecorAccess(
   await assertWeddingAccess(actor, d.moment.weddingId, mode);
 }
 
+/**
+ * A WeddingService row (the responsibility matrix) belongs to a wedding. It is
+ * managed by the venue owner (writes) and readable by any participant (venue,
+ * couple, supplier) — the matrix carries no guest PII, just "who does what". We
+ * resolve the row → weddingId, then use the participant-aware role gate:
+ *   • write → venue/admin only.
+ *   • read  → venue/couple/supplier/admin (any participant).
+ * Returns the resolved wedding id (handy for the collection route reuse).
+ */
+export async function assertServiceAccess(
+  actor: Actor,
+  serviceId: string,
+  mode: AccessMode = "read"
+): Promise<string> {
+  const s = await prisma.weddingService.findUnique({
+    where: { id: serviceId },
+    select: { weddingId: true },
+  });
+  if (!s) throw notFound("Service");
+  const allowed = mode === "write" ? (["venue", "admin"] as const) : (["venue", "couple", "supplier", "admin"] as const);
+  await assertWeddingRole(actor, s.weddingId, [...allowed]);
+  return s.weddingId;
+}
+
 /** A supplier is wedding-owned. */
 export async function assertSupplierAccess(
   actor: Actor,
