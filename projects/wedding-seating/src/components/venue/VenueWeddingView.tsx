@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageShell, Card, Badge, Button, Input, Stat } from "@/components/ui";
 import WeddingParticipantsCard from "@/components/venue/WeddingParticipantsCard";
 import WeddingServicesCard from "@/components/venue/WeddingServicesCard";
+import RequirementsPanel from "@/components/requirements/RequirementsPanel";
 
 interface Material {
   id: string;
@@ -153,6 +154,13 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
 
       {/* Services & responsibility matrix */}
       <WeddingServicesCard weddingId={view.id} />
+
+      {/* Interactions ledger (SSOT) */}
+      <RequirementsPanel
+        weddingId={view.id}
+        role="venue"
+        moments={moments.map((m) => ({ id: m.id, label: momentTitle(m) }))}
+      />
 
       {/* Material summary */}
       <Card style={{ marginBottom: 20 }}>

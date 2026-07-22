@@ -864,6 +864,53 @@ export async function assertServiceAccess(
   return s.weddingId;
 }
 
+/**
+ * A WeddingRequirement (the interactions ledger) belongs to a wedding. Visibility
+ * is scoped by participation:
+ *   • venue / admin → read + write on everything (the coordinator).
+ *   • couple        → read everything; write only if involved (they raised it, or
+ *                     it's addressed to the couple).
+ *   • supplier      → read + write only if involved (they raised it, it targets
+ *                     their slot, or it concerns a service they provide) — an
+ *                     unrelated supplier gets a 404 (the row is hidden).
+ * Returns the actor's resolved WeddingRole (used to attribute comments/authorRole).
+ */
+export async function assertRequirementAccess(
+  actor: Actor,
+  requirementId: string,
+  mode: AccessMode = "read"
+): Promise<WeddingRole> {
+  const r = await prisma.weddingRequirement.findUnique({
+    where: { id: requirementId },
+    select: {
+      weddingId: true,
+      fromProfileId: true,
+      toRole: true,
+      toSupplierId: true,
+      service: { select: { supplierId: true } },
+    },
+  });
+  if (!r) throw notFound("Requirement");
+
+  const wr = await getWeddingRole(actor, r.weddingId);
+  if (!wr) throw notFound("Requirement");
+  if (wr.role === "venue" || wr.role === "admin") return wr;
+
+  if (wr.role === "couple") {
+    if (mode === "read") return wr;
+    if (r.fromProfileId === actor.userId || r.toRole === "couple") return wr;
+    throw new AccessError(403, "Sem permissão para este requisito.");
+  }
+
+  // supplier — only if involved (raiser, target slot, or service provider).
+  const mySlot = wr.supplierId ?? null;
+  const involved =
+    r.fromProfileId === actor.userId ||
+    (!!mySlot && (r.toSupplierId === mySlot || r.service?.supplierId === mySlot));
+  if (involved) return wr;
+  throw notFound("Requirement"); // hide from unrelated suppliers
+}
+
 /** A supplier is wedding-owned. */
 export async function assertSupplierAccess(
   actor: Actor,

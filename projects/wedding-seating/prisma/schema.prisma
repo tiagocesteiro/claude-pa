@@ -139,6 +139,7 @@ model Wedding {
   suppliers     Supplier[]
   participants  WeddingParticipant[]
   services      WeddingService[]
+  requirements  WeddingRequirement[]
   createdAt     DateTime             @default(now())
 }
 
@@ -160,9 +161,57 @@ model WeddingService {
   status       String    @default("planned") // "planned" | "confirmed" | "done"
   note         String?
   createdAt    DateTime  @default(now())
+  requirements WeddingRequirement[]
 
   @@index([weddingId])
   @@index([supplierId])
+}
+
+/// The interactions ledger — the single source of truth for structured needs and
+/// agreements between the parties of a wedding. A requirement is RAISED by one
+/// participant (`fromRole`/`fromProfileId`) and optionally ADDRESSED to another
+/// (`toRole`, or a specific supplier slot `toSupplierId`), optionally tied to a
+/// moment and/or a matrix service. It has a lifecycle everyone relevant can see:
+/// open → agreed → done. Examples: catering→venue "cocktail: 8 mesas + 12 m
+/// lineares"; venue→DJ "zona de montagem + 3 tomadas". Visibility is scoped in
+/// `assertRequirementAccess`: venue/couple see all; a supplier sees only the ones
+/// they raised, that target their slot, or that concern a service they provide.
+model WeddingRequirement {
+  id            String          @id @default(cuid())
+  weddingId     String
+  wedding       Wedding         @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  momentId      String?
+  moment        WeddingMoment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
+  serviceId     String?
+  service       WeddingService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  fromRole      String // "venue" | "couple" | "supplier" — who raised it
+  fromProfileId String? // the raising account (attribution)
+  toRole        String? // "venue" | "couple" | "supplier" — who it's addressed to
+  toSupplierId  String? // a specific supplier slot, when addressed to one
+  title         String
+  detail        String? // free text; can hold structured content ("8 mesas, 12 m lineares")
+  status        String          @default("open") // "open" (aberto) | "agreed" (acordado) | "done" (feito)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  comments      WeddingRequirementComment[]
+
+  @@index([weddingId])
+  @@index([serviceId])
+  @@index([toSupplierId])
+}
+
+/// A lightweight reply on a requirement — the two-way communication layer of the
+/// ledger. Author is a participant (`authorRole`/`authorProfileId`).
+model WeddingRequirementComment {
+  id              String             @id @default(cuid())
+  requirementId   String
+  requirement     WeddingRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  authorRole      String // "venue" | "couple" | "supplier"
+  authorProfileId String?
+  text            String
+  createdAt       DateTime           @default(now())
+
+  @@index([requirementId])
 }
 
 /// A couple-owned room layout: a base (a venue template's floor plan as read-only
@@ -276,10 +325,11 @@ model WeddingMoment {
   templateId  String?
   template    LayoutTemplate?  @relation(fields: [templateId], references: [id])
   notes       String? // legacy free-text (superseded by tasks); kept, unused by new UI
-  tasks       MomentTask[]
-  decor       MomentDecor[]
-  layouts     WeddingLayout[]
-  materials   MomentMaterial[]
+  tasks        MomentTask[]
+  decor        MomentDecor[]
+  layouts      WeddingLayout[]
+  materials    MomentMaterial[]
+  requirements WeddingRequirement[]
 
   @@index([weddingId])
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Badge } from "@/components/ui";
+import RequirementsPanel from "@/components/requirements/RequirementsPanel";
 
 interface View {
   id: string;
@@ -103,6 +104,14 @@ export default function SupplierWeddingView({ weddingId }: { weddingId: string }
           </ul>
         )}
       </Card>
+
+      <div style={{ marginTop: 20 }}>
+        <RequirementsPanel
+          weddingId={weddingId}
+          role="supplier"
+          moments={moments.map((m) => ({ id: m.id, label: momentTitle(m) }))}
+        />
+      </div>
     </PageShell>
   );
 }
