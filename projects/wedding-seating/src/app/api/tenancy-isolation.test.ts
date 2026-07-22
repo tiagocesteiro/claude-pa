@@ -13,7 +13,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 // actor the current test is impersonating. `vi.hoisted` lets the mock factory
 // (hoisted above imports) share this mutable ref safely.
 const authState = vi.hoisted(() => ({
-  actor: null as { userId: string; email: string | null; role: "couple" | "venue" | "admin" } | null,
+  actor: null as { userId: string; email: string | null; role: "couple" | "venue" | "supplier" | "admin" } | null,
 }));
 vi.mock("@/lib/auth/actor", () => ({
   getActor: async () => authState.actor,

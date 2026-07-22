@@ -483,6 +483,72 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
   };
 }
 
+// ── Wedding participation (the new unified role resolver) ────────────────────
+// The platform is moving to venue-owned weddings with couple + suppliers as
+// invited participants (WeddingParticipant). `getWeddingRole` is the single place
+// that answers "what is this actor's role IN this wedding?", used by new
+// participant-aware endpoints. Existing `assert*Access` helpers keep working;
+// this is layered in additively.
+
+export interface WeddingRole {
+  role: "venue" | "couple" | "supplier" | "admin";
+  /** The Supplier slot id, when role === "supplier". */
+  supplierId?: string | null;
+  /** The supplier's service kind (catering|dj|photo|decor|band|other), if any. */
+  service?: string | null;
+}
+
+/**
+ * Resolve the actor's role in a wedding: admin → admin; else the
+ * WeddingParticipant row; else a legacy fallback (Wedding.ownerId → couple,
+ * Venue.ownerId → venue) so weddings created before participants existed still
+ * resolve. Returns null when the actor has no role in the wedding (or it's gone).
+ */
+export async function getWeddingRole(actor: Actor, weddingId: string): Promise<WeddingRole | null> {
+  if (actor.role === "admin") {
+    const w = await prisma.wedding.findUnique({ where: { id: weddingId }, select: { id: true } });
+    return w ? { role: "admin" } : null;
+  }
+
+  const p = await prisma.weddingParticipant.findUnique({
+    where: { weddingId_profileId: { weddingId, profileId: actor.userId } },
+    select: { role: true, supplierId: true },
+  });
+  if (p) {
+    let service: string | null = null;
+    if (p.role === "supplier" && p.supplierId) {
+      const s = await prisma.supplier.findUnique({ where: { id: p.supplierId }, select: { service: true } });
+      service = s?.service ?? null;
+    }
+    return { role: p.role as WeddingRole["role"], supplierId: p.supplierId, service };
+  }
+
+  // Legacy fallback for weddings without backfilled participants.
+  const w = await prisma.wedding.findUnique({
+    where: { id: weddingId },
+    select: { ownerId: true, venue: { select: { ownerId: true } } },
+  });
+  if (!w) return null;
+  if (w.venue?.ownerId === actor.userId) return { role: "venue" };
+  if (w.ownerId === actor.userId) return { role: "couple" };
+  return null;
+}
+
+/** Throws a 403/404 AccessError unless the actor's wedding role is in
+ * `allowed`. Returns the resolved role for further capability checks. */
+export async function assertWeddingRole(
+  actor: Actor,
+  weddingId: string,
+  allowed: WeddingRole["role"][]
+): Promise<WeddingRole> {
+  const wr = await getWeddingRole(actor, weddingId);
+  if (!wr) throw notFound("Wedding");
+  if (!allowed.includes(wr.role)) {
+    throw new AccessError(403, "Sem permissão para este casamento.");
+  }
+  return wr;
+}
+
 // ── Platform-admin overview (admin role only) ────────────────────────────────
 
 /** One venue row in the admin overview: identity + owner + child counts. */

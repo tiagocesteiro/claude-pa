@@ -1,7 +1,7 @@
 import type { Profile } from "@prisma/client";
 import { prisma } from "./client";
 
-export type Role = "venue" | "couple" | "admin";
+export type Role = "venue" | "couple" | "supplier" | "admin";
 
 export function getProfile(id: string): Promise<Profile | null> {
   return prisma.profile.findUnique({ where: { id } });

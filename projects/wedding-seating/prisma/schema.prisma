@@ -16,7 +16,7 @@ datasource db {
 model Profile {
   id        String   @id // Supabase auth.users.id (uuid)
   email     String
-  role      String // "venue" | "couple" | "admin"
+  role      String // "venue" | "couple" | "supplier" | "admin"
   createdAt DateTime @default(now())
 }
 
@@ -112,11 +112,11 @@ model Table {
 }
 
 model Wedding {
-  id            String          @id @default(cuid())
+  id            String               @id @default(cuid())
   couple        String
   date          DateTime?
   venueId       String?
-  venue         Venue?          @relation(fields: [venueId], references: [id])
+  venue         Venue?               @relation(fields: [venueId], references: [id])
   ownerId       String? // Profile.id of the couple account — nullable (a venue may create the wedding first)
   partner1      String?
   partner1Email String?
@@ -127,7 +127,7 @@ model Wedding {
   guestEstimate Int?
   notes         String?
   floorPlanId   String?
-  floorPlan     FloorPlan?      @relation(fields: [floorPlanId], references: [id])
+  floorPlan     FloorPlan?           @relation(fields: [floorPlanId], references: [id])
   templateId    String?
   tables        Table[]
   guests        Guest[]
@@ -137,7 +137,8 @@ model Wedding {
   invites       WeddingInvite[]
   layouts       WeddingLayout[]
   suppliers     Supplier[]
-  createdAt     DateTime        @default(now())
+  participants  WeddingParticipant[]
+  createdAt     DateTime             @default(now())
 }
 
 /// A couple-owned room layout: a base (a venue template's floor plan as read-only
@@ -202,10 +203,30 @@ model WeddingInvite {
   wedding      Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   email        String
   token        String   @unique
-  role         String // "venue" | "couple"
+  role         String // "venue" | "couple" | "supplier"
+  supplierId   String? // the supplier slot this invite is for (when role == "supplier")
+  service      String? // supplier service kind (informational)
   acceptedById String?
   expiresAt    DateTime
   createdAt    DateTime @default(now())
+}
+
+/// Who takes part in a wedding and as what — the single place access resolves
+/// "is this actor a participant of THIS wedding, and in which role?". The venue
+/// owner, the couple, and each supplier account are participant rows. Backfilled
+/// for existing weddings from Venue.ownerId (venue) + Wedding.ownerId (couple).
+model WeddingParticipant {
+  id         String   @id @default(cuid())
+  weddingId  String
+  wedding    Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  profileId  String // Profile.id (plain string, like Venue.ownerId — auth.users lives outside Prisma)
+  role       String // "venue" | "couple" | "supplier"
+  supplierId String? // the Supplier slot, when role == "supplier"
+  createdAt  DateTime @default(now())
+
+  @@unique([weddingId, profileId])
+  @@index([weddingId])
+  @@index([profileId])
 }
 
 /// A moment in the wedding day (cerimónia, cocktail, jantar, dança, or a custom
@@ -256,17 +277,28 @@ model MomentMaterial {
 
 /// A supplier/vendor for a wedding (catering, fotografia, DJ, ...). Wedding-owned;
 /// added on the Detalhes page. Assignable as the responsible party of a task.
+/// A supplier/vendor SLOT on a wedding (catering, DJ, foto, decoração, banda…).
+/// Doubles as the invitable participant: the venue adds the slot, invites it
+/// (`inviteToken`), and once a supplier account accepts, `profileId` links their
+/// Profile (see WeddingParticipant). Still assignable as a task's responsible party.
 model Supplier {
-  id        String       @id @default(cuid())
-  weddingId String
-  wedding   Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  name      String
-  service   String? // what they provide (free text)
-  contact   String? // phone/email/note
-  createdAt DateTime     @default(now())
-  tasks     MomentTask[]
+  id          String       @id @default(cuid())
+  weddingId   String
+  wedding     Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name        String
+  service     String? // what they provide (free text or a kind: catering|dj|photo|decor|band|other)
+  contact     String? // phone/email/note
+  email       String? // invite email
+  profileId   String? // Profile.id of the linked supplier account (after accepting), if any
+  inviteToken String? // token for the shareable invite link (random, app-unique)
+  invitedAt   DateTime?
+  acceptedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  tasks       MomentTask[]
 
   @@index([weddingId])
+  @@index([profileId])
+  @@index([inviteToken])
 }
 
 /// A to-do / pending item within a moment, assignable to the couple, the venue,

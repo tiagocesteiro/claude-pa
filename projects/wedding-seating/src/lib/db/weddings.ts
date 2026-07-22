@@ -34,6 +34,19 @@ export function createWedding(input: {
   return prisma.$transaction(async (tx) => {
     const wedding = await tx.wedding.create({ data: input });
     await tx.weddingMoment.createMany({ data: defaultMomentSeed(wedding.id) });
+
+    // Seed participants: the couple (if a couple account created it) and the
+    // venue owner (the venue is the primary owner going forward).
+    const participants: { weddingId: string; profileId: string; role: string }[] = [];
+    if (input.ownerId) participants.push({ weddingId: wedding.id, profileId: input.ownerId, role: "couple" });
+    if (input.venueId) {
+      const venue = await tx.venue.findUnique({ where: { id: input.venueId }, select: { ownerId: true } });
+      if (venue?.ownerId && venue.ownerId !== input.ownerId) {
+        participants.push({ weddingId: wedding.id, profileId: venue.ownerId, role: "venue" });
+      }
+    }
+    if (participants.length) await tx.weddingParticipant.createMany({ data: participants });
+
     return wedding;
   });
 }
