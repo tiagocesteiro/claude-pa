@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, Field, Input, Button, Wordmark } from "@/components/ui";
 
+/** Safe internal redirect target from `?next=` (must be an in-app path). */
+function useNextParam(): string {
+  const [next, setNext] = useState("");
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read once on mount
+    if (n && n.startsWith("/") && !n.startsWith("//")) setNext(n);
+  }, []);
+  return next;
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const next = useNextParam();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +39,7 @@ export default function LoginPage() {
         setError(data?.error ?? "Não foi possível entrar.");
         return;
       }
-      router.push("/admin");
+      router.push(next || "/admin");
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -75,7 +87,8 @@ export default function LoginPage() {
         </form>
 
         <p style={{ marginTop: 20, textAlign: "center", color: "var(--text-muted)" }}>
-          Ainda não tens conta? <Link href="/registar">Regista-te</Link>
+          Ainda não tens conta?{" "}
+          <Link href={next ? `/registar?next=${encodeURIComponent(next)}` : "/registar"}>Regista-te</Link>
         </p>
       </Card>
     </main>

@@ -38,7 +38,7 @@ interface VenueBooking {
   seatingDone: boolean;
 }
 
-type Role = "venue" | "couple" | "admin";
+type Role = "venue" | "couple" | "supplier" | "admin";
 
 /** Cross-tenant admin overview: every venue + wedding on the platform. */
 interface AdminVenueRow {
@@ -85,6 +85,7 @@ export default function AdminPage() {
   const isAdmin = role === "admin";
   const showVenue = role === "venue";
   const showCouple = role === "couple";
+  const showSupplier = role === "supplier";
 
   return (
     <PageShell size="md">
@@ -92,10 +93,53 @@ export default function AdminPage() {
       {isAdmin && <AdminSection />}
       {showCouple && <CoupleSection />}
       {showVenue && <VenueSection />}
-      {roleLoaded && !isAdmin && !showVenue && !showCouple && (
+      {showSupplier && <SupplierSection />}
+      {roleLoaded && !isAdmin && !showVenue && !showCouple && !showSupplier && (
         <p>A tua conta não tem um perfil válido. Contacta o suporte.</p>
       )}
     </PageShell>
+  );
+}
+
+/** Supplier workspace: the weddings this supplier account has been invited to. */
+function SupplierSection() {
+  const [weddings, setWeddings] = useState<{ weddingId: string; couple: string; date: string | null; venueName: string | null; service: string | null }[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/supplier/weddings");
+      if (res.ok) setWeddings(((await res.json()) as { weddings: typeof weddings }).weddings ?? []);
+      setLoaded(true);
+    })();
+  }, []);
+
+  return (
+    <section>
+      <h1>Os meus casamentos</h1>
+      {loaded && weddings.length === 0 && (
+        <p style={{ color: "var(--text-muted)" }}>
+          Ainda não foste convidado para nenhum casamento. Pede à quinta o link de convite.
+        </p>
+      )}
+      <ul className="list-reset" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {weddings.map((w) => (
+          <li key={w.weddingId}>
+            <Card pad="sm">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <span>
+                  <strong>{w.couple}</strong>
+                  {w.venueName && <span style={{ color: "var(--text-muted)" }}> · {w.venueName}</span>}
+                  <span style={{ color: "var(--text-muted)" }}> · {w.date ? new Date(w.date).toLocaleDateString("pt-PT") : "sem data"}</span>
+                  {w.service && <span style={{ marginLeft: 8 }}><Badge tone="neutral">{w.service}</Badge></span>}
+                </span>
+                <Link href={`/admin/supplier-wedding/${w.weddingId}`}>Abrir &rarr;</Link>
+              </div>
+            </Card>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

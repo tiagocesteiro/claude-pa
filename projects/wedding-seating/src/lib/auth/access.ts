@@ -549,6 +549,104 @@ export async function assertWeddingRole(
   return wr;
 }
 
+// ── Supplier portal (scoped, PII-free) ──────────────────────────────────────
+
+export interface SupplierWeddingRow {
+  weddingId: string;
+  couple: string;
+  date: Date | null;
+  venueName: string | null;
+  service: string | null;
+}
+
+/** The weddings a supplier account takes part in (their "my weddings" list). */
+export async function listSupplierWeddings(profileId: string): Promise<SupplierWeddingRow[]> {
+  const parts = await prisma.weddingParticipant.findMany({
+    where: { profileId, role: "supplier" },
+    orderBy: { createdAt: "desc" },
+    select: {
+      supplierId: true,
+      wedding: { select: { id: true, couple: true, date: true, venue: { select: { name: true } } } },
+    },
+  });
+  const supplierIds = parts.map((p) => p.supplierId).filter((s): s is string => Boolean(s));
+  const services = supplierIds.length
+    ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, service: true } })
+    : [];
+  const serviceById = new Map(services.map((s) => [s.id, s.service]));
+  return parts.map((p) => ({
+    weddingId: p.wedding.id,
+    couple: p.wedding.couple,
+    date: p.wedding.date,
+    venueName: p.wedding.venue?.name ?? null,
+    service: p.supplierId ? serviceById.get(p.supplierId) ?? null : null,
+  }));
+}
+
+export interface SupplierWeddingView {
+  id: string;
+  couple: string;
+  date: Date | null;
+  venueName: string | null;
+  service: string | null;
+  moments: { id: string; kind: string | null; title: string | null; startTime: string | null }[];
+  myTasks: { id: string; text: string; note: string | null; done: boolean; dueDate: Date | null; moment: string | null }[];
+}
+
+/**
+ * A supplier's PII-free view of ONE wedding they're on: identity + the day's
+ * moments (timeline) + the tasks assigned to THEIR slot. No guest data. The route
+ * gates this via `getWeddingRole` (must be the supplier participant).
+ */
+export async function getSupplierWeddingView(
+  weddingId: string,
+  supplierId: string | null
+): Promise<SupplierWeddingView | null> {
+  const w = await prisma.wedding.findUnique({
+    where: { id: weddingId },
+    select: {
+      id: true,
+      couple: true,
+      date: true,
+      venue: { select: { name: true } },
+      moments: {
+        orderBy: [{ order: "asc" }, { id: "asc" }],
+        select: { id: true, kind: true, title: true, startTime: true },
+      },
+    },
+  });
+  if (!w) return null;
+
+  const service = supplierId
+    ? (await prisma.supplier.findUnique({ where: { id: supplierId }, select: { service: true } }))?.service ?? null
+    : null;
+
+  const tasks = supplierId
+    ? await prisma.momentTask.findMany({
+        where: { supplierId },
+        orderBy: [{ order: "asc" }, { id: "asc" }],
+        select: { id: true, text: true, note: true, done: true, dueDate: true, moment: { select: { title: true, kind: true } } },
+      })
+    : [];
+
+  return {
+    id: w.id,
+    couple: w.couple,
+    date: w.date,
+    venueName: w.venue?.name ?? null,
+    service,
+    moments: w.moments,
+    myTasks: tasks.map((t) => ({
+      id: t.id,
+      text: t.text,
+      note: t.note,
+      done: t.done,
+      dueDate: t.dueDate,
+      moment: t.moment?.title ?? t.moment?.kind ?? null,
+    })),
+  };
+}
+
 // ── Platform-admin overview (admin role only) ────────────────────────────────
 
 /** One venue row in the admin overview: identity + owner + child counts. */

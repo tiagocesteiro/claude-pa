@@ -23,6 +23,9 @@ function isPublicPath(pathname: string): boolean {
     pathname.startsWith("/login/") ||
     pathname === "/registar" ||
     pathname.startsWith("/registar/") ||
+    // Invite landing — must load for a logged-out invitee so it can prompt
+    // login/registar (the invite API itself still requires auth to preview/accept).
+    pathname.startsWith("/convite/") ||
     // Auth callbacks (e.g. email confirmation) — never gate these.
     pathname === "/auth" ||
     pathname.startsWith("/auth/") ||

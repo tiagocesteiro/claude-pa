@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, Field, Input, Button, Wordmark } from "@/components/ui";
@@ -15,6 +15,12 @@ const ROLE_OPTIONS: { value: Role; title: string; desc: string; icon: string }[]
 
 export default function RegistarPage() {
   const router = useRouter();
+  const [next, setNext] = useState("");
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read once on mount
+    if (n && n.startsWith("/") && !n.startsWith("//")) setNext(n);
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("couple");
@@ -42,7 +48,7 @@ export default function RegistarPage() {
         return;
       }
       // Email confirmation disabled → signUp already returned a session.
-      router.push("/admin");
+      router.push(next || "/admin");
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -144,7 +150,7 @@ export default function RegistarPage() {
         )}
 
         <p style={{ marginTop: 20, textAlign: "center", color: "var(--text-muted)" }}>
-          Já tens conta? <Link href="/login">Entrar</Link>
+          Já tens conta? <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>Entrar</Link>
         </p>
       </Card>
     </main>
