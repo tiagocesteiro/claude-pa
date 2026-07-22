@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Badge, Button, Input, Stat } from "@/components/ui";
+import WeddingParticipantsCard from "@/components/venue/WeddingParticipantsCard";
 
 interface Material {
   id: string;
@@ -145,6 +146,9 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
           <Stat value={totalPending} label="Tarefas pendentes" />
         </div>
       </Card>
+
+      {/* Participants & invites */}
+      <WeddingParticipantsCard weddingId={view.id} />
 
       {/* Material summary */}
       <Card style={{ marginBottom: 20 }}>

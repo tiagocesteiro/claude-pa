@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 import { listSuppliers, createSupplier } from "@/lib/db/suppliers";
-import { assertWeddingAccess } from "@/lib/auth/access";
+import { assertWeddingRole } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
 export const runtime = "nodejs";
+
+// Suppliers are managed by the venue (owner) OR the couple (both participants).
+const MANAGERS = ["venue", "couple", "admin"] as const;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
   const { id } = await params;
   try {
-    await assertWeddingAccess(actor, id, "read");
+    await assertWeddingRole(actor, id, [...MANAGERS]);
   } catch (e) {
     return accessErrorResponse(e);
   }
@@ -22,7 +25,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (actor instanceof NextResponse) return actor;
   const { id } = await params;
   try {
-    await assertWeddingAccess(actor, id, "write");
+    await assertWeddingRole(actor, id, [...MANAGERS]);
   } catch (e) {
     return accessErrorResponse(e);
   }

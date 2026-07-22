@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, Field, Input, Button, Wordmark } from "@/components/ui";
 
-type Role = "venue" | "couple";
+type Role = "venue" | "couple" | "supplier";
 
 const ROLE_OPTIONS: { value: Role; title: string; desc: string; icon: string }[] = [
-  { value: "couple", title: "Sou um Casal", desc: "Organizo o seating do meu casamento.", icon: "💍" },
-  { value: "venue", title: "Sou uma Quinta", desc: "Recebo casamentos no meu espaço.", icon: "🏛️" },
+  { value: "venue", title: "Sou uma Quinta", desc: "Recebo casamentos e coordeno tudo no meu espaço.", icon: "🏛️" },
+  { value: "couple", title: "Sou um Casal", desc: "Organizo o meu casamento.", icon: "💍" },
+  { value: "supplier", title: "Sou um Fornecedor", desc: "Catering, DJ, foto, decoração… acedo por convite.", icon: "🎪" },
 ];
 
 export default function RegistarPage() {
