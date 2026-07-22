@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/serverClient";
 import { upsertProfile, type Role } from "@/lib/db/profiles";
 
-const VALID_ROLES: Role[] = ["venue", "couple"];
+const VALID_ROLES: Role[] = ["venue", "couple", "supplier"];
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Email e password são obrigatórios." }, { status: 400 });
   }
   if (!role) {
-    return NextResponse.json({ error: "Escolhe se és quinta ou casal." }, { status: 400 });
+    return NextResponse.json({ error: "Escolhe o tipo de conta (quinta, casal ou fornecedor)." }, { status: 400 });
   }
 
   const supabase = await createSupabaseServerClient();
