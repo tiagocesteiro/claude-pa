@@ -911,6 +911,21 @@ export async function assertRequirementAccess(
   throw notFound("Requirement"); // hide from unrelated suppliers
 }
 
+/**
+ * Gate for the catering dietary aggregate (per-table dietary COUNTS of the final
+ * dinner layout, no names). Only the venue/admin (coordinator + RGPD controller)
+ * and the wedding's **catering** supplier may see it — every other role, incl.
+ * non-catering suppliers, is denied. Dietary is special-category data, so this
+ * channel is deliberately narrow.
+ */
+export async function assertDietaryAccess(actor: Actor, weddingId: string): Promise<void> {
+  const wr = await getWeddingRole(actor, weddingId);
+  if (!wr) throw notFound("Wedding");
+  if (wr.role === "venue" || wr.role === "admin") return;
+  if (wr.role === "supplier" && wr.service === "catering") return;
+  throw new AccessError(403, "Apenas a quinta e o catering veem as dietas.");
+}
+
 /** A supplier is wedding-owned. */
 export async function assertSupplierAccess(
   actor: Actor,

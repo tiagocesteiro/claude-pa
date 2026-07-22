@@ -6,6 +6,7 @@ import { PageShell, Card, Badge, Button, Input, Stat } from "@/components/ui";
 import WeddingParticipantsCard from "@/components/venue/WeddingParticipantsCard";
 import WeddingServicesCard from "@/components/venue/WeddingServicesCard";
 import RequirementsPanel from "@/components/requirements/RequirementsPanel";
+import DietaryByTableCard from "@/components/catering/DietaryByTableCard";
 
 interface Material {
   id: string;
@@ -161,6 +162,9 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
         role="venue"
         moments={moments.map((m) => ({ id: m.id, label: momentTitle(m) }))}
       />
+
+      {/* Dietary aggregate (catering) — renders only when there's a final dinner seating */}
+      <DietaryByTableCard weddingId={view.id} />
 
       {/* Material summary */}
       <Card style={{ marginBottom: 20 }}>

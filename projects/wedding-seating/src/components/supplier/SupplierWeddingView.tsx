@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Badge } from "@/components/ui";
 import RequirementsPanel from "@/components/requirements/RequirementsPanel";
+import DietaryByTableCard from "@/components/catering/DietaryByTableCard";
 
 interface View {
   id: string;
@@ -104,6 +105,12 @@ export default function SupplierWeddingView({ weddingId }: { weddingId: string }
           </ul>
         )}
       </Card>
+
+      {view.service === "catering" && (
+        <div style={{ marginTop: 20 }}>
+          <DietaryByTableCard weddingId={weddingId} />
+        </div>
+      )}
 
       <div style={{ marginTop: 20 }}>
         <RequirementsPanel
