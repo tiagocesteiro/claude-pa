@@ -70,11 +70,13 @@ export default function RequirementsPanel({
   role,
   moments = [],
   title = "Requisitos & pedidos",
+  reloadKey = 0,
 }: {
   weddingId: string;
   role: "venue" | "supplier" | "couple";
   moments?: { id: string; label: string }[];
   title?: string;
+  reloadKey?: number;
 }) {
   const [items, setItems] = useState<Requirement[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
@@ -103,7 +105,7 @@ export default function RequirementsPanel({
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, reloadKey]);
 
   function supplierName(id: string | null): string {
     return suppliers.find((s) => s.id === id)?.name ?? "Fornecedor";

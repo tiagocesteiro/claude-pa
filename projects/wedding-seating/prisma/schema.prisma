@@ -31,7 +31,28 @@ model Venue {
   layoutTemplates LayoutTemplate[]
   weddings        Wedding[]
   decorItems      DecorItem[]
+  reqTemplates    RequirementTemplate[]
   createdAt       DateTime         @default(now())
+}
+
+/// A venue's reusable request/instruction template. The venue defines these once
+/// (e.g. "Catering: confirmar nº de mesas + metros lineares"; "DJ: indicar
+/// tomadas e zona de montagem") and, for any wedding, sends the chosen ones to
+/// the matching suppliers — each becomes a WeddingRequirement addressed to that
+/// wedding's supplier slot for `service` (or to the couple when `service` is null).
+model RequirementTemplate {
+  id        String   @id @default(cuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  kind      String   @default("request") // "request" (pedido) | "question" (dúvida)
+  service   String? // target supplier service (catering|dj|photo|…); null → the couple
+  title     String
+  detail    String?
+  data      Json? // structured defaults, e.g. { tables, linearMeters, time }
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([venueId])
 }
 
 model TableType {

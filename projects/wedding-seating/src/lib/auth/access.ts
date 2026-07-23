@@ -181,6 +181,21 @@ export async function assertTemplateAccess(
   await assertVenueAccess(actor, tpl.venueId, mode);
 }
 
+/** A RequirementTemplate is venue-owned (the venue's reusable request library) —
+ * same rule as the decor catalog: venue writes; couple reads a venue it booked. */
+export async function assertRequirementTemplateAccess(
+  actor: Actor,
+  templateId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const t = await prisma.requirementTemplate.findUnique({
+    where: { id: templateId },
+    select: { venueId: true },
+  });
+  if (!t) throw notFound("Template");
+  await assertVenueAccess(actor, t.venueId, mode);
+}
+
 export async function assertTableTypeAccess(
   actor: Actor,
   tableTypeId: string,

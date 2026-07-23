@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageShell, Card, Badge, Button, Input, Stat } from "@/components/ui";
 import WeddingParticipantsCard from "@/components/venue/WeddingParticipantsCard";
 import WeddingServicesCard from "@/components/venue/WeddingServicesCard";
+import SendTemplatesCard from "@/components/venue/SendTemplatesCard";
 import RequirementsPanel from "@/components/requirements/RequirementsPanel";
 import DietaryByTableCard from "@/components/catering/DietaryByTableCard";
 import ActivityFeed from "@/components/activity/ActivityFeed";
@@ -57,6 +58,7 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [activeMomentId, setActiveMomentId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, { name: string; qty: string; note: string }>>({});
+  const [reqRefresh, setReqRefresh] = useState(0);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/venue/weddings/${weddingId}`);
@@ -157,11 +159,15 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
       {/* Services & responsibility matrix */}
       <WeddingServicesCard weddingId={view.id} />
 
+      {/* Send request templates to this wedding's suppliers */}
+      <SendTemplatesCard weddingId={view.id} onSent={() => setReqRefresh((n) => n + 1)} />
+
       {/* Interactions ledger (SSOT) */}
       <RequirementsPanel
         weddingId={view.id}
         role="venue"
         moments={moments.map((m) => ({ id: m.id, label: momentTitle(m) }))}
+        reloadKey={reqRefresh}
       />
 
       {/* Dietary aggregate (catering) — renders only when there's a final dinner seating */}
