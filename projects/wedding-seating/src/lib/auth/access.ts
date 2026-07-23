@@ -992,8 +992,8 @@ export async function assertSupplierAccess(
   await assertWeddingAccess(actor, s.weddingId, mode);
 }
 
-/** A DecorItem is venue-owned (the venue's catalog) — venue writes; couple reads
- * a venue it has booked (same rule as floor plans / templates). */
+/** A DecorItem is owned by EITHER a venue (venue writes; couple reads a booked
+ * venue) OR a supplier rental account (only that supplier account, or admin). */
 export async function assertDecorItemAccess(
   actor: Actor,
   decorItemId: string,
@@ -1001,9 +1001,15 @@ export async function assertDecorItemAccess(
 ): Promise<void> {
   const item = await prisma.decorItem.findUnique({
     where: { id: decorItemId },
-    select: { venueId: true },
+    select: { ownerRole: true, venueId: true, supplierProfileId: true },
   });
   if (!item) throw notFound("Decor item");
+  if (item.ownerRole === "supplier") {
+    if (actor.role === "admin") return;
+    if (actor.role === "supplier" && item.supplierProfileId === actor.userId) return;
+    throw notFound("Decor item"); // not yours — hide it
+  }
+  if (!item.venueId) throw notFound("Decor item");
   await assertVenueAccess(actor, item.venueId, mode);
 }
 

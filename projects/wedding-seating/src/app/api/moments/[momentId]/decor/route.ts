@@ -35,16 +35,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ momentI
   const quantity = Number.isFinite(Number(b?.quantity)) && Number(b.quantity) > 0 ? Math.floor(Number(b.quantity)) : 1;
 
   if (b?.decorItemId) {
-    // The catalog item must belong to the wedding's venue.
+    // The catalog item must belong to the wedding's venue OR to a decor supplier
+    // assigned to the wedding (an external rental company).
     const moment = await getMoment(momentId);
     const wedding = moment
-      ? await prisma.wedding.findUnique({ where: { id: moment.weddingId }, select: { venueId: true } })
+      ? await prisma.wedding.findUnique({
+          where: { id: moment.weddingId },
+          select: { venueId: true, suppliers: { where: { service: "decor" }, select: { profileId: true } } },
+        })
       : null;
     const item = await prisma.decorItem.findUnique({
       where: { id: b.decorItemId },
-      select: { venueId: true, quantity: true, name: true },
+      select: { ownerRole: true, venueId: true, supplierProfileId: true, quantity: true, name: true },
     });
-    if (!item || item.venueId !== wedding?.venueId) {
+    const decorProfileIds = new Set((wedding?.suppliers ?? []).map((s) => s.profileId).filter(Boolean));
+    const belongs =
+      item &&
+      (item.ownerRole === "venue"
+        ? item.venueId === wedding?.venueId
+        : item.supplierProfileId != null && decorProfileIds.has(item.supplierProfileId));
+    if (!item || !belongs) {
       return NextResponse.json({ error: "item de decoração inválido" }, { status: 400 });
     }
     // Stock guard: never let the couple request more than the venue has available.

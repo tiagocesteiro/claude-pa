@@ -481,19 +481,26 @@ model MomentDecor {
 
 /// The venue's decoration catalog (dataset). Venue-owned; the couple picks items
 /// from it per moment (and may also add their own custom MomentDecor lines).
+/// A decoration catalog item. Owned by EITHER a venue (in-house decor) OR a
+/// supplier account (an external rental company, ownerRole "supplier"). A wedding
+/// offers the couple the venue's catalog PLUS the catalog of its assigned decor
+/// supplier — each MomentDecor line can reference an item from either source.
 model DecorItem {
-  id          String        @id @default(cuid())
-  venueId     String
-  venue       Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  name        String
-  category    String?
-  image       String? // optional Supabase Storage object path
-  price       Float?
-  quantity    Int? // how many the venue has available (informational)
-  createdAt   DateTime      @default(now())
-  momentDecor MomentDecor[]
+  id                String        @id @default(cuid())
+  ownerRole         String        @default("venue") // "venue" | "supplier"
+  venueId           String?
+  venue             Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  supplierProfileId String? // the rental company's account (Profile.id) when ownerRole == "supplier"
+  name              String
+  category          String?
+  image             String? // optional Supabase Storage object path
+  price             Float?
+  quantity          Int? // how many are available (informational / stock guard)
+  createdAt         DateTime      @default(now())
+  momentDecor       MomentDecor[]
 
   @@index([venueId])
+  @@index([supplierProfileId])
 }
 
 model Group {

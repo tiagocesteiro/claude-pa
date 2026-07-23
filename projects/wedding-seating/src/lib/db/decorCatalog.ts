@@ -5,20 +5,40 @@ import { prisma } from "./client";
  * moment. Tenancy gated by the route (venue writes; couple reads its booked venue). */
 
 export function listDecorItems(venueId: string): Promise<DecorItem[]> {
-  return prisma.decorItem.findMany({ where: { venueId }, orderBy: { name: "asc" } });
+  return prisma.decorItem.findMany({ where: { venueId, ownerRole: "venue" }, orderBy: { name: "asc" } });
+}
+
+/** A supplier (rental company) account's own decoration catalog. */
+export function listSupplierDecorItems(profileId: string): Promise<DecorItem[]> {
+  return prisma.decorItem.findMany({ where: { supplierProfileId: profileId, ownerRole: "supplier" }, orderBy: { name: "asc" } });
 }
 
 export function getDecorItem(id: string): Promise<DecorItem | null> {
   return prisma.decorItem.findUnique({ where: { id } });
 }
 
-export function createDecorItem(
-  venueId: string,
-  input: { name: string; category?: string | null; image?: string | null; price?: number | null; quantity?: number | null }
-): Promise<DecorItem> {
+type DecorInput = { name: string; category?: string | null; image?: string | null; price?: number | null; quantity?: number | null };
+
+export function createDecorItem(venueId: string, input: DecorInput): Promise<DecorItem> {
   return prisma.decorItem.create({
     data: {
+      ownerRole: "venue",
       venueId,
+      name: input.name,
+      category: input.category ?? null,
+      image: input.image ?? null,
+      price: input.price ?? null,
+      quantity: input.quantity ?? null,
+    },
+  });
+}
+
+/** Create an item in a supplier (rental company) account's catalog. */
+export function createSupplierDecorItem(profileId: string, input: DecorInput): Promise<DecorItem> {
+  return prisma.decorItem.create({
+    data: {
+      ownerRole: "supplier",
+      supplierProfileId: profileId,
       name: input.name,
       category: input.category ?? null,
       image: input.image ?? null,

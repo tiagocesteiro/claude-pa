@@ -6,6 +6,7 @@ import { PageShell, Card, Field, Input, Select, Button, Stat, Badge } from "@/co
 import VenueCalendar from "@/components/venue/VenueCalendar";
 import { useUnseenCounts, UnseenPill } from "@/components/activity/UnseenBadge";
 import SupplierTemplatesCatalog from "@/components/supplier/SupplierTemplatesCatalog";
+import SupplierDecorCatalog from "@/components/supplier/SupplierDecorCatalog";
 
 interface Venue {
   id: string;
@@ -147,6 +148,7 @@ function SupplierSection() {
       </ul>
 
       <SupplierTemplatesCatalog />
+      <SupplierDecorCatalog />
     </section>
   );
 }

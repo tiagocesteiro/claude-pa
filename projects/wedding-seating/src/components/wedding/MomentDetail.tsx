@@ -41,6 +41,7 @@ interface CatalogItem {
   price: number | null;
   image: string | null;
   quantity: number | null;
+  source?: string; // "Quinta" or the rental company's name
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -97,13 +98,11 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
     let cancelled = false;
     (async () => {
       await Promise.all([loadMoment(), loadSuppliers()]);
-      const wRes = await fetch(`/api/weddings/${weddingId}`);
-      if (!cancelled && wRes.ok) {
-        const w = (await wRes.json()) as { venueId: string | null };
-        if (w.venueId) {
-          const cRes = await fetch(`/api/venues/${w.venueId}/decor-items`);
-          if (cRes.ok) setCatalog(((await cRes.json()) as { items: CatalogItem[] }).items ?? []);
-        }
+      // The wedding's decoration catalog = the venue's items PLUS the assigned
+      // decor supplier's (rental company), each tagged with its source.
+      const cRes = await fetch(`/api/weddings/${weddingId}/decor-catalog`);
+      if (!cancelled && cRes.ok) {
+        setCatalog(((await cRes.json()) as { items: CatalogItem[] }).items ?? []);
       }
       // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load
       if (!cancelled) setLoading(false);
@@ -366,6 +365,9 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
                       <span style={{ width: "100%", height: 84, borderRadius: 4, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 11 }}>sem foto</span>
                     )}
                     <span style={{ fontSize: 12, lineHeight: 1.2, color: "var(--heading)" }}>{c.name}</span>
+                    {c.source && (
+                      <span style={{ fontSize: 10, color: "var(--accent-strong, #54704c)", fontWeight: 600 }}>{c.source}</span>
+                    )}
                     <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                       {c.quantity != null ? `disp. ${c.quantity}` : ""}
                       {c.price != null ? `${c.quantity != null ? " · " : ""}${c.price} €` : ""}
