@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listRequirements, createRequirement, type RequirementScope } from "@/lib/db/requirements";
+import { listRequirements, createRequirement, REQUIREMENT_KINDS, type RequirementScope, type RequirementKind } from "@/lib/db/requirements";
 import { getWeddingRole, canConfirmRequirement } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 import { AccessError } from "@/lib/auth/access";
@@ -22,8 +22,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         : { kind: "all" };
     const requirements = (await listRequirements(id, scope)).map((r) => ({
       ...r,
-      // Whether THIS actor may confirm the requirement now (drives the button).
-      canAgree: r.status === "open" && canConfirmRequirement(wr, actor.userId, r),
+      // A confirmation handshake only applies to "pedidos" (requests), never dúvidas.
+      canAgree: r.kind === "request" && r.status === "open" && canConfirmRequirement(wr, actor.userId, r),
     }));
     return NextResponse.json({ requirements });
   } catch (e) {
@@ -42,9 +42,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const title = typeof b?.title === "string" && b.title.trim() ? b.title.trim() : null;
     if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
 
+    const kind: RequirementKind = REQUIREMENT_KINDS.includes(b?.kind) ? b.kind : "request";
+
     let toRole = typeof b?.toRole === "string" ? b.toRole : null;
     const toSupplierId = typeof b?.toSupplierId === "string" && b.toSupplierId ? b.toSupplierId : null;
-    // A supplier's need defaults to being addressed to the venue.
+    // A supplier's need/question defaults to being addressed to the venue.
     if (wr.role === "supplier" && !toRole && !toSupplierId) toRole = "venue";
 
     // Optional structured fields — coerce numbers, keep only what's provided.
@@ -56,6 +58,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const requirement = await createRequirement(id, {
       title,
+      kind,
       fromRole: wr.role,
       fromProfileId: actor.userId,
       toRole,
@@ -71,7 +74,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       action: "requirement.created",
       entityType: "requirement",
       entityId: requirement.id,
-      summary: `Criou o pedido «${title}»${requirement.detail ? `: ${requirement.detail}` : ""}`,
+      summary: `${kind === "question" ? "Colocou a dúvida" : "Criou o pedido"} «${title}»${requirement.detail ? `: ${requirement.detail}` : ""}`,
       supplierId: toSupplierId ?? (wr.role === "supplier" ? wr.supplierId ?? null : null),
     });
     return NextResponse.json({ requirement }, { status: 201 });

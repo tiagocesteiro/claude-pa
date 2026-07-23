@@ -211,6 +211,7 @@ model WeddingRequirement {
   moment        WeddingMoment?  @relation(fields: [momentId], references: [id], onDelete: SetNull)
   serviceId     String?
   service       WeddingService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  kind          String  @default("request") // "request" (pedido) | "question" (dúvida)
   fromRole      String // "venue" | "couple" | "supplier" — who raised it
   fromProfileId String? // the raising account (attribution)
   toRole        String? // "venue" | "couple" | "supplier" — who it's addressed to

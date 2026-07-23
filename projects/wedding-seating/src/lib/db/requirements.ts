@@ -54,11 +54,15 @@ export interface RequirementData {
   time?: string;
 }
 
+export type RequirementKind = "request" | "question";
+export const REQUIREMENT_KINDS: RequirementKind[] = ["request", "question"];
+
 export function createRequirement(
   weddingId: string,
   input: {
     title: string;
     fromRole: string;
+    kind?: RequirementKind;
     fromProfileId?: string | null;
     toRole?: string | null;
     toSupplierId?: string | null;
@@ -73,6 +77,7 @@ export function createRequirement(
     data: {
       weddingId,
       title: input.title,
+      kind: input.kind ?? "request",
       fromRole: input.fromRole,
       fromProfileId: input.fromProfileId ?? null,
       toRole: input.toRole ?? null,

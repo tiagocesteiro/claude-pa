@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Card, Button, Input, Badge } from "@/components/ui";
+import { REQUIREMENT_KIND_LABELS, requirementStatusLabel } from "@/lib/labels";
 
 interface Comment {
   id: string;
@@ -17,6 +18,7 @@ interface ReqData {
 interface Requirement {
   id: string;
   title: string;
+  kind: string; // request | question
   detail: string | null;
   data: ReqData | null;
   status: string; // open | agreed | done
@@ -48,14 +50,6 @@ const KIND_LABELS: Record<string, string> = {
   ceremony: "Cerimónia", cocktail: "Cocktail", dinner: "Jantar", dance: "Dança",
 };
 const ROLE_LABELS: Record<string, string> = { venue: "Quinta", couple: "Noivos", supplier: "Fornecedor" };
-const STATUS: { value: string; label: string; tone: "neutral" | "warning" | "success" }[] = [
-  { value: "open", label: "Aberto", tone: "warning" },
-  { value: "agreed", label: "Acordado", tone: "neutral" },
-  { value: "done", label: "Feito", tone: "success" },
-];
-function statusMeta(v: string) {
-  return STATUS.find((s) => s.value === v) ?? STATUS[0];
-}
 function serviceLabel(kind: string, name: string | null): string {
   return name ?? KIND_LABELS[kind] ?? kind;
 }
@@ -88,6 +82,7 @@ export default function RequirementsPanel({
   const [error, setError] = useState<string | null>(null);
 
   // New-requirement form
+  const [nKind, setNKind] = useState<"request" | "question">("request");
   const [nTitle, setNTitle] = useState("");
   const [nDetail, setNDetail] = useState("");
   const [nTarget, setNTarget] = useState(""); // venue only: "" | "couple" | supplierId
@@ -123,7 +118,7 @@ export default function RequirementsPanel({
     if (!nTitle.trim()) return;
     setBusy(true);
     setError(null);
-    const body: Record<string, unknown> = { title: nTitle.trim(), detail: nDetail.trim() || null };
+    const body: Record<string, unknown> = { title: nTitle.trim(), detail: nDetail.trim() || null, kind: nKind };
     if (nMoment) body.momentId = nMoment;
     if (role === "venue" && nTarget) {
       if (nTarget === "couple") body.toRole = "couple";
@@ -209,14 +204,21 @@ export default function RequirementsPanel({
       <h2 style={{ marginTop: 0, marginBottom: 4 }}>{title}</h2>
       <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
         {role === "supplier"
-          ? "Indica à quinta o que precisas (ex.: “cocktail: 8 mesas + 12 m lineares”). Segue o estado até ficar acordado."
-          : "Pedidos e necessidades entre a quinta, os noivos e os fornecedores — a fonte única da verdade."}
+          ? "Indica à quinta o que precisas (pedido) ou coloca uma dúvida. Segue o estado até ficar resolvido."
+          : "Pedidos e dúvidas entre a quinta, os noivos e os fornecedores — a fonte única da verdade."}
       </p>
 
       {/* New requirement */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end", marginBottom: 14 }}>
-        <label style={{ fontSize: 13, flex: "1 1 220px" }}>
-          Pedido <Input value={nTitle} onChange={(e) => setNTitle(e.target.value)} placeholder="ex.: 8 mesas + 12 m lineares" style={{ width: "100%" }} />
+        <label style={{ fontSize: 13 }}>
+          Tipo{" "}
+          <select className="input" value={nKind} onChange={(e) => setNKind(e.target.value as "request" | "question")}>
+            <option value="request">Pedido</option>
+            <option value="question">Dúvida</option>
+          </select>
+        </label>
+        <label style={{ fontSize: 13, flex: "1 1 200px" }}>
+          {nKind === "question" ? "Dúvida" : "Pedido"} <Input value={nTitle} onChange={(e) => setNTitle(e.target.value)} placeholder={nKind === "question" ? "ex.: a quinta fornece toalhas?" : "ex.: 8 mesas + 12 m lineares"} style={{ width: "100%" }} />
         </label>
         {role === "venue" && (
           <label style={{ fontSize: 13 }}>
@@ -239,11 +241,13 @@ export default function RequirementsPanel({
         )}
         <Button variant="primary" onClick={create} disabled={busy || !nTitle.trim()}>Criar</Button>
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end", marginBottom: 10 }}>
-        <label style={{ fontSize: 13 }}>Nº mesas <Input type="number" min="0" value={nTables} onChange={(e) => setNTables(e.target.value)} placeholder="—" style={{ width: 80 }} /></label>
-        <label style={{ fontSize: 13 }}>Metros lineares <Input type="number" min="0" value={nMeters} onChange={(e) => setNMeters(e.target.value)} placeholder="—" style={{ width: 90 }} /></label>
-        <label style={{ fontSize: 13 }}>Hora <Input type="time" value={nTime} onChange={(e) => setNTime(e.target.value)} style={{ width: 110 }} /></label>
-      </div>
+      {nKind === "request" && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end", marginBottom: 10 }}>
+          <label style={{ fontSize: 13 }}>Nº mesas <Input type="number" min="0" value={nTables} onChange={(e) => setNTables(e.target.value)} placeholder="—" style={{ width: 80 }} /></label>
+          <label style={{ fontSize: 13 }}>Metros lineares <Input type="number" min="0" value={nMeters} onChange={(e) => setNMeters(e.target.value)} placeholder="—" style={{ width: 90 }} /></label>
+          <label style={{ fontSize: 13 }}>Hora <Input type="time" value={nTime} onChange={(e) => setNTime(e.target.value)} style={{ width: 110 }} /></label>
+        </div>
+      )}
       <label style={{ fontSize: 13, display: "block", marginBottom: 14 }}>
         <Input value={nDetail} onChange={(e) => setNDetail(e.target.value)} placeholder="Detalhe (opcional)" style={{ width: "100%" }} />
       </label>
@@ -254,12 +258,14 @@ export default function RequirementsPanel({
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
           {items.map((r) => {
-            const st = statusMeta(r.status);
+            const statusTone = r.status === "done" ? "success" : r.status === "agreed" ? "neutral" : "warning";
+            const statusLabel = requirementStatusLabel(r.kind, r.status);
             return (
               <li key={r.id} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 12 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <Badge tone={r.kind === "question" ? "accent" : "neutral"}>{REQUIREMENT_KIND_LABELS[r.kind] ?? r.kind}</Badge>
                   <strong style={{ flex: "1 1 auto" }}>{r.title}</strong>
-                  <Badge tone={st.tone}>{st.label}</Badge>
+                  <Badge tone={statusTone}>{statusLabel}</Badge>
                   {r.status === "agreed" && r.agreedByRole && (
                     <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
                       por {ROLE_LABELS[r.agreedByRole] ?? r.agreedByRole}
@@ -296,7 +302,9 @@ export default function RequirementsPanel({
                     <Button variant="primary" size="sm" onClick={() => setStatus(r.id, "agreed")} disabled={busy}>Confirmar acordo</Button>
                   )}
                   {r.status !== "done" && (
-                    <Button variant="secondary" size="sm" onClick={() => setStatus(r.id, "done")} disabled={busy}>Marcar feito</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setStatus(r.id, "done")} disabled={busy}>
+                      {r.kind === "question" ? "Marcar resolvida" : "Marcar feito"}
+                    </Button>
                   )}
                   {r.status !== "open" && (
                     <Button variant="ghost" size="sm" onClick={() => setStatus(r.id, "open")} disabled={busy}>Reabrir</Button>

@@ -46,6 +46,23 @@ export const REQUIREMENT_STATUS_LABELS: Record<string, string> = {
   done: "Feito",
 };
 
+export const REQUIREMENT_KIND_LABELS: Record<string, string> = {
+  request: "Pedido",
+  question: "Dúvida",
+};
+
+/** Status label depends on the kind: a "dúvida" (question) reads as
+ * "Por responder" → "Resolvida"; a "pedido" (request) as "Aberto" → "Acordado"
+ * → "Feito". */
+export function requirementStatusLabel(kind: string, status: string): string {
+  if (kind === "question") {
+    if (status === "open") return "Por responder";
+    if (status === "done") return "Resolvida";
+    return REQUIREMENT_STATUS_LABELS[status] ?? status; // "agreed" shouldn't occur
+  }
+  return REQUIREMENT_STATUS_LABELS[status] ?? status;
+}
+
 export function serviceKindLabel(kind: string): string {
   return SERVICE_KIND_LABELS[kind] ?? kind;
 }

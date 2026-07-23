@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, Badge } from "@/components/ui";
+import { useEffect, useMemo, useState } from "react";
+import { Card, Badge, Button } from "@/components/ui";
 import {
   ROLE_LABELS,
   REQUIREMENT_STATUS_LABELS,
@@ -51,11 +51,24 @@ function fmtWhen(iso: string): string {
   return d.toLocaleString("pt-PT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+/** Actions that represent a change of STATE (of a pedido/dúvida, service, task,
+ * or the final layout) — the "Só estados" filter keeps only these. */
+const STATE_ACTIONS = new Set([
+  "requirement.status_changed",
+  "requirement.agreed",
+  "requirement.reopened",
+  "service.status_changed",
+  "task.completed",
+  "task.reopened",
+  "layout.final_set",
+]);
+
 /** The wedding's activity timeline (scoped server-side per role). Read-only. */
 export default function ActivityFeed({ weddingId, title = "Atividade" }: { weddingId: string; title?: string }) {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "state">("all");
 
   useEffect(() => {
     (async () => {
@@ -72,21 +85,33 @@ export default function ActivityFeed({ weddingId, title = "Atividade" }: { weddi
   }, [weddingId]);
 
   const seenThreshold = lastSeenAt ? new Date(lastSeenAt).getTime() : 0;
+  const shown = useMemo(
+    () => (filter === "state" ? events.filter((e) => STATE_ACTIONS.has(e.action)) : events),
+    [events, filter]
+  );
 
   return (
     <Card style={{ marginBottom: 20 }}>
-      <h2 style={{ marginTop: 0, marginBottom: 4 }}>{title}</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <h2 style={{ marginTop: 0, marginBottom: 4 }}>{title}</h2>
+        <div style={{ display: "flex", gap: 6 }}>
+          <Button variant={filter === "all" ? "primary" : "secondary"} size="sm" onClick={() => setFilter("all")}>Tudo</Button>
+          <Button variant={filter === "state" ? "primary" : "secondary"} size="sm" onClick={() => setFilter("state")}>Só estados</Button>
+        </div>
+      </div>
       <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
-        Registo de todas as alterações e trocas de informação. Nada se perde.
+        Registo de todas as alterações e trocas de informação (pedidos, dúvidas, estados). Nada se perde.
       </p>
 
       {loading ? (
         <p style={{ color: "var(--text-muted)", fontSize: 13 }}>A carregar…</p>
-      ) : events.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Ainda sem atividade registada.</p>
+      ) : shown.length === 0 ? (
+        <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
+          {filter === "state" ? "Sem alterações de estado registadas." : "Ainda sem atividade registada."}
+        </p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-          {events.map((e) => {
+          {shown.map((e) => {
             const changed = e.changes ? Object.entries(e.changes) : [];
             const isNew = new Date(e.createdAt).getTime() > seenThreshold;
             return (

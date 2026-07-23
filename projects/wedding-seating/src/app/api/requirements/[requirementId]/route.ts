@@ -3,11 +3,9 @@ import { getRequirement, updateRequirement, deleteRequirement, REQUIREMENT_STATU
 import { assertRequirementAccess, canConfirmRequirement, AccessError, type WeddingRole } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 import { recordEvent, diff } from "@/lib/db/audit";
-import { ROLE_LABELS } from "@/lib/labels";
+import { ROLE_LABELS, requirementStatusLabel } from "@/lib/labels";
 
 export const runtime = "nodejs";
-
-const STATUS_LABELS: Record<string, string> = { open: "Aberto", agreed: "Acordado", done: "Feito" };
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ requirementId: string }> }) {
   const actor = await requireActor();
@@ -76,8 +74,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ requir
   );
   if (Object.keys(changes).length > 0) {
     const statusChanged = before.status !== requirement.status;
+    const noun = before.kind === "question" ? "a dúvida" : "o pedido";
     let action = "requirement.updated";
-    let summary = `Editou o pedido «${requirement.title}»`;
+    let summary = `Editou ${noun} «${requirement.title}»`;
     if (autoReopen) {
       action = "requirement.reopened";
       summary = `Reabriu «${requirement.title}» ao editá-lo depois de acordado`;
@@ -86,7 +85,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ requir
       summary = `Confirmou o acordo de «${requirement.title}» (${ROLE_LABELS[wr.role] ?? wr.role})`;
     } else if (statusChanged) {
       action = "requirement.status_changed";
-      summary = `Marcou «${before.title}» como ${STATUS_LABELS[requirement.status] ?? requirement.status}`;
+      summary = `Marcou ${noun} «${before.title}» como ${requirementStatusLabel(before.kind, requirement.status)}`;
     }
     await recordEvent({
       weddingId: before.weddingId,

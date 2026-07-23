@@ -76,6 +76,21 @@ it("lifecycle status + comments", async () => {
   expect(withComment?.comments[0].authorRole).toBe("venue");
 });
 
+it("createRequirement stores the kind (pedido/dúvida), defaulting to request", async () => {
+  const { requirementStatusLabel } = await import("@/lib/labels");
+  const w = await createWedding({ couple: "Kinds" });
+  const pedido = await createRequirement(w.id, { title: "Mesas", fromRole: "supplier" });
+  const duvida = await createRequirement(w.id, { title: "Toalhas?", fromRole: "supplier", kind: "question" });
+  expect(pedido.kind).toBe("request");
+  expect(duvida.kind).toBe("question");
+
+  // Kind-aware status labels.
+  expect(requirementStatusLabel("request", "open")).toBe("Aberto");
+  expect(requirementStatusLabel("request", "done")).toBe("Feito");
+  expect(requirementStatusLabel("question", "open")).toBe("Por responder");
+  expect(requirementStatusLabel("question", "done")).toBe("Resolvida");
+});
+
 it("createRequirement stores optional structured data (and drops empty)", async () => {
   const w = await createWedding({ couple: "Req Data" });
   const r = await createRequirement(w.id, {

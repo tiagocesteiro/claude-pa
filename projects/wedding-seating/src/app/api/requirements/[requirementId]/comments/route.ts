@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ require
       action: "requirement.comment_added",
       entityType: "requirement",
       entityId: requirementId,
-      summary: `Respondeu em «${req_.title}»: ${text}`,
+      summary: `Respondeu ${req_.kind === "question" ? "à dúvida" : "em"} «${req_.title}»: ${text}`,
       supplierId: req_.toSupplierId ?? supplierId,
     });
   }
