@@ -4,6 +4,7 @@ import { getMoment } from "@/lib/db/moments";
 import { listMomentDecor, addDecorFromCatalog, addCustomDecor } from "@/lib/db/momentDecor";
 import { assertMomentAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
@@ -53,11 +54,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ momentI
         { status: 400 }
       );
     }
-    return NextResponse.json({ decor: await addDecorFromCatalog(momentId, b.decorItemId, quantity) }, { status: 201 });
+    const decor = await addDecorFromCatalog(momentId, b.decorItemId, quantity);
+    if (moment) {
+      await recordEvent({
+        weddingId: moment.weddingId, actor, action: "decor.added", entityType: "decor", entityId: decor.id,
+        summary: `Adicionou decoração «${item.name}»${quantity > 1 ? ` ×${quantity}` : ""}`,
+      });
+    }
+    return NextResponse.json({ decor }, { status: 201 });
   }
 
   const name = typeof b?.name === "string" && b.name.trim() ? b.name.trim() : null;
   if (!name) return NextResponse.json({ error: "decorItemId ou name required" }, { status: 400 });
   const note = typeof b?.note === "string" && b.note.trim() ? b.note.trim() : null;
-  return NextResponse.json({ decor: await addCustomDecor(momentId, { name, note, quantity }) }, { status: 201 });
+  const decor = await addCustomDecor(momentId, { name, note, quantity });
+  const m = await getMoment(momentId);
+  if (m) {
+    await recordEvent({
+      weddingId: m.weddingId, actor, action: "decor.added", entityType: "decor", entityId: decor.id,
+      summary: `Adicionou decoração «${name}»${quantity > 1 ? ` ×${quantity}` : ""}`,
+    });
+  }
+  return NextResponse.json({ decor }, { status: 201 });
 }

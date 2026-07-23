@@ -4,6 +4,7 @@ import { importGuests } from "@/lib/import/importGuests";
 import { getWedding } from "@/lib/db/weddings";
 import { assertWeddingAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
 
 // Node runtime (exceljs is Node-only); larger serverless timeout for parsing a
 // large guest workbook (Fase 0 — deploy readiness).
@@ -38,5 +39,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const result = await importGuests(id, rows);
+  await recordEvent({
+    weddingId: id, actor, action: "guests.imported", entityType: "guest",
+    summary: `Importou ${result.guests} convidados${result.groups ? ` (${result.groups} grupos)` : ""}`,
+  });
   return NextResponse.json(result);
 }

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { updateMaterial, deleteMaterial } from "@/lib/db/materials";
 import { assertMaterialAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
+import { prisma } from "@/lib/db/client";
 
 export const runtime = "nodejs";
 
@@ -31,6 +33,20 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   } catch (e) {
     return accessErrorResponse(e);
   }
+  const before = await prisma.momentMaterial.findUnique({
+    where: { id },
+    select: { name: true, moment: { select: { weddingId: true } } },
+  });
   await deleteMaterial(id);
+  if (before) {
+    await recordEvent({
+      weddingId: before.moment.weddingId,
+      actor,
+      action: "material.removed",
+      entityType: "material",
+      entityId: id,
+      summary: `Removeu material «${before.name}»`,
+    });
+  }
   return NextResponse.json({ ok: true });
 }

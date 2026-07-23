@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { updateMomentDecor, deleteMomentDecor } from "@/lib/db/momentDecor";
 import { assertMomentDecorAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
+import { prisma } from "@/lib/db/client";
 
 export const runtime = "nodejs";
 
@@ -32,6 +34,20 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ deco
   } catch (e) {
     return accessErrorResponse(e);
   }
+  const before = await prisma.momentDecor.findUnique({
+    where: { id: decorId },
+    select: { name: true, decorItem: { select: { name: true } }, moment: { select: { weddingId: true } } },
+  });
   await deleteMomentDecor(decorId);
+  if (before) {
+    await recordEvent({
+      weddingId: before.moment.weddingId,
+      actor,
+      action: "decor.removed",
+      entityType: "decor",
+      entityId: decorId,
+      summary: `Removeu decoração «${before.decorItem?.name ?? before.name ?? "item"}»`,
+    });
+  }
   return NextResponse.json({ ok: true });
 }

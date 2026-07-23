@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { listMoments, createMoment } from "@/lib/db/moments";
 import { assertWeddingAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
@@ -31,5 +32,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const b = await req.json().catch(() => ({}));
   const title = typeof b?.title === "string" && b.title.trim() ? b.title.trim() : null;
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
-  return NextResponse.json({ moment: await createMoment(id, title) }, { status: 201 });
+  const moment = await createMoment(id, title);
+  await recordEvent({
+    weddingId: id, actor, action: "moment.created", entityType: "moment", entityId: moment.id,
+    summary: `Adicionou o momento «${title}»`,
+  });
+  return NextResponse.json({ moment }, { status: 201 });
 }

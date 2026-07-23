@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { listMomentMaterials, createMaterial } from "@/lib/db/materials";
 import { assertMomentVenueAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
+import { prisma } from "@/lib/db/client";
 
 export const runtime = "nodejs";
 
@@ -33,5 +35,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ momentI
   const quantity = Number.isFinite(Number(b?.quantity)) ? Number(b.quantity) : 1;
   const note = typeof b?.note === "string" && b.note.trim() ? b.note.trim() : null;
   const material = await createMaterial(momentId, { name, quantity, note });
+  const m = await prisma.weddingMoment.findUnique({ where: { id: momentId }, select: { weddingId: true } });
+  if (m) {
+    await recordEvent({
+      weddingId: m.weddingId,
+      actor,
+      action: "material.added",
+      entityType: "material",
+      entityId: material.id,
+      summary: `Adicionou material «${name}»${quantity > 1 ? ` ×${quantity}` : ""}`,
+    });
+  }
   return NextResponse.json({ material }, { status: 201 });
 }

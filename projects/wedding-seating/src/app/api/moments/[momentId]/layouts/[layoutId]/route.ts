@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { renameLayout, setFinalLayout, deleteLayout, getLayout } from "@/lib/db/layouts";
 import { assertLayoutAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,17 @@ export async function PATCH(
 
   const b = await req.json().catch(() => ({}));
   if (typeof b?.name === "string" && b.name.trim()) await renameLayout(layoutId, b.name.trim());
-  if (b?.isFinal === true) await setFinalLayout(momentId, layoutId);
+  if (b?.isFinal === true && !layout.isFinal) {
+    await setFinalLayout(momentId, layoutId);
+    await recordEvent({
+      weddingId: layout.weddingId,
+      actor,
+      action: "layout.final_set",
+      entityType: "layout",
+      entityId: layoutId,
+      summary: `Marcou o layout «${layout.name}» como final`,
+    });
+  }
   return NextResponse.json({ ok: true });
 }
 

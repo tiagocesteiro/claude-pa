@@ -5,6 +5,7 @@ import { listMomentTasks } from "@/lib/db/tasks";
 import { listMomentDecor } from "@/lib/db/momentDecor";
 import { assertMomentAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
@@ -89,7 +90,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ moment
     }
   }
 
-  return NextResponse.json({ moment: await updateMoment(momentId, fields) });
+  const updated = await updateMoment(momentId, fields);
+  if (fields.title !== undefined && fields.title !== moment.title) {
+    await recordEvent({
+      weddingId: moment.weddingId, actor, action: "moment.renamed", entityType: "moment", entityId: momentId,
+      summary: `Renomeou um momento para «${fields.title}»`,
+      changes: { title: { from: moment.title, to: fields.title } },
+    });
+  }
+  return NextResponse.json({ moment: updated });
 }
 
 /** Delete a moment (its tasks + decor cascade). */
@@ -102,6 +111,13 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ mome
   } catch (e) {
     return accessErrorResponse(e);
   }
+  const before = await getMoment(momentId);
   await deleteMoment(momentId);
+  if (before) {
+    await recordEvent({
+      weddingId: before.weddingId, actor, action: "moment.deleted", entityType: "moment", entityId: momentId,
+      summary: `Removeu o momento «${before.title ?? "sem nome"}»`,
+    });
+  }
   return NextResponse.json({ ok: true });
 }
