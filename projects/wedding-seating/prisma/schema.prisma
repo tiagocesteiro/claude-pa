@@ -411,6 +411,7 @@ model MomentMaterial {
   name      String
   quantity  Int           @default(1)
   note      String?
+  image     String? // optional example image (Supabase Storage object path) — shown in the overview
   createdAt DateTime      @default(now())
 
   @@index([momentId])

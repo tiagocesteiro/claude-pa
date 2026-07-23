@@ -1,20 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Badge, Button, Input, Stat } from "@/components/ui";
+import { imageUrlFor } from "@/lib/images";
 import WeddingParticipantsCard from "@/components/venue/WeddingParticipantsCard";
 import WeddingServicesCard from "@/components/venue/WeddingServicesCard";
 import SendTemplatesCard from "@/components/venue/SendTemplatesCard";
 import RequirementsPanel from "@/components/requirements/RequirementsPanel";
 import DietaryByTableCard from "@/components/catering/DietaryByTableCard";
 import ActivityFeed from "@/components/activity/ActivityFeed";
+import DecorGallery from "@/components/wedding/DecorGallery";
 
 interface Material {
   id: string;
   name: string;
   quantity: number;
   note: string | null;
+  image: string | null;
 }
 interface Moment {
   id: string;
@@ -23,7 +26,7 @@ interface Moment {
   startTime: string | null;
   hasSeating: boolean;
   finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
-  decor: { name: string; category: string | null; quantity: number }[];
+  decor: { name: string; category: string | null; quantity: number; image: string | null }[];
   materials: Material[];
   pendingTasks: { text: string; assignee: string; supplierId: string | null }[];
 }
@@ -59,6 +62,7 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
   const [activeMomentId, setActiveMomentId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, { name: string; qty: string; note: string }>>({});
   const [reqRefresh, setReqRefresh] = useState(0);
+  const matFileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/venue/weddings/${weddingId}`);
@@ -97,6 +101,12 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
   }
   async function removeMaterial(id: string) {
     const res = await fetch(`/api/materials/${id}`, { method: "DELETE" });
+    if (res.ok) await load();
+  }
+  async function uploadMaterialImage(id: string, file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`/api/materials/${id}/image`, { method: "POST", body: fd });
     if (res.ok) await load();
   }
 
@@ -255,14 +265,8 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 12 }}>
               <div>
-                <h4 style={{ margin: "0 0 4px", fontSize: 13, color: "var(--text-muted)" }}>Decoração</h4>
-                {m.decor.length === 0 ? (
-                  <p style={{ color: "var(--text-muted)", fontSize: 13 }}>—</p>
-                ) : (
-                  <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13 }}>
-                    {m.decor.map((d, i) => <li key={i}>{decorLabel(d)}{d.quantity > 1 ? ` ×${d.quantity}` : ""}</li>)}
-                  </ul>
-                )}
+                <h4 style={{ margin: "0 0 6px", fontSize: 13, color: "var(--text-muted)" }}>Decoração</h4>
+                <DecorGallery items={m.decor.map((d) => ({ name: decorLabel(d), image: d.image, quantity: d.quantity }))} />
               </div>
               <div>
                 <h4 style={{ margin: "0 0 4px", fontSize: 13, color: "var(--text-muted)" }}>Tarefas pendentes</h4>
@@ -285,10 +289,20 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
                 <ul style={{ listStyle: "none", padding: 0, margin: "0 0 8px", display: "flex", flexDirection: "column", gap: 4 }}>
                   {m.materials.map((mat) => (
                     <li key={mat.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                      {mat.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imageUrlFor(mat.image)} alt={mat.name} style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 6, background: "var(--surface-2, rgba(0,0,0,0.04))", padding: 2 }} />
+                      ) : null}
                       <span style={{ flex: 1 }}>
                         {mat.name}{mat.quantity > 1 ? ` ×${mat.quantity}` : ""}
                         {mat.note && <span style={{ color: "var(--text-muted)" }}> · {mat.note}</span>}
                       </span>
+                      <input
+                        ref={(el) => { matFileInputs.current[mat.id] = el; }}
+                        type="file" accept="image/*" style={{ display: "none" }}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMaterialImage(mat.id, f); }}
+                      />
+                      <Button variant="ghost" onClick={() => matFileInputs.current[mat.id]?.click()}>{mat.image ? "Trocar imagem" : "Imagem"}</Button>
                       <Button variant="ghost" onClick={() => removeMaterial(mat.id)}>Remover</Button>
                     </li>
                   ))}

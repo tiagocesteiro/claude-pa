@@ -422,8 +422,8 @@ export interface VenueWeddingView {
     startTime: string | null;
     hasSeating: boolean;
     finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
-    decor: { name: string; category: string | null; quantity: number }[];
-    materials: { id: string; name: string; quantity: number; note: string | null }[];
+    decor: { name: string; category: string | null; quantity: number; image: string | null }[];
+    materials: { id: string; name: string; quantity: number; note: string | null; image: string | null }[];
     pendingTasks: { text: string; assignee: string; supplierId: string | null }[];
   }[];
 }
@@ -453,8 +453,8 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
           startTime: true,
           hasSeating: true,
           tasks: { where: { done: false }, select: { text: true, assignee: true, supplierId: true } },
-          decor: { select: { name: true, quantity: true, decorItem: { select: { name: true, category: true } } } },
-          materials: { select: { id: true, name: true, quantity: true, note: true } },
+          decor: { select: { name: true, quantity: true, decorItem: { select: { name: true, category: true, image: true } } } },
+          materials: { select: { id: true, name: true, quantity: true, note: true, image: true } },
           layouts: {
             where: { isFinal: true },
             select: { name: true, _count: { select: { tables: true, seats: true } } },
@@ -496,6 +496,7 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
           name: d.decorItem?.name ?? d.name ?? "Item",
           category: d.decorItem?.category ?? null,
           quantity: d.quantity,
+          image: d.decorItem?.image ?? null,
         })),
         materials: m.materials,
         pendingTasks: m.tasks,

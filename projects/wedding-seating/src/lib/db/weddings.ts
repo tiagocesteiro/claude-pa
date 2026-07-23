@@ -68,7 +68,7 @@ export function getWeddingDetail(id: string) {
           tasks: { orderBy: [{ order: "asc" }, { id: "asc" }] },
           decor: {
             orderBy: { id: "asc" },
-            include: { decorItem: { select: { name: true, category: true, price: true } } },
+            include: { decorItem: { select: { name: true, category: true, price: true, image: true } } },
           },
         },
       },

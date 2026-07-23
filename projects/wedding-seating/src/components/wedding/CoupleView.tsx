@@ -9,6 +9,7 @@ import { parseElements } from "@/lib/floorplan/elements";
 import { buildPdfFilename, groupGuestsByTable } from "@/lib/plan/pdfExport";
 import { buildColorMap, type AttributeKey } from "@/lib/plan/colors";
 import { imageUrlFor } from "@/lib/images";
+import DecorGallery from "@/components/wedding/DecorGallery";
 
 const COLOR_ATTR_OPTIONS: { label: string; value: AttributeKey | "" }[] = [
   { label: "Nenhum", value: "" },
@@ -36,7 +37,7 @@ interface DecorLine {
   id: string;
   name: string | null;
   quantity: number;
-  decorItem: { name: string } | null;
+  decorItem: { name: string; image: string | null } | null;
 }
 interface Moment {
   id: string;
@@ -353,16 +354,14 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
 
             {m.decor.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <h3 style={{ margin: "0 0 6px", fontSize: 14, color: "var(--heading)" }}>Decoração</h3>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--text-muted)" }}>
-                  {m.decor.map((d) => (
-                    <li key={d.id}>
-                      {d.decorItem?.name ?? d.name ?? "Item"}
-                      {d.quantity > 1 ? ` ×${d.quantity}` : ""}
-                      {d.decorItem ? "" : " (próprio)"}
-                    </li>
-                  ))}
-                </ul>
+                <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "var(--heading)" }}>Decoração</h3>
+                <DecorGallery
+                  items={m.decor.map((d) => ({
+                    name: d.decorItem?.name ?? d.name ?? "Item",
+                    image: d.decorItem?.image ?? null,
+                    quantity: d.quantity,
+                  }))}
+                />
               </div>
             )}
 

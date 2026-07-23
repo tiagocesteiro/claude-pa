@@ -24,12 +24,13 @@ export function createMaterial(
 
 export function updateMaterial(
   id: string,
-  fields: { name?: string; quantity?: number; note?: string | null }
+  fields: { name?: string; quantity?: number; note?: string | null; image?: string | null }
 ): Promise<MomentMaterial> {
   const data: Record<string, unknown> = {};
   if ("name" in fields) data.name = fields.name;
   if ("quantity" in fields && fields.quantity && fields.quantity > 0) data.quantity = Math.floor(fields.quantity);
   if ("note" in fields) data.note = fields.note;
+  if ("image" in fields) data.image = fields.image;
   return prisma.momentMaterial.update({ where: { id }, data });
 }
 
