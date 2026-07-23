@@ -3,7 +3,7 @@ import { createWedding } from "./weddings";
 import { createRequirement, listRequirements, updateRequirement, addComment, getRequirement } from "./requirements";
 import { addService } from "./services";
 import { addParticipant } from "./participants";
-import { assertRequirementAccess, AccessError } from "@/lib/auth/access";
+import { assertRequirementAccess, canConfirmRequirement, AccessError, type WeddingRole } from "@/lib/auth/access";
 import type { Actor } from "@/lib/auth/actor";
 import { prisma } from "./client";
 
@@ -85,6 +85,52 @@ it("createRequirement stores optional structured data (and drops empty)", async 
 
   const r2 = await createRequirement(w.id, { title: "Sem dados", fromRole: "venue", data: {} });
   expect(r2.data).toBeNull();
+});
+
+it("canConfirmRequirement: only the addressed counterpart may agree (never the raiser)", () => {
+  const venue: WeddingRole = { role: "venue" };
+  const couple: WeddingRole = { role: "couple" };
+  const supA: WeddingRole = { role: "supplier", supplierId: "slotA" };
+  const supB: WeddingRole = { role: "supplier", supplierId: "slotB" };
+  const admin: WeddingRole = { role: "admin" };
+
+  // supplier → venue: the venue confirms; couple can't; the raiser can't.
+  const supToVenue = { fromProfileId: "p-sup", toSupplierId: null, toRole: "venue" };
+  expect(canConfirmRequirement(venue, "p-venue", supToVenue)).toBe(true);
+  expect(canConfirmRequirement(couple, "p-couple", supToVenue)).toBe(false);
+  expect(canConfirmRequirement(supA, "p-sup", supToVenue)).toBe(false);
+
+  // venue → supplierA: only that supplier; other suppliers can't; raiser venue can't.
+  const venueToSupA = { fromProfileId: "p-venue", toSupplierId: "slotA", toRole: null };
+  expect(canConfirmRequirement(supA, "p-supA", venueToSupA)).toBe(true);
+  expect(canConfirmRequirement(supB, "p-supB", venueToSupA)).toBe(false);
+  expect(canConfirmRequirement(venue, "p-venue", venueToSupA)).toBe(false);
+
+  // venue → couple: the couple confirms; raiser venue can't.
+  const venueToCouple = { fromProfileId: "p-venue", toSupplierId: null, toRole: "couple" };
+  expect(canConfirmRequirement(couple, "p-couple", venueToCouple)).toBe(true);
+  expect(canConfirmRequirement(venue, "p-venue", venueToCouple)).toBe(false);
+
+  // admin may confirm — but not even admin can self-agree (raiser is blocked first).
+  expect(canConfirmRequirement(admin, "p-admin", supToVenue)).toBe(true);
+  expect(canConfirmRequirement(admin, "p-sup", supToVenue)).toBe(false);
+});
+
+it("updateRequirement round-trips the agreement trail", async () => {
+  const w = await createWedding({ couple: "Handshake" });
+  const r = await createRequirement(w.id, { title: "Acordar", fromRole: "supplier", fromProfileId: "hs-sup", toRole: "venue" });
+  const agreed = await updateRequirement(r.id, {
+    status: "agreed", agreedByProfileId: "hs-venue", agreedByRole: "venue", agreedAt: new Date(),
+  });
+  expect(agreed.status).toBe("agreed");
+  expect(agreed.agreedByRole).toBe("venue");
+  expect(agreed.agreedAt).not.toBeNull();
+
+  // Reopening clears the trail.
+  const reopened = await updateRequirement(r.id, { status: "open", agreedByProfileId: null, agreedByRole: null, agreedAt: null });
+  expect(reopened.status).toBe("open");
+  expect(reopened.agreedByRole).toBeNull();
+  expect(reopened.agreedAt).toBeNull();
 });
 
 afterAll(async () => {

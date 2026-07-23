@@ -96,6 +96,9 @@ export function updateRequirement(
     toSupplierId?: string | null;
     momentId?: string | null;
     serviceId?: string | null;
+    agreedByProfileId?: string | null;
+    agreedByRole?: string | null;
+    agreedAt?: Date | null;
   }
 ): Promise<RequirementWithRelations> {
   const data: Prisma.WeddingRequirementUpdateInput = {};
@@ -106,6 +109,9 @@ export function updateRequirement(
   if ("toSupplierId" in fields) data.toSupplierId = fields.toSupplierId;
   if ("momentId" in fields) data.moment = fields.momentId ? { connect: { id: fields.momentId } } : { disconnect: true };
   if ("serviceId" in fields) data.service = fields.serviceId ? { connect: { id: fields.serviceId } } : { disconnect: true };
+  if ("agreedByProfileId" in fields) data.agreedByProfileId = fields.agreedByProfileId;
+  if ("agreedByRole" in fields) data.agreedByRole = fields.agreedByRole;
+  if ("agreedAt" in fields) data.agreedAt = fields.agreedAt;
   return prisma.weddingRequirement.update({ where: { id }, data, include: withRelations });
 }
 

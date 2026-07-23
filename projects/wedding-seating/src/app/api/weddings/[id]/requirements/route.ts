@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { listRequirements, createRequirement, type RequirementScope } from "@/lib/db/requirements";
-import { getWeddingRole } from "@/lib/auth/access";
+import { getWeddingRole, canConfirmRequirement } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 import { AccessError } from "@/lib/auth/access";
 import { recordEvent } from "@/lib/db/audit";
@@ -20,7 +20,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       wr.role === "supplier"
         ? { kind: "supplier", supplierId: wr.supplierId ?? null, profileId: actor.userId }
         : { kind: "all" };
-    return NextResponse.json({ requirements: await listRequirements(id, scope) });
+    const requirements = (await listRequirements(id, scope)).map((r) => ({
+      ...r,
+      // Whether THIS actor may confirm the requirement now (drives the button).
+      canAgree: r.status === "open" && canConfirmRequirement(wr, actor.userId, r),
+    }));
+    return NextResponse.json({ requirements });
   } catch (e) {
     return accessErrorResponse(e);
   }

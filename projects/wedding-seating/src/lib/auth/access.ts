@@ -865,6 +865,27 @@ export async function assertServiceAccess(
 }
 
 /**
+ * The handshake rule: who may CONFIRM ("acordar") a requirement. The agreement is
+ * the counterpart's commitment, so the raiser can never self-agree. The confirmer
+ * is the addressee: a specific supplier slot (`toSupplierId`), or the role in
+ * `toRole` (venue/couple); an unaddressed requirement defaults to the venue.
+ * Admin may always confirm. Used both to enforce the transition and to show the
+ * "Confirmar acordo" button to the right person.
+ */
+export function canConfirmRequirement(
+  wr: WeddingRole,
+  actorUserId: string,
+  req: { fromProfileId: string | null; toSupplierId: string | null; toRole: string | null }
+): boolean {
+  if (actorUserId && actorUserId === req.fromProfileId) return false; // no self-agree
+  if (wr.role === "admin") return true;
+  if (req.toSupplierId) return wr.role === "supplier" && wr.supplierId === req.toSupplierId;
+  if (req.toRole === "couple") return wr.role === "couple";
+  // toRole === "venue" or unaddressed → the venue is the confirmer
+  return wr.role === "venue";
+}
+
+/**
  * A WeddingRequirement (the interactions ledger) belongs to a wedding. Visibility
  * is scoped by participation:
  *   • venue / admin → read + write on everything (the coordinator).

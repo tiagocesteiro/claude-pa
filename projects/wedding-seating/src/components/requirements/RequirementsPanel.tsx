@@ -23,6 +23,9 @@ interface Requirement {
   fromRole: string;
   toRole: string | null;
   toSupplierId: string | null;
+  canAgree: boolean;
+  agreedByRole: string | null;
+  agreedAt: string | null;
   service: { kind: string; name: string | null } | null;
   moment: { title: string | null; kind: string | null } | null;
   comments: Comment[];
@@ -155,6 +158,7 @@ export default function RequirementsPanel({
 
   async function setStatus(id: string, status: string) {
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/requirements/${id}`, {
         method: "PATCH",
@@ -162,6 +166,10 @@ export default function RequirementsPanel({
         body: JSON.stringify({ status }),
       });
       if (res.ok) await load();
+      else {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(j.error || "Não foi possível atualizar o estado.");
+      }
     } finally {
       setBusy(false);
     }
@@ -252,6 +260,12 @@ export default function RequirementsPanel({
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <strong style={{ flex: "1 1 auto" }}>{r.title}</strong>
                   <Badge tone={st.tone}>{st.label}</Badge>
+                  {r.status === "agreed" && r.agreedByRole && (
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      por {ROLE_LABELS[r.agreedByRole] ?? r.agreedByRole}
+                      {r.agreedAt ? ` · ${new Date(r.agreedAt).toLocaleDateString("pt-PT")}` : ""}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
                   {ROLE_LABELS[r.fromRole] ?? r.fromRole} → {toLabel(r)}
@@ -276,11 +290,17 @@ export default function RequirementsPanel({
                   </ul>
                 )}
 
-                {/* Actions */}
+                {/* Actions — handshake: only the counterpart may confirm ("acordar") */}
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
-                  <select className="input" value={r.status} onChange={(e) => setStatus(r.id, e.target.value)} disabled={busy} style={{ width: 130 }}>
-                    {STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
+                  {r.status === "open" && r.canAgree && (
+                    <Button variant="primary" size="sm" onClick={() => setStatus(r.id, "agreed")} disabled={busy}>Confirmar acordo</Button>
+                  )}
+                  {r.status !== "done" && (
+                    <Button variant="secondary" size="sm" onClick={() => setStatus(r.id, "done")} disabled={busy}>Marcar feito</Button>
+                  )}
+                  {r.status !== "open" && (
+                    <Button variant="ghost" size="sm" onClick={() => setStatus(r.id, "open")} disabled={busy}>Reabrir</Button>
+                  )}
                   <Input
                     value={reply[r.id] ?? ""}
                     onChange={(e) => setReply((x) => ({ ...x, [r.id]: e.target.value }))}
