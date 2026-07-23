@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listSuppliers, createSupplier } from "@/lib/db/suppliers";
+import { listSuppliers, createSupplier, findDuplicateSupplier } from "@/lib/db/suppliers";
 import { assertWeddingRole } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
@@ -32,9 +32,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const b = await req.json().catch(() => ({}));
   const name = typeof b?.name === "string" && b.name.trim() ? b.name.trim() : null;
   if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+  const service = typeof b?.service === "string" && b.service.trim() ? b.service.trim() : null;
+
+  // Prevent duplicate slots (same name + service) in the same wedding.
+  const dup = await findDuplicateSupplier(id, name, service);
+  if (dup) {
+    return NextResponse.json({ error: "Já existe um fornecedor com este nome e serviço." }, { status: 409 });
+  }
+
   const supplier = await createSupplier(id, {
     name,
-    service: typeof b?.service === "string" && b.service.trim() ? b.service.trim() : null,
+    service,
     contact: typeof b?.contact === "string" && b.contact.trim() ? b.contact.trim() : null,
   });
   return NextResponse.json({ supplier }, { status: 201 });

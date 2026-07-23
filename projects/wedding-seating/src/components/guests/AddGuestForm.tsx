@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { Group } from "./useGuestBoard";
+import DietaryDatalist from "./DietaryDatalist";
+import { DIETARY_DATALIST_ID } from "@/lib/labels";
 
 // Same "adult"/"child"/"senior" values normalized by lib/import/parseGuests.ts, so a
 // manually-added guest colors/filters identically to one brought in via bulk import.
@@ -91,11 +93,13 @@ export default function AddGuestForm({
           style={{ width: 90 }}
         />
         <input
+          list={DIETARY_DATALIST_ID}
           data-testid="add-guest-dietary"
           value={dietary}
           onChange={(e) => setDietary(e.target.value)}
           placeholder="Alimentar (ex: vegetariana)"
         />
+        <DietaryDatalist />
         <button type="submit" disabled={saving || !name.trim()}>
           {saving ? "A adicionar..." : "Adicionar convidado"}
         </button>

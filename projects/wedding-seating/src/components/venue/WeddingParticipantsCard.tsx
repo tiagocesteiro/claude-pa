@@ -60,11 +60,14 @@ export default function WeddingParticipantsCard({ weddingId }: { weddingId: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), service }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error || "");
+      }
       setName("");
       await load();
-    } catch {
-      setError("Não foi possível adicionar o fornecedor.");
+    } catch (e) {
+      setError((e as Error).message || "Não foi possível adicionar o fornecedor.");
     } finally {
       setBusy(false);
     }

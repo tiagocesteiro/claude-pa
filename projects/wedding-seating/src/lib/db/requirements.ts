@@ -47,6 +47,13 @@ export function getRequirement(id: string): Promise<RequirementWithRelations | n
   return prisma.weddingRequirement.findUnique({ where: { id }, include: withRelations });
 }
 
+/** Optional structured fields on a requirement (the venue reads exact numbers). */
+export interface RequirementData {
+  tables?: number;
+  linearMeters?: number;
+  time?: string;
+}
+
 export function createRequirement(
   weddingId: string,
   input: {
@@ -58,8 +65,10 @@ export function createRequirement(
     momentId?: string | null;
     serviceId?: string | null;
     detail?: string | null;
+    data?: RequirementData | null;
   }
 ): Promise<RequirementWithRelations> {
+  const data = input.data && Object.keys(input.data).length > 0 ? input.data : undefined;
   return prisma.weddingRequirement.create({
     data: {
       weddingId,
@@ -71,6 +80,7 @@ export function createRequirement(
       momentId: input.momentId ?? null,
       serviceId: input.serviceId ?? null,
       detail: input.detail ?? null,
+      data: data as Prisma.InputJsonValue | undefined,
     },
     include: withRelations,
   });

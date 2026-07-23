@@ -76,6 +76,17 @@ it("lifecycle status + comments", async () => {
   expect(withComment?.comments[0].authorRole).toBe("venue");
 });
 
+it("createRequirement stores optional structured data (and drops empty)", async () => {
+  const w = await createWedding({ couple: "Req Data" });
+  const r = await createRequirement(w.id, {
+    title: "Cocktail", fromRole: "supplier", data: { tables: 8, linearMeters: 12, time: "19:00" },
+  });
+  expect(r.data).toEqual({ tables: 8, linearMeters: 12, time: "19:00" });
+
+  const r2 = await createRequirement(w.id, { title: "Sem dados", fromRole: "venue", data: {} });
+  expect(r2.data).toBeNull();
+});
+
 afterAll(async () => {
   await prisma.$disconnect();
 });

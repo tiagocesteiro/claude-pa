@@ -9,10 +9,16 @@ interface Comment {
   text: string;
   createdAt: string;
 }
+interface ReqData {
+  tables?: number;
+  linearMeters?: number;
+  time?: string;
+}
 interface Requirement {
   id: string;
   title: string;
   detail: string | null;
+  data: ReqData | null;
   status: string; // open | agreed | done
   fromRole: string;
   toRole: string | null;
@@ -21,6 +27,16 @@ interface Requirement {
   moment: { title: string | null; kind: string | null } | null;
   comments: Comment[];
   createdAt: string;
+}
+
+/** Render the structured fields as short chips ("8 mesas", "12 m", "19:00"). */
+function dataChips(d: ReqData | null): string[] {
+  if (!d) return [];
+  const out: string[] = [];
+  if (typeof d.tables === "number") out.push(`${d.tables} mesas`);
+  if (typeof d.linearMeters === "number") out.push(`${d.linearMeters} m lineares`);
+  if (d.time) out.push(d.time);
+  return out;
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -73,6 +89,9 @@ export default function RequirementsPanel({
   const [nDetail, setNDetail] = useState("");
   const [nTarget, setNTarget] = useState(""); // venue only: "" | "couple" | supplierId
   const [nMoment, setNMoment] = useState("");
+  const [nTables, setNTables] = useState("");
+  const [nMeters, setNMeters] = useState("");
+  const [nTime, setNTime] = useState("");
   const [reply, setReply] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
@@ -107,6 +126,11 @@ export default function RequirementsPanel({
       if (nTarget === "couple") body.toRole = "couple";
       else body.toSupplierId = nTarget;
     }
+    const data: Record<string, unknown> = {};
+    if (nTables.trim()) data.tables = Number(nTables);
+    if (nMeters.trim()) data.linearMeters = Number(nMeters);
+    if (nTime.trim()) data.time = nTime.trim();
+    if (Object.keys(data).length > 0) body.data = data;
     try {
       const res = await fetch(`/api/weddings/${weddingId}/requirements`, {
         method: "POST",
@@ -118,6 +142,9 @@ export default function RequirementsPanel({
       setNDetail("");
       setNTarget("");
       setNMoment("");
+      setNTables("");
+      setNMeters("");
+      setNTime("");
       await load();
     } catch {
       setError("Não foi possível criar o requisito.");
@@ -204,6 +231,11 @@ export default function RequirementsPanel({
         )}
         <Button variant="primary" onClick={create} disabled={busy || !nTitle.trim()}>Criar</Button>
       </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end", marginBottom: 10 }}>
+        <label style={{ fontSize: 13 }}>Nº mesas <Input type="number" min="0" value={nTables} onChange={(e) => setNTables(e.target.value)} placeholder="—" style={{ width: 80 }} /></label>
+        <label style={{ fontSize: 13 }}>Metros lineares <Input type="number" min="0" value={nMeters} onChange={(e) => setNMeters(e.target.value)} placeholder="—" style={{ width: 90 }} /></label>
+        <label style={{ fontSize: 13 }}>Hora <Input type="time" value={nTime} onChange={(e) => setNTime(e.target.value)} style={{ width: 110 }} /></label>
+      </div>
       <label style={{ fontSize: 13, display: "block", marginBottom: 14 }}>
         <Input value={nDetail} onChange={(e) => setNDetail(e.target.value)} placeholder="Detalhe (opcional)" style={{ width: "100%" }} />
       </label>
@@ -226,6 +258,11 @@ export default function RequirementsPanel({
                   {r.service ? ` · ${serviceLabel(r.service.kind, r.service.name)}` : ""}
                   {r.moment ? ` · ${momentLabel(r.moment)}` : ""}
                 </div>
+                {dataChips(r.data).length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                    {dataChips(r.data).map((c) => <Badge key={c} tone="neutral">{c}</Badge>)}
+                  </div>
+                )}
                 {r.detail && <p style={{ margin: "6px 0 0", fontSize: 13 }}>{r.detail}</p>}
 
                 {/* Thread */}

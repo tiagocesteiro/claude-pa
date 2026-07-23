@@ -49,3 +49,21 @@ export const REQUIREMENT_STATUS_LABELS: Record<string, string> = {
 export function serviceKindLabel(kind: string): string {
   return SERVICE_KIND_LABELS[kind] ?? kind;
 }
+
+/** Canonical dietary options — used as `<datalist>` suggestions so guests' diets
+ * cluster on consistent terms (which keeps the catering per-table aggregate from
+ * fragmenting), while still allowing a free-typed value for anything bespoke. */
+export const DIETARY_OPTIONS = [
+  "Vegetariano",
+  "Vegan",
+  "Sem glúten",
+  "Sem lactose",
+  "Sem marisco",
+  "Sem frutos secos",
+  "Diabético",
+  "Halal",
+  "Kosher",
+] as const;
+
+/** Shared datalist id for dietary inputs. */
+export const DIETARY_DATALIST_ID = "dietary-options";

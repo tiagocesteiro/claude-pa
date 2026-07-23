@@ -42,6 +42,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // A supplier's need defaults to being addressed to the venue.
     if (wr.role === "supplier" && !toRole && !toSupplierId) toRole = "venue";
 
+    // Optional structured fields — coerce numbers, keep only what's provided.
+    const rawData = (b?.data ?? {}) as Record<string, unknown>;
+    const data: { tables?: number; linearMeters?: number; time?: string } = {};
+    if (Number.isFinite(Number(rawData.tables)) && rawData.tables !== "" && rawData.tables != null) data.tables = Number(rawData.tables);
+    if (Number.isFinite(Number(rawData.linearMeters)) && rawData.linearMeters !== "" && rawData.linearMeters != null) data.linearMeters = Number(rawData.linearMeters);
+    if (typeof rawData.time === "string" && rawData.time.trim()) data.time = rawData.time.trim();
+
     const requirement = await createRequirement(id, {
       title,
       fromRole: wr.role,
@@ -51,6 +58,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       momentId: typeof b?.momentId === "string" && b.momentId ? b.momentId : null,
       serviceId: typeof b?.serviceId === "string" && b.serviceId ? b.serviceId : null,
       detail: typeof b?.detail === "string" && b.detail.trim() ? b.detail.trim() : null,
+      data: Object.keys(data).length > 0 ? data : null,
     });
     await recordEvent({
       weddingId: id,

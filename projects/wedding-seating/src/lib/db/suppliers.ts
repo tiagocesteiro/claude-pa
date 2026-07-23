@@ -12,6 +12,22 @@ export function getSupplier(id: string): Promise<Supplier | null> {
   return prisma.supplier.findUnique({ where: { id } });
 }
 
+/** An existing slot in the wedding with the same name (case-insensitive) and the
+ * same service — used to prevent creating duplicate supplier slots. */
+export function findDuplicateSupplier(
+  weddingId: string,
+  name: string,
+  service: string | null
+): Promise<Supplier | null> {
+  return prisma.supplier.findFirst({
+    where: {
+      weddingId,
+      name: { equals: name, mode: "insensitive" },
+      service: service ?? null,
+    },
+  });
+}
+
 export function createSupplier(
   weddingId: string,
   input: { name: string; service?: string | null; contact?: string | null }

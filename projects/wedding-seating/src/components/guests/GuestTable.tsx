@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { Group, Guest } from "./useGuestBoard";
 import GuestGroupsEditor from "./GuestGroupsEditor";
+import DietaryDatalist from "./DietaryDatalist";
+import { DIETARY_DATALIST_ID } from "@/lib/labels";
 
 // Same "adult"/"child"/"senior" values used by AddGuestForm + import normalization.
 const AGE_OPTIONS: { label: string; value: string }[] = [
@@ -182,6 +184,7 @@ export default function GuestTable({
 
   return (
     <div>
+      <DietaryDatalist />
       {/* Groups management --------------------------------------------------- */}
       <div
         style={{
@@ -487,6 +490,7 @@ export default function GuestTable({
                     </td>
                     <td style={td}>
                       <input
+                        list={DIETARY_DATALIST_ID}
                         defaultValue={guest.dietary ?? ""}
                         placeholder="—"
                         style={{ width: 140 }}

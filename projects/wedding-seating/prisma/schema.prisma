@@ -217,6 +217,7 @@ model WeddingRequirement {
   toSupplierId  String? // a specific supplier slot, when addressed to one
   title         String
   detail        String? // free text; can hold structured content ("8 mesas, 12 m lineares")
+  data          Json? // optional structured fields, e.g. { tables, linearMeters, time } — the venue reads exact numbers, no parsing
   status        String          @default("open") // "open" (aberto) | "agreed" (acordado) | "done" (feito)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
