@@ -25,6 +25,7 @@ interface Moment {
   title: string | null;
   startTime: string | null;
   hasSeating: boolean;
+  image: string | null;
   finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
   decor: { name: string; category: string | null; quantity: number; image: string | null }[];
   materials: Material[];
@@ -250,6 +251,12 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
           .filter((m) => (activeMomentId ?? moments[0]?.id) === m.id)
           .map((m) => (
           <Card key={m.id}>
+            {m.image && (
+              <div style={{ margin: "-16px -16px 12px", overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrlFor(m.image)} alt={momentTitle(m)} style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }} />
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
               <h3 style={{ margin: 0 }}>{momentTitle(m)}</h3>
               {m.startTime && <span style={{ color: "var(--text-muted)", fontSize: 14 }}>{m.startTime}</span>}

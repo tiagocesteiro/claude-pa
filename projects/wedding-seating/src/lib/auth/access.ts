@@ -202,6 +202,18 @@ export async function assertRequirementTemplateAccess(
   await assertVenueAccess(actor, t.venueId, mode);
 }
 
+/** A VenueSpace is venue-owned (the venue's space-photo library) — venue writes;
+ * couple reads a venue it has booked (same rule as the decor catalog). */
+export async function assertVenueSpaceAccess(
+  actor: Actor,
+  spaceId: string,
+  mode: AccessMode = "read"
+): Promise<void> {
+  const s = await prisma.venueSpace.findUnique({ where: { id: spaceId }, select: { venueId: true } });
+  if (!s) throw notFound("Space");
+  await assertVenueAccess(actor, s.venueId, mode);
+}
+
 export async function assertTableTypeAccess(
   actor: Actor,
   tableTypeId: string,
@@ -421,6 +433,7 @@ export interface VenueWeddingView {
     title: string | null;
     startTime: string | null;
     hasSeating: boolean;
+    image: string | null;
     finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
     decor: { name: string; category: string | null; quantity: number; image: string | null }[];
     materials: { id: string; name: string; quantity: number; note: string | null; image: string | null }[];
@@ -452,6 +465,7 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
           title: true,
           startTime: true,
           hasSeating: true,
+          image: true,
           tasks: { where: { done: false }, select: { text: true, assignee: true, supplierId: true } },
           decor: { select: { name: true, quantity: true, decorItem: { select: { name: true, category: true, image: true } } } },
           materials: { select: { id: true, name: true, quantity: true, note: true, image: true } },
@@ -489,6 +503,7 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
         title: m.title,
         startTime: m.startTime,
         hasSeating: m.hasSeating,
+        image: m.image,
         finalLayout: final
           ? { name: final.name, tableCount: final._count.tables, seatedCount: final._count.seats }
           : null,

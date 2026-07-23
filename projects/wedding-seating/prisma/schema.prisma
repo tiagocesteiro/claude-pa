@@ -32,7 +32,23 @@ model Venue {
   weddings        Wedding[]
   decorItems      DecorItem[]
   reqTemplates    RequirementTemplate[]
+  spaces          VenueSpace[]
   createdAt       DateTime         @default(now())
+}
+
+/// A venue's reusable space/area photo (e.g. "Jardim da cerimónia", "Salão",
+/// "Terraço do cocktail"). The venue builds this library once; each wedding's
+/// moments pick a space image to show as their hero banner in the overview.
+model VenueSpace {
+  id        String   @id @default(cuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name      String
+  image     String? // Supabase Storage object path
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([venueId])
 }
 
 /// A venue's reusable request/instruction template. The venue defines these once
@@ -387,6 +403,7 @@ model WeddingMoment {
   // dinner. When false, its layouts are arrangements (tables + elements) with no
   // seated guests.
   hasSeating  Boolean          @default(false)
+  image       String? // hero image of the venue space for this moment (Storage object path)
   floorPlanId String?
   floorPlan   FloorPlan?       @relation(fields: [floorPlanId], references: [id])
   templateId  String?

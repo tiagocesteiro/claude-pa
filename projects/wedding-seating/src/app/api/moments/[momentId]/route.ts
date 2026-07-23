@@ -52,10 +52,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ moment
     floorPlanId?: string | null;
     hasSeating?: boolean;
     startTime?: string | null;
+    image?: string | null;
   } = {};
   if (typeof b?.title === "string" && b.title.trim()) fields.title = b.title.trim();
   if (typeof b?.order === "number") fields.order = b.order;
   if (typeof b?.hasSeating === "boolean") fields.hasSeating = b.hasSeating;
+  if ("image" in b) fields.image = typeof b.image === "string" && b.image.trim() ? b.image.trim() : null;
   // Start time as "HH:MM" (or null to clear); loose validation.
   if ("startTime" in b) {
     const s = typeof b.startTime === "string" ? b.startTime.trim() : "";

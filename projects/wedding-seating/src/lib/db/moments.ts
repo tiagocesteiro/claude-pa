@@ -65,6 +65,7 @@ export function updateMoment(
     floorPlanId?: string | null;
     hasSeating?: boolean;
     startTime?: string | null;
+    image?: string | null;
   }
 ): Promise<WeddingMoment> {
   const data: Record<string, unknown> = {};
@@ -74,6 +75,7 @@ export function updateMoment(
   if ("floorPlanId" in fields) data.floorPlanId = fields.floorPlanId;
   if ("hasSeating" in fields) data.hasSeating = fields.hasSeating;
   if ("startTime" in fields) data.startTime = fields.startTime;
+  if ("image" in fields) data.image = fields.image;
   return prisma.weddingMoment.update({ where: { id: momentId }, data });
 }
 

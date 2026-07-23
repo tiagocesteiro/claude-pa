@@ -45,6 +45,7 @@ interface Moment {
   title: string | null;
   hasSeating: boolean;
   startTime: string | null;
+  image: string | null;
   tasks: Task[];
   decor: DecorLine[];
 }
@@ -291,6 +292,12 @@ export default function CoupleView({ weddingId }: { weddingId: string }) {
           m.hasSeating && plan && colorAttr ? buildColorMap(plan.guests, colorAttr) : { legend: [], colorByGuest: {} };
         return (
           <section key={m.id} style={sectionStyle()}>
+            {m.image && (
+              <div style={{ margin: "-4px -4px 16px", borderRadius: 14, overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrlFor(m.image)} alt={momentTitle(m)} style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block" }} />
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <h2 style={{ marginTop: 0, marginBottom: 0, color: "var(--heading)", display: "flex", alignItems: "baseline", gap: 10 }}>
                 {momentTitle(m)}
