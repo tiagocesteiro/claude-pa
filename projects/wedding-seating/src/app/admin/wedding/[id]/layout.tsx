@@ -60,6 +60,7 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
   const detailsHref = `/admin/wedding/${weddingId}/details`;
   const guestsHref = `/admin/wedding/${weddingId}`;
   const coupleHref = `/admin/wedding/${weddingId}/couple`;
+  const activityHref = `/admin/wedding/${weddingId}/activity`;
 
   const tabs = [
     { label: "Detalhes", href: detailsHref, active: pathname?.endsWith("/details") ?? false },
@@ -72,6 +73,7 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
       active: pathname?.includes(`/moment/${m.id}`) ?? false,
     })),
     { label: "Visão geral", href: coupleHref, active: pathname?.endsWith("/couple") ?? false },
+    { label: "Atividade", href: activityHref, active: pathname?.endsWith("/activity") ?? false },
   ];
 
   async function addMoment() {

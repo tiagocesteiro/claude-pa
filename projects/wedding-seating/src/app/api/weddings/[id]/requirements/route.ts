@@ -3,6 +3,7 @@ import { listRequirements, createRequirement, type RequirementScope } from "@/li
 import { getWeddingRole } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 import { AccessError } from "@/lib/auth/access";
+import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
@@ -50,6 +51,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       momentId: typeof b?.momentId === "string" && b.momentId ? b.momentId : null,
       serviceId: typeof b?.serviceId === "string" && b.serviceId ? b.serviceId : null,
       detail: typeof b?.detail === "string" && b.detail.trim() ? b.detail.trim() : null,
+    });
+    await recordEvent({
+      weddingId: id,
+      actor,
+      action: "requirement.created",
+      entityType: "requirement",
+      entityId: requirement.id,
+      summary: `Criou o pedido «${title}»${requirement.detail ? `: ${requirement.detail}` : ""}`,
+      supplierId: toSupplierId ?? (wr.role === "supplier" ? wr.supplierId ?? null : null),
     });
     return NextResponse.json({ requirement }, { status: 201 });
   } catch (e) {

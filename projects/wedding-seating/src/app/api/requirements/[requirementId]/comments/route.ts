@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { addComment } from "@/lib/db/requirements";
+import { addComment, getRequirement } from "@/lib/db/requirements";
 import { assertRequirementAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
@@ -12,9 +13,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ require
   if (actor instanceof NextResponse) return actor;
   const { requirementId } = await params;
   let role: string;
+  let supplierId: string | null = null;
   try {
     const wr = await assertRequirementAccess(actor, requirementId, "write");
     role = wr.role;
+    supplierId = wr.role === "supplier" ? wr.supplierId ?? null : null;
   } catch (e) {
     return accessErrorResponse(e);
   }
@@ -22,5 +25,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ require
   const text = typeof b?.text === "string" && b.text.trim() ? b.text.trim() : null;
   if (!text) return NextResponse.json({ error: "text required" }, { status: 400 });
   const comment = await addComment(requirementId, { authorRole: role, authorProfileId: actor.userId, text });
+
+  const req_ = await getRequirement(requirementId);
+  if (req_) {
+    await recordEvent({
+      weddingId: req_.weddingId,
+      actor,
+      action: "requirement.comment_added",
+      entityType: "requirement",
+      entityId: requirementId,
+      summary: `Respondeu em «${req_.title}»: ${text}`,
+      supplierId: req_.toSupplierId ?? supplierId,
+    });
+  }
   return NextResponse.json({ comment }, { status: 201 });
 }

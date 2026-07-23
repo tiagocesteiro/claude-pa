@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageShell, Card, Badge } from "@/components/ui";
 import RequirementsPanel from "@/components/requirements/RequirementsPanel";
 import DietaryByTableCard from "@/components/catering/DietaryByTableCard";
+import ActivityFeed from "@/components/activity/ActivityFeed";
 
 interface View {
   id: string;
@@ -118,6 +119,10 @@ export default function SupplierWeddingView({ weddingId }: { weddingId: string }
           role="supplier"
           moments={moments.map((m) => ({ id: m.id, label: momentTitle(m) }))}
         />
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <ActivityFeed weddingId={weddingId} title="Atividade (a minha)" />
       </div>
     </PageShell>
   );

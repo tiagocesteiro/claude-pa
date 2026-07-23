@@ -3,6 +3,14 @@ import { prisma } from "@/lib/db/client";
 import { getTask, updateTask, deleteTask, isTaskAssignee, type TaskAssignee } from "@/lib/db/tasks";
 import { assertTaskAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { recordEvent } from "@/lib/db/audit";
+
+async function taskWeddingId(taskId: string): Promise<string | null> {
+  const task = await getTask(taskId);
+  if (!task) return null;
+  const moment = await prisma.weddingMoment.findUnique({ where: { id: task.momentId }, select: { weddingId: true } });
+  return moment?.weddingId ?? null;
+}
 
 export const runtime = "nodejs";
 
@@ -52,7 +60,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ taskId
     }
   }
 
-  return NextResponse.json({ task: await updateTask(taskId, fields) });
+  const before = await getTask(taskId);
+  const task = await updateTask(taskId, fields);
+  if (before && fields.done !== undefined && before.done !== task.done) {
+    const weddingId = await taskWeddingId(taskId);
+    if (weddingId) {
+      await recordEvent({
+        weddingId,
+        actor,
+        action: task.done ? "task.completed" : "task.reopened",
+        entityType: "task",
+        entityId: task.id,
+        summary: `${task.done ? "Concluiu" : "Reabriu"} a tarefa «${task.text}»`,
+        supplierId: task.supplierId,
+      });
+    }
+  }
+  return NextResponse.json({ task });
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ taskId: string }> }) {

@@ -926,6 +926,16 @@ export async function assertDietaryAccess(actor: Actor, weddingId: string): Prom
   throw new AccessError(403, "Apenas a quinta e o catering veem as dietas.");
 }
 
+/**
+ * Gate for the activity/audit log of a wedding. Any participant may READ it
+ * (there is no write API — the log is append-only, written server-side only).
+ * Returns the actor's WeddingRole so the route can build the scope (a supplier
+ * sees only events they authored or that concern their slot).
+ */
+export async function assertAuditAccess(actor: Actor, weddingId: string): Promise<WeddingRole> {
+  return assertWeddingRole(actor, weddingId, ["venue", "couple", "supplier", "admin"]);
+}
+
 /** A supplier is wedding-owned. */
 export async function assertSupplierAccess(
   actor: Actor,

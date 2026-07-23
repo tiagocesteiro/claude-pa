@@ -140,7 +140,34 @@ model Wedding {
   participants  WeddingParticipant[]
   services      WeddingService[]
   requirements  WeddingRequirement[]
+  auditEvents   AuditEvent[]
   createdAt     DateTime             @default(now())
+}
+
+/// Append-only activity/audit log — the immutable record of every meaningful
+/// change and interaction on a wedding. It is the "Atividade" tab, the "never
+/// lose information" guarantee (old values kept in `changes`), and the seed for
+/// notifications. Written ONLY via `recordEvent` (server-side, after a mutation
+/// succeeds); never edited or deleted (except cascade with the wedding). Scoped
+/// reads: venue/couple see all; a supplier sees events they authored or that
+/// concern their slot (`supplierId`). See `src/lib/db/audit.ts`.
+model AuditEvent {
+  id             String   @id @default(cuid())
+  weddingId      String
+  wedding        Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  actorProfileId String? // who did it (Profile.id); null for system events
+  actorRole      String // "venue" | "couple" | "supplier" | "admin" (denormalized for display/filter)
+  actorLabel     String // display snapshot (name/email) — survives account/slot deletion
+  action         String // dot-namespaced verb, e.g. "requirement.status_changed"
+  entityType     String // "requirement" | "service" | "task" | "invite" | "layout" | …
+  entityId       String?
+  summary        String // human PT sentence, e.g. "Catering pediu: 8 mesas + 12 m lineares"
+  supplierId     String? // the supplier slot the event concerns (for scoped supplier visibility)
+  changes        Json? // { field: { from, to }, … } — the lossless before/after diffs
+  createdAt      DateTime @default(now())
+
+  @@index([weddingId, createdAt])
+  @@index([supplierId])
 }
 
 /// The responsibility matrix of a wedding: which services it needs (catering, DJ,
