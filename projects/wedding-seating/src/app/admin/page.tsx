@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PageShell, Card, Field, Input, Select, Button, Stat, Badge } from "@/components/ui";
 import VenueCalendar from "@/components/venue/VenueCalendar";
+import { useUnseenCounts, UnseenPill } from "@/components/activity/UnseenBadge";
 
 interface Venue {
   id: string;
@@ -105,6 +106,7 @@ export default function AdminPage() {
 function SupplierSection() {
   const [weddings, setWeddings] = useState<{ weddingId: string; couple: string; date: string | null; venueName: string | null; service: string | null }[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const unseen = useUnseenCounts();
 
   useEffect(() => {
     (async () => {
@@ -133,7 +135,10 @@ function SupplierSection() {
                   <span style={{ color: "var(--text-muted)" }}> · {w.date ? new Date(w.date).toLocaleDateString("pt-PT") : "sem data"}</span>
                   {w.service && <span style={{ marginLeft: 8 }}><Badge tone="neutral">{w.service}</Badge></span>}
                 </span>
-                <Link href={`/admin/supplier-wedding/${w.weddingId}`}>Abrir &rarr;</Link>
+                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <UnseenPill count={unseen[w.weddingId]} />
+                  <Link href={`/admin/supplier-wedding/${w.weddingId}`}>Abrir &rarr;</Link>
+                </span>
               </div>
             </Card>
           </li>
@@ -245,6 +250,7 @@ function AdminSection() {
 /** Couple workspace: create + manage the couple's weddings, picking a venue. */
 function CoupleSection() {
   const [weddings, setWeddings] = useState<Wedding[]>([]);
+  const unseen = useUnseenCounts();
   const [pickableVenues, setPickableVenues] = useState<PickableVenue[]>([]);
   const [coupleName, setCoupleName] = useState("");
   const [weddingVenueId, setWeddingVenueId] = useState("");
@@ -368,9 +374,12 @@ function CoupleSection() {
                   <span style={{ color: "var(--text-muted)" }}> — {new Date(w.date).toLocaleDateString("pt-PT")}</span>
                 )}
               </span>
-              <Button variant="danger" size="sm" onClick={() => handleDeleteWedding(w)} title="Apagar casamento">
-                Apagar
-              </Button>
+              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <UnseenPill count={unseen[w.id]} />
+                <Button variant="danger" size="sm" onClick={() => handleDeleteWedding(w)} title="Apagar casamento">
+                  Apagar
+                </Button>
+              </span>
             </Card>
           </li>
         ))}
@@ -382,6 +391,7 @@ function CoupleSection() {
 /** Venue workspace: create + manage the venue account's venues. */
 function VenueSection() {
   const [venues, setVenues] = useState<Venue[]>([]);
+  const unseen = useUnseenCounts();
   const [bookings, setBookings] = useState<VenueBooking[]>([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [bookingsView, setBookingsView] = useState<"calendar" | "list">("calendar");
@@ -518,7 +528,7 @@ function VenueSection() {
             )
             .map((b) => (
               <li key={b.id}>
-                <BookingCard booking={b} />
+                <BookingCard booking={b} unseen={unseen[b.id]} />
               </li>
             ))}
         </ul>
@@ -531,7 +541,7 @@ function VenueSection() {
  * only couple, date, estimate, aggregate counts and a "what's missing" checklist
  * — never guest names, dietary data, or the seating layout, and no link into the
  * couple's private pages. */
-function BookingCard({ booking: b }: { booking: VenueBooking }) {
+function BookingCard({ booking: b, unseen }: { booking: VenueBooking; unseen?: number }) {
   const { guests: g } = b;
   const missingRsvp = g.pending;
   const allDone = b.arrangementPicked && b.seatingDone && missingRsvp === 0;
@@ -539,7 +549,10 @@ function BookingCard({ booking: b }: { booking: VenueBooking }) {
   return (
     <Card>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <strong style={{ fontSize: "1.05rem" }}>{b.couple}</strong>
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <strong style={{ fontSize: "1.05rem" }}>{b.couple}</strong>
+          <UnseenPill count={unseen} />
+        </span>
         <span style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: "0.85rem" }}>
           {b.date ? new Date(b.date).toLocaleDateString("pt-PT") : "sem data"}
           {allDone ? (

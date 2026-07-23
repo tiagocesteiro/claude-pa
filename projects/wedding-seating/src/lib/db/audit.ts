@@ -80,3 +80,32 @@ export function listAuditEvents(weddingId: string, scope: AuditScope, take = 200
         };
   return prisma.auditEvent.findMany({ where, orderBy: { createdAt: "desc" }, take });
 }
+
+/**
+ * "Novidades" (awareness): how many events a participant hasn't seen yet, per
+ * wedding they take part in. Unseen = created after their `lastSeenActivityAt`
+ * AND not authored by themselves (you're never notified about your own actions),
+ * within their scope (venue/couple = all; supplier = their slot only). Returns a
+ * { weddingId: count } map for the given profile.
+ */
+export async function unseenCountsForProfile(profileId: string): Promise<Record<string, number>> {
+  const parts = await prisma.weddingParticipant.findMany({
+    where: { profileId },
+    select: { weddingId: true, role: true, supplierId: true, lastSeenActivityAt: true },
+  });
+  const entries = await Promise.all(
+    parts.map(async (p) => {
+      const since = p.lastSeenActivityAt ?? new Date(0);
+      const where: Prisma.AuditEventWhereInput = {
+        weddingId: p.weddingId,
+        createdAt: { gt: since },
+        actorProfileId: { not: profileId },
+      };
+      // A supplier only "hears about" events that concern their slot.
+      if (p.role === "supplier") where.supplierId = p.supplierId ?? "__none__";
+      const count = await prisma.auditEvent.count({ where });
+      return [p.weddingId, count] as const;
+    })
+  );
+  return Object.fromEntries(entries.filter(([, c]) => c > 0));
+}

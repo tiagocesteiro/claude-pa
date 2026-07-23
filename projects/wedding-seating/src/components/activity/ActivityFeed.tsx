@@ -54,15 +54,24 @@ function fmtWhen(iso: string): string {
 /** The wedding's activity timeline (scoped server-side per role). Read-only. */
 export default function ActivityFeed({ weddingId, title = "Atividade" }: { weddingId: string; title?: string }) {
   const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const res = await fetch(`/api/weddings/${weddingId}/activity`);
-      if (res.ok) setEvents(((await res.json()) as { events: AuditEvent[] }).events ?? []);
+      if (res.ok) {
+        const data = (await res.json()) as { events: AuditEvent[]; lastSeenAt: string | null };
+        setEvents(data.events ?? []);
+        setLastSeenAt(data.lastSeenAt);
+        // Opening the log marks it seen (resets the "novidades" badge next visit).
+        fetch(`/api/weddings/${weddingId}/activity/seen`, { method: "POST" }).catch(() => {});
+      }
       setLoading(false);
     })();
   }, [weddingId]);
+
+  const seenThreshold = lastSeenAt ? new Date(lastSeenAt).getTime() : 0;
 
   return (
     <Card style={{ marginBottom: 20 }}>
@@ -79,11 +88,13 @@ export default function ActivityFeed({ weddingId, title = "Atividade" }: { weddi
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
           {events.map((e) => {
             const changed = e.changes ? Object.entries(e.changes) : [];
+            const isNew = new Date(e.createdAt).getTime() > seenThreshold;
             return (
-              <li key={e.id} style={{ borderLeft: "2px solid var(--border)", paddingLeft: 12 }}>
+              <li key={e.id} style={{ borderLeft: `2px solid ${isNew ? "var(--accent)" : "var(--border)"}`, paddingLeft: 12 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <Badge tone={ROLE_TONE[e.actorRole] ?? "neutral"}>{ROLE_LABELS[e.actorRole] ?? e.actorRole}</Badge>
                   <span style={{ fontSize: 13, fontWeight: 500 }}>{e.actorLabel}</span>
+                  {isNew && <Badge tone="accent">novo</Badge>}
                   <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: "auto" }}>{fmtWhen(e.createdAt)}</span>
                 </div>
                 <div style={{ fontSize: 13, marginTop: 2 }}>{e.summary}</div>

@@ -38,6 +38,25 @@ export async function removeParticipant(weddingId: string, profileId: string): P
   await prisma.weddingParticipant.deleteMany({ where: { weddingId, profileId } });
 }
 
+/** Mark the activity log of a wedding as seen by a participant (resets their
+ * "novidades" badge). No-op if they aren't a participant. */
+export async function markActivitySeen(weddingId: string, profileId: string): Promise<void> {
+  await prisma.weddingParticipant.updateMany({
+    where: { weddingId, profileId },
+    data: { lastSeenActivityAt: new Date() },
+  });
+}
+
+/** The participant's last-seen timestamp for a wedding's activity (null if never
+ * seen or not a participant). */
+export async function getLastSeenActivity(weddingId: string, profileId: string): Promise<Date | null> {
+  const p = await prisma.weddingParticipant.findUnique({
+    where: { weddingId_profileId: { weddingId, profileId } },
+    select: { lastSeenActivityAt: true },
+  });
+  return p?.lastSeenActivityAt ?? null;
+}
+
 /** The weddings a given profile takes part in (any role) — for a supplier's or
  * couple's "my weddings" list. */
 export function listWeddingIdsForProfile(profileId: string): Promise<{ weddingId: string; role: string }[]> {

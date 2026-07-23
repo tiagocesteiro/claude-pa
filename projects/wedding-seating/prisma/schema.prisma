@@ -323,6 +323,9 @@ model WeddingParticipant {
   role       String // "venue" | "couple" | "supplier"
   supplierId String? // the Supplier slot, when role == "supplier"
   createdAt  DateTime @default(now())
+  // When this participant last opened the activity log — drives the "novidades"
+  // (unseen) badge. Null = never opened (everything is new).
+  lastSeenActivityAt DateTime?
 
   @@unique([weddingId, profileId])
   @@index([weddingId])
