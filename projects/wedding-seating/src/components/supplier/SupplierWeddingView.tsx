@@ -6,6 +6,7 @@ import { PageShell, Card, Badge } from "@/components/ui";
 import RequirementsPanel from "@/components/requirements/RequirementsPanel";
 import DietaryByTableCard from "@/components/catering/DietaryByTableCard";
 import ActivityFeed from "@/components/activity/ActivityFeed";
+import SendTemplatesCard from "@/components/venue/SendTemplatesCard";
 
 interface View {
   id: string;
@@ -31,6 +32,7 @@ export default function SupplierWeddingView({ weddingId }: { weddingId: string }
   const [view, setView] = useState<View | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reqRefresh, setReqRefresh] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -114,10 +116,15 @@ export default function SupplierWeddingView({ weddingId }: { weddingId: string }
       )}
 
       <div style={{ marginTop: 20 }}>
+        <SendTemplatesCard weddingId={weddingId} onSent={() => setReqRefresh((n) => n + 1)} />
+      </div>
+
+      <div style={{ marginTop: 20 }}>
         <RequirementsPanel
           weddingId={weddingId}
           role="supplier"
           moments={moments.map((m) => ({ id: m.id, label: momentTitle(m) }))}
+          reloadKey={reqRefresh}
         />
       </div>
 

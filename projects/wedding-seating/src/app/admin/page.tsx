@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageShell, Card, Field, Input, Select, Button, Stat, Badge } from "@/components/ui";
 import VenueCalendar from "@/components/venue/VenueCalendar";
 import { useUnseenCounts, UnseenPill } from "@/components/activity/UnseenBadge";
+import SupplierTemplatesCatalog from "@/components/supplier/SupplierTemplatesCatalog";
 
 interface Venue {
   id: string;
@@ -144,6 +145,8 @@ function SupplierSection() {
           </li>
         ))}
       </ul>
+
+      <SupplierTemplatesCatalog />
     </section>
   );
 }

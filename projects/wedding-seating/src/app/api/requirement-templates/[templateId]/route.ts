@@ -18,6 +18,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ templa
   const fields: Parameters<typeof updateRequirementTemplate>[1] = {};
   if (b?.kind === "question" || b?.kind === "request") fields.kind = b.kind;
   if ("service" in b) fields.service = typeof b.service === "string" && b.service.trim() ? b.service.trim() : null;
+  if ("targetRole" in b) fields.targetRole = b.targetRole === "couple" ? "couple" : "venue";
   if (typeof b?.title === "string" && b.title.trim()) fields.title = b.title.trim();
   if ("detail" in b) fields.detail = typeof b.detail === "string" && b.detail.trim() ? b.detail.trim() : null;
   if (typeof b?.order === "number") fields.order = b.order;

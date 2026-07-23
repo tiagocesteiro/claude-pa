@@ -1,30 +1,24 @@
 import { NextResponse } from "next/server";
-import { listRequirementTemplates, createVenueTemplate } from "@/lib/db/requirementTemplates";
-import { assertVenueAccess } from "@/lib/auth/access";
-import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
+import { listSupplierTemplates, createSupplierTemplate } from "@/lib/db/requirementTemplates";
+import { requireActor } from "@/lib/auth/guard";
 
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+/** The current supplier account's reusable request templates. Supplier-only. */
+export async function GET() {
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
-  const { id } = await params;
-  try {
-    await assertVenueAccess(actor, id, "read");
-  } catch (e) {
-    return accessErrorResponse(e);
+  if (actor.role !== "supplier" && actor.role !== "admin") {
+    return NextResponse.json({ error: "Apenas fornecedores." }, { status: 403 });
   }
-  return NextResponse.json({ templates: await listRequirementTemplates(id) });
+  return NextResponse.json({ templates: await listSupplierTemplates(actor.userId) });
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request) {
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
-  const { id } = await params;
-  try {
-    await assertVenueAccess(actor, id, "write");
-  } catch (e) {
-    return accessErrorResponse(e);
+  if (actor.role !== "supplier" && actor.role !== "admin") {
+    return NextResponse.json({ error: "Apenas fornecedores." }, { status: 403 });
   }
   const b = await req.json().catch(() => ({}));
   const title = typeof b?.title === "string" && b.title.trim() ? b.title.trim() : null;
@@ -36,9 +30,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (rawData.linearMeters != null && rawData.linearMeters !== "" && Number.isFinite(Number(rawData.linearMeters))) data.linearMeters = Number(rawData.linearMeters);
   if (typeof rawData.time === "string" && rawData.time.trim()) data.time = rawData.time.trim();
 
-  const template = await createVenueTemplate(id, {
+  const template = await createSupplierTemplate(actor.userId, {
     kind: b?.kind === "question" ? "question" : "request",
-    service: typeof b?.service === "string" && b.service.trim() ? b.service.trim() : null,
+    targetRole: b?.targetRole === "couple" ? "couple" : "venue",
     title,
     detail: typeof b?.detail === "string" && b.detail.trim() ? b.detail.trim() : null,
     data: Object.keys(data).length > 0 ? data : null,

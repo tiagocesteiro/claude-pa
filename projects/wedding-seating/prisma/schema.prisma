@@ -41,18 +41,26 @@ model Venue {
 /// the matching suppliers — each becomes a WeddingRequirement addressed to that
 /// wedding's supplier slot for `service` (or to the couple when `service` is null).
 model RequirementTemplate {
-  id        String   @id @default(cuid())
-  venueId   String
-  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  kind      String   @default("request") // "request" (pedido) | "question" (dúvida)
-  service   String? // target supplier service (catering|dj|photo|…); null → the couple
-  title     String
-  detail    String?
-  data      Json? // structured defaults, e.g. { tables, linearMeters, time }
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  // Owned by EITHER a venue (ownerRole "venue" → venueId set) OR a supplier
+  // account (ownerRole "supplier" → supplierProfileId = Profile.id). Exactly one.
+  ownerRole        String   @default("venue") // "venue" | "supplier"
+  venueId          String?
+  venue            Venue?   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  supplierProfileId String? // the supplier account (Profile.id) that owns it
+  kind             String   @default("request") // "request" (pedido) | "question" (dúvida)
+  // Target of a VENUE template: a supplier service (catering|dj|…), or null → couple.
+  service          String?
+  // Target of a SUPPLIER template: "venue" | "couple".
+  targetRole       String?
+  title            String
+  detail           String?
+  data             Json? // structured defaults, e.g. { tables, linearMeters, time }
+  order            Int      @default(0)
+  createdAt        DateTime @default(now())
 
   @@index([venueId])
+  @@index([supplierProfileId])
 }
 
 model TableType {
