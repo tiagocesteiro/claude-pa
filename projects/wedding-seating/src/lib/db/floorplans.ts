@@ -8,6 +8,7 @@ export function createFloorPlan(input: {
   width: number;
   depth: number;
   name?: string | null;
+  spaceId?: string | null;
 }): Promise<FloorPlan> {
   return prisma.floorPlan.create({ data: input });
 }

@@ -47,8 +47,9 @@ model VenueSpace {
   image     String? // Supabase Storage object path
   order     Int             @default(0)
   createdAt DateTime        @default(now())
-  moments   WeddingMoment[]
-  templates LayoutTemplate[]
+  moments    WeddingMoment[]
+  templates  LayoutTemplate[]
+  floorPlans FloorPlan[]
 
   @@index([venueId])
 }
@@ -119,6 +120,8 @@ model FloorPlan {
   id             String           @id @default(cuid())
   venueId        String
   venue          Venue            @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  spaceId        String? // the venue space this floor plan (planta 2D) belongs to
+  space          VenueSpace?      @relation(fields: [spaceId], references: [id])
   name           String? // human label for the layout (e.g. "Salão principal")
   image          String // local file path
   scale          Float // pixels per metre

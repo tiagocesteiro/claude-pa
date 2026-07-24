@@ -39,4 +39,11 @@ it("stores and clears a floor plan's zones", async () => {
   expect(cleared.zones).toBeNull();
 });
 
+it("a floor plan can belong to a venue space", async () => {
+  const v = await createVenue({ name: "Quinta FP Space" });
+  const space = await prisma.venueSpace.create({ data: { venueId: v.id, name: "Salão" } });
+  const fp = await createFloorPlan({ venueId: v.id, spaceId: space.id, image: "", scale: 0, width: 0, depth: 0 });
+  expect(fp.spaceId).toBe(space.id);
+});
+
 afterAll(async () => { await prisma.$disconnect(); });

@@ -29,18 +29,14 @@ export default function VenueLayout({ children }: { children: React.ReactNode })
     loadVenue();
   }, [venueId]);
 
-  const catalogHref = `/admin/venue/${venueId}`;
-  const layoutsHref = `/admin/venue/${venueId}/layouts`;
-  const templatesHref = `/admin/venue/${venueId}/templates`;
-
-  const isCatalogActive = pathname === catalogHref;
-  const isLayoutsActive = pathname?.endsWith("/layouts") ?? false;
-  const isTemplatesActive = pathname?.endsWith("/templates") ?? false;
+  const materialHref = `/admin/venue/${venueId}`;
+  const espacosHref = `/admin/venue/${venueId}/espacos`;
+  const pedidosHref = `/admin/venue/${venueId}/pedidos`;
 
   const tabs = [
-    { label: "Mesas disponíveis", href: catalogHref, active: isCatalogActive },
-    { label: "Layouts de salas", href: layoutsHref, active: isLayoutsActive },
-    { label: "Templates", href: templatesHref, active: isTemplatesActive },
+    { label: "Material", href: materialHref, active: pathname === materialHref },
+    { label: "Espaços", href: espacosHref, active: pathname?.includes("/espacos") ?? false },
+    { label: "Pedidos template", href: pedidosHref, active: pathname?.endsWith("/pedidos") ?? false },
   ];
 
   return (

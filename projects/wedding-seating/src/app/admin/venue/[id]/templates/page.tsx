@@ -101,10 +101,22 @@ export default function VenueTemplatesPage() {
     }
   }, [venueId]);
 
+  const [spaceFilter, setSpaceFilter] = useState<string>("");
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
     load();
+    // Scoped from the Espaços hub (?space=…): filter the list + prefill the form.
+    const sp = new URLSearchParams(window.location.search).get("space") ?? "";
+    if (sp) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time query read
+      setSpaceFilter(sp);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time query read
+      setForm((f) => ({ ...f, spaceId: sp }));
+    }
   }, [load]);
+
+  const shownTemplates = spaceFilter ? templates.filter((t) => t.spaceId === spaceFilter) : templates;
 
   /** "Planta N" is only a fallback for layouts the venue never named — a named
    * floor plan is shown by its name everywhere it's referenced (Plan 18 Task 2). */
@@ -265,15 +277,21 @@ export default function VenueTemplatesPage() {
   return (
     <div>
       <h2>Templates</h2>
+      {spaceFilter && (
+        <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: -6 }}>
+          A mostrar os templates de um espaço.{" "}
+          <a href={`/admin/venue/${venueId}/templates`} onClick={(e) => { e.preventDefault(); setSpaceFilter(""); setForm((f) => ({ ...f, spaceId: "" })); }}>Ver todos</a>
+        </p>
+      )}
 
       {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
       {!loading && (
         <>
-          {templates.length === 0 && <p style={{ color: "#6b7280" }}>Sem templates ainda</p>}
-          {templates.length > 0 && (
+          {shownTemplates.length === 0 && <p style={{ color: "#6b7280" }}>Sem templates ainda</p>}
+          {shownTemplates.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              {templates.map((t) =>
+              {shownTemplates.map((t) =>
                 editingId === t.id ? (
                   <div
                     key={t.id}
