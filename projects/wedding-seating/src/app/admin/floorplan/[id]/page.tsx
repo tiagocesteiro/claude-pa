@@ -251,15 +251,14 @@ export default function FloorPlanEditorPage() {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
       <p>
-        <Link href="/admin">&larr; Back to venues</Link>
-        {floorPlan && (
-          <>
-            {" · "}
-            <Link href={`/admin/venue/${floorPlan.venueId}`}>Table type catalog</Link>
-          </>
-        )}
+        <Link
+          href={floorPlan ? `/admin/venue/${floorPlan.venueId}/espacos` : "/admin"}
+          style={{ color: "var(--text-muted)" }}
+        >
+          &larr; Voltar aos espaços
+        </Link>
       </p>
-      <h1>Layout editor</h1>
+      <h1>Editor de planta</h1>
 
       {loading && <p style={{ color: "var(--text-muted)" }}>A carregar...</p>}
 
