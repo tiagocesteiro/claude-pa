@@ -403,6 +403,12 @@ function VenueSection() {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Venue-created wedding.
+  const [wCouple, setWCouple] = useState("");
+  const [wDate, setWDate] = useState("");
+  const [wVenueId, setWVenueId] = useState("");
+  const [wError, setWError] = useState<string | null>(null);
+  const [wCreating, setWCreating] = useState(false);
 
   const loadVenues = useCallback(async () => {
     const res = await fetch("/api/venues");
@@ -441,6 +447,27 @@ function VenueSection() {
     setName("");
     setLocation("");
     await loadVenues();
+  }
+
+  async function handleCreateWedding(e: React.FormEvent) {
+    e.preventDefault();
+    setWError(null);
+    if (!wCouple.trim()) { setWError("Indica o nome do casal."); return; }
+    const venueId = wVenueId || venues[0]?.id;
+    if (!venueId) { setWError("Cria primeiro uma quinta."); return; }
+    setWCreating(true);
+    try {
+      const res = await fetch("/api/weddings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ couple: wCouple.trim(), venueId, date: wDate || undefined }),
+      });
+      if (!res.ok) { setWError("Não foi possível criar o casamento."); return; }
+      setWCouple(""); setWDate(""); setWVenueId("");
+      await loadBookings();
+    } finally {
+      setWCreating(false);
+    }
   }
 
   async function handleDeleteVenue(v: Venue) {
@@ -504,6 +531,34 @@ function VenueSection() {
           </li>
         ))}
       </ul>
+
+      {venues.length > 0 && (
+        <Card style={{ marginTop: 24, marginBottom: 8 }}>
+          <h2 style={{ marginTop: 0 }}>Novo casamento</h2>
+          <p style={{ color: "var(--text-muted)", marginTop: -4, fontSize: 13 }}>
+            Cria o casamento e depois define os momentos e espaços. Convida os noivos e fornecedores a partir de lá.
+          </p>
+          <form onSubmit={handleCreateWedding}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
+              <Field label="Casal">
+                <Input value={wCouple} onChange={(e) => setWCouple(e.target.value)} placeholder="Ana & João" />
+              </Field>
+              <Field label="Quinta">
+                <Select value={wVenueId} onChange={(e) => setWVenueId(e.target.value)}>
+                  {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                </Select>
+              </Field>
+              <Field label="Data">
+                <Input type="date" value={wDate} onChange={(e) => setWDate(e.target.value)} />
+              </Field>
+            </div>
+            <Button type="submit" variant="primary" loading={wCreating}>
+              {wCreating ? "A criar..." : "Criar casamento"}
+            </Button>
+            {wError && <p className="form-error" style={{ marginTop: 10 }}>{wError}</p>}
+          </form>
+        </Card>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: "1.4em" }}>
         <h2 style={{ margin: 0 }}>Casamentos na tua quinta</h2>

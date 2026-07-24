@@ -40,9 +40,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "planta não pertence à quinta" }, { status: 400 });
     }
   }
+  let spaceId: string | null = null;
+  if (typeof b.spaceId === "string" && b.spaceId) {
+    const sp = await prisma.venueSpace.findUnique({ where: { id: b.spaceId }, select: { venueId: true } });
+    if (!sp || sp.venueId !== id) return NextResponse.json({ error: "espaço não pertence à quinta" }, { status: 400 });
+    spaceId = b.spaceId;
+  }
   const template = await createTemplate({
     venueId: id,
     floorPlanId: b.floorPlanId,
+    spaceId,
     name: b.name,
     minGuests: b.minGuests,
     maxGuests: b.maxGuests,

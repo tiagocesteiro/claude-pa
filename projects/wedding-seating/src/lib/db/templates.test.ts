@@ -43,4 +43,15 @@ it("CRUDs layout templates for a venue", async () => {
   expect((await listTemplates(v.id)).length).toBe(0);
 });
 
+it("a template can be scoped to a venue space", async () => {
+  const v = await prisma.venue.create({ data: { name: "V Space Tpl" } });
+  const space = await prisma.venueSpace.create({ data: { venueId: v.id, name: "Salão" } });
+  const t = await createTemplate({ venueId: v.id, spaceId: space.id, name: "Jantar", minGuests: 40, maxGuests: 120 });
+  expect(t.spaceId).toBe(space.id);
+
+  // Reassign to no space (space-agnostic).
+  const cleared = await updateTemplate(t.id, { spaceId: null });
+  expect(cleared.spaceId).toBeNull();
+});
+
 afterAll(async () => { await prisma.$disconnect(); });

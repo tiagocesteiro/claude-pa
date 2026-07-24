@@ -136,6 +136,7 @@ export function listTemplatesFor(actor: Actor) {
     minGuests: true,
     maxGuests: true,
     venueId: true,
+    spaceId: true,
     venue: { select: { name: true } },
     floorPlanId: true,
     floorPlan: { select: { image: true } },

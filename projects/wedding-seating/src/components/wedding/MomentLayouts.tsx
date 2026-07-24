@@ -28,6 +28,7 @@ interface TemplateRow {
   id: string;
   name: string;
   venueId: string;
+  spaceId: string | null;
   minGuests: number;
   maxGuests: number;
   photos: string | null;
@@ -40,10 +41,12 @@ export default function MomentLayouts({
   weddingId,
   momentId,
   hasSeating,
+  spaceId = null,
 }: {
   weddingId: string;
   momentId: string;
   hasSeating: boolean;
+  spaceId?: string | null;
 }) {
   const [layouts, setLayouts] = useState<LayoutRow[]>([]);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -79,7 +82,14 @@ export default function MomentLayouts({
     };
   }, [weddingId, momentId, loadLayouts]);
 
-  const venueTemplates = templates.filter((t) => venueId && t.venueId === venueId);
+  const allVenueTemplates = templates.filter((t) => venueId && t.venueId === venueId);
+  // If the moment has a space, show that space's arrangements (plus space-agnostic
+  // ones). Fall back to all venue templates when the space has none, to avoid a
+  // dead-end.
+  const spaceScoped = spaceId
+    ? allVenueTemplates.filter((t) => t.spaceId === spaceId || t.spaceId === null)
+    : allVenueTemplates;
+  const venueTemplates = spaceScoped.length > 0 ? spaceScoped : allVenueTemplates;
 
   async function post(body: unknown) {
     setBusy(true);

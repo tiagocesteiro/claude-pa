@@ -13,6 +13,7 @@ interface MomentMeta {
   hasSeating: boolean;
   startTime: string | null;
   image: string | null;
+  spaceId: string | null;
 }
 interface Task {
   id: string;
@@ -286,7 +287,7 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
             ? "Desenha o layout e senta os convidados. Podes ter vários layouts e marcar um como final."
             : "Desenha a disposição da sala (mesas + elementos como bar/pista). Sem lugares marcados."}
         </p>
-        <MomentLayouts weddingId={weddingId} momentId={momentId} hasSeating={moment.hasSeating} />
+        <MomentLayouts weddingId={weddingId} momentId={momentId} hasSeating={moment.hasSeating} spaceId={moment.spaceId} />
       </Card>
 
       {/* Decoration */}

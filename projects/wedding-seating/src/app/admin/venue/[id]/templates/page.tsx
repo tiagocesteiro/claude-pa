@@ -20,11 +20,17 @@ interface TemplateRecord {
   id: string;
   venueId: string;
   floorPlanId: string | null;
+  spaceId: string | null;
   name: string;
   minGuests: number;
   maxGuests: number;
   lines: string;
   photos: string | null;
+}
+
+interface SpaceOption {
+  id: string;
+  name: string;
 }
 
 interface FloorPlanOption {
@@ -40,10 +46,11 @@ interface FormValues {
   minGuests: string;
   maxGuests: string;
   floorPlanId: string;
+  spaceId: string;
 }
 
 function emptyForm(): FormValues {
-  return { name: "", minGuests: "", maxGuests: "", floorPlanId: "" };
+  return { name: "", minGuests: "", maxGuests: "", floorPlanId: "", spaceId: "" };
 }
 
 export default function VenueTemplatesPage() {
@@ -52,6 +59,7 @@ export default function VenueTemplatesPage() {
 
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
   const [floorPlans, setFloorPlans] = useState<FloorPlanOption[]>([]);
+  const [spaces, setSpaces] = useState<SpaceOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState<FormValues>(emptyForm);
@@ -69,14 +77,16 @@ export default function VenueTemplatesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [templatesRes, floorPlansRes] = await Promise.all([
+      const [templatesRes, floorPlansRes, spacesRes] = await Promise.all([
         fetch(`/api/venues/${venueId}/templates`),
         fetch(`/api/floorplans`),
+        fetch(`/api/venues/${venueId}/spaces`),
       ]);
       if (!templatesRes.ok) throw new Error("failed to load templates");
       if (!floorPlansRes.ok) throw new Error("failed to load floor plans");
       const templatesData = (await templatesRes.json()) as TemplateRecord[];
       const floorPlansData = (await floorPlansRes.json()) as FloorPlanOption[];
+      if (spacesRes.ok) setSpaces(((await spacesRes.json()) as { spaces: SpaceOption[] }).spaces ?? []);
       setTemplates(templatesData);
       setFloorPlans(
         floorPlansData
@@ -125,6 +135,7 @@ export default function VenueTemplatesPage() {
       minGuests: Number(values.minGuests),
       maxGuests: Number(values.maxGuests),
       floorPlanId: values.floorPlanId || undefined,
+      spaceId: values.spaceId || "",
       lines: "[]",
     };
   }
@@ -166,6 +177,7 @@ export default function VenueTemplatesPage() {
       minGuests: String(t.minGuests),
       maxGuests: String(t.maxGuests),
       floorPlanId: t.floorPlanId ?? "",
+      spaceId: t.spaceId ?? "",
     });
   }
 
@@ -237,6 +249,15 @@ export default function VenueTemplatesPage() {
             </option>
           ))}
         </select>
+        {spaces.length > 0 && (
+          <>
+            {"  "}Espaço{" "}
+            <select value={values.spaceId} onChange={(e) => setter((f) => ({ ...f, spaceId: e.target.value }))} style={{ width: 150 }}>
+              <option value="">Qualquer espaço</option>
+              {spaces.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </>
+        )}
       </label>
     );
   }

@@ -25,6 +25,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "planta não pertence à quinta" }, { status: 400 });
     }
   }
+  // Reassign the template's space (must belong to the same venue); "" clears it.
+  if ("spaceId" in b) {
+    const spaceId: string | null = typeof b.spaceId === "string" && b.spaceId ? b.spaceId : null;
+    if (spaceId) {
+      const [tpl, sp] = await Promise.all([
+        prisma.layoutTemplate.findUnique({ where: { id }, select: { venueId: true } }),
+        prisma.venueSpace.findUnique({ where: { id: spaceId }, select: { venueId: true } }),
+      ]);
+      if (!sp || !tpl || sp.venueId !== tpl.venueId) {
+        return NextResponse.json({ error: "espaço não pertence à quinta" }, { status: 400 });
+      }
+    }
+    await updateTemplate(id, { spaceId });
+  }
   const patch = Object.fromEntries(
     Object.entries({
       name: b?.name,

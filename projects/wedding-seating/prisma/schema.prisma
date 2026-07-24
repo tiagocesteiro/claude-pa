@@ -48,6 +48,7 @@ model VenueSpace {
   order     Int             @default(0)
   createdAt DateTime        @default(now())
   moments   WeddingMoment[]
+  templates LayoutTemplate[]
 
   @@index([venueId])
 }
@@ -98,6 +99,8 @@ model LayoutTemplate {
   id          String          @id @default(cuid())
   venueId     String
   venue       Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  spaceId     String? // the venue space this arrangement belongs to (null = works in any space)
+  space       VenueSpace?     @relation(fields: [spaceId], references: [id])
   floorPlanId String?
   floorPlan   FloorPlan?      @relation(fields: [floorPlanId], references: [id])
   name        String
@@ -108,6 +111,8 @@ model LayoutTemplate {
   tables      Table[]
   moments     WeddingMoment[]
   createdAt   DateTime        @default(now())
+
+  @@index([spaceId])
 }
 
 model FloorPlan {
