@@ -1,5 +1,5 @@
 import { describe, it, expect, afterAll } from "vitest";
-import { createFloorPlan, getFloorPlan, updateFloorPlanScale, updateFloorPlanBoundary, updateFloorPlanZones } from "./floorplans";
+import { createFloorPlan, getFloorPlan, updateFloorPlanScale, updateFloorPlanBoundary, updateFloorPlanZones, updateFloorPlanSpace } from "./floorplans";
 import { createVenue } from "./venues";
 import { prisma } from "./client";
 
@@ -44,6 +44,12 @@ it("a floor plan can belong to a venue space", async () => {
   const space = await prisma.venueSpace.create({ data: { venueId: v.id, name: "Salão" } });
   const fp = await createFloorPlan({ venueId: v.id, spaceId: space.id, image: "", scale: 0, width: 0, depth: 0 });
   expect(fp.spaceId).toBe(space.id);
+
+  // Recover an orphan plan by assigning it a space (and clearing it).
+  const orphan = await createFloorPlan({ venueId: v.id, image: "", scale: 0, width: 0, depth: 0 });
+  expect(orphan.spaceId).toBeNull();
+  expect((await updateFloorPlanSpace(orphan.id, space.id)).spaceId).toBe(space.id);
+  expect((await updateFloorPlanSpace(orphan.id, null)).spaceId).toBeNull();
 });
 
 afterAll(async () => { await prisma.$disconnect(); });

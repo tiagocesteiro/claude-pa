@@ -7,9 +7,11 @@ import {
   updateFloorPlanZones,
   updateFloorPlanElements,
   updateFloorPlanName,
+  updateFloorPlanSpace,
   updateFloorPlanDimensions,
   deleteFloorPlan,
 } from "@/lib/db/floorplans";
+import { prisma } from "@/lib/db/client";
 import { assertFloorPlanAccess } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 
@@ -36,6 +38,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return accessErrorResponse(e);
   }
   const b = await req.json().catch(() => ({}));
+  // Assign the floor plan to a venue space (must belong to the SAME venue); "" clears it.
+  if ("spaceId" in b) {
+    const spaceId: string | null = typeof b.spaceId === "string" && b.spaceId ? b.spaceId : null;
+    if (spaceId) {
+      const [fp, sp] = await Promise.all([
+        prisma.floorPlan.findUnique({ where: { id }, select: { venueId: true } }),
+        prisma.venueSpace.findUnique({ where: { id: spaceId }, select: { venueId: true } }),
+      ]);
+      if (!sp || !fp || sp.venueId !== fp.venueId) {
+        return NextResponse.json({ error: "espaço não pertence à quinta" }, { status: 400 });
+      }
+    }
+    return NextResponse.json(await updateFloorPlanSpace(id, spaceId));
+  }
   if (typeof b?.name === "string" || b?.name === null) {
     return NextResponse.json(await updateFloorPlanName(id, b.name));
   }

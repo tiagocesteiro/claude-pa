@@ -72,6 +72,22 @@ export default function VenueSpacesManager({ venueId }: { venueId: string }) {
       if (res.ok) { const fp = await res.json(); router.push(`/admin/floorplan/${fp.id}`); }
     } finally { setBusy(false); }
   }
+  async function assignPlan(planId: string, spaceId: string) {
+    if (!spaceId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/floorplans/${planId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ spaceId }) });
+      if (res.ok) await load();
+    } finally { setBusy(false); }
+  }
+  async function assignTemplate(templateId: string, spaceId: string) {
+    if (!spaceId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/templates/${templateId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ spaceId }) });
+      if (res.ok) await load();
+    } finally { setBusy(false); }
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -149,6 +165,53 @@ export default function VenueSpacesManager({ venueId }: { venueId: string }) {
           </Card>
         );
       })}
+
+      {/* Recover pre-existing plantas/templates that have no space yet */}
+      {(() => {
+        const orphanPlans = floorPlans.filter((f) => !f.spaceId);
+        const orphanTemplates = templates.filter((t) => !t.spaceId);
+        if (orphanPlans.length === 0 && orphanTemplates.length === 0) return null;
+        return (
+          <Card>
+            <h3 style={{ marginTop: 0, marginBottom: 4 }}>Sem espaço (antigos)</h3>
+            <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
+              Plantas e templates que criaste antes dos espaços. Atribui cada um ao seu espaço para os recuperares.
+            </p>
+            {orphanPlans.length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <strong style={{ fontSize: 13 }}>Plantas 2D</strong>
+                <ul style={{ listStyle: "none", padding: 0, margin: "6px 0 0", display: "flex", flexDirection: "column", gap: 6 }}>
+                  {orphanPlans.map((p) => (
+                    <li key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <Link href={`/admin/floorplan/${p.id}`} style={{ flex: "1 1 160px", fontSize: 13 }}>{p.name || "Planta"}{!p.image ? " (por desenhar)" : ""}</Link>
+                      <select className="input" defaultValue="" onChange={(e) => assignPlan(p.id, e.target.value)} disabled={busy} style={{ width: 180 }}>
+                        <option value="">— atribuir a espaço —</option>
+                        {spaces.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {orphanTemplates.length > 0 && (
+              <div>
+                <strong style={{ fontSize: 13 }}>Templates de layout</strong>
+                <ul style={{ listStyle: "none", padding: 0, margin: "6px 0 0", display: "flex", flexDirection: "column", gap: 6 }}>
+                  {orphanTemplates.map((t) => (
+                    <li key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ flex: "1 1 160px", fontSize: 13 }}>{t.name}</span>
+                      <select className="input" defaultValue="" onChange={(e) => assignTemplate(t.id, e.target.value)} disabled={busy} style={{ width: 180 }}>
+                        <option value="">— atribuir a espaço —</option>
+                        {spaces.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+        );
+      })()}
     </div>
   );
 }

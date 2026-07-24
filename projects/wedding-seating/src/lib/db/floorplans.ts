@@ -21,6 +21,10 @@ export function updateFloorPlanName(id: string, name: string | null): Promise<Fl
   return prisma.floorPlan.update({ where: { id }, data: { name } });
 }
 
+export function updateFloorPlanSpace(id: string, spaceId: string | null): Promise<FloorPlan> {
+  return prisma.floorPlan.update({ where: { id }, data: { spaceId } });
+}
+
 /** Deletes a layout and everything built on it: its tables + any LayoutTemplates
  * positioned on it (which cascade their own tables). Wedding moments / weddings that
  * referenced this plan or those templates have their references nulled (SetNull). */
