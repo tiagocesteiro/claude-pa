@@ -40,13 +40,14 @@ model Venue {
 /// "Terraço do cocktail"). The venue builds this library once; each wedding's
 /// moments pick a space image to show as their hero banner in the overview.
 model VenueSpace {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   venueId   String
-  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue     Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
   name      String
   image     String? // Supabase Storage object path
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+  moments   WeddingMoment[]
 
   @@index([venueId])
 }
@@ -403,7 +404,9 @@ model WeddingMoment {
   // dinner. When false, its layouts are arrangements (tables + elements) with no
   // seated guests.
   hasSeating  Boolean          @default(false)
-  image       String? // hero image of the venue space for this moment (Storage object path)
+  image       String? // hero image of the venue space for this moment (snapshot of the space's photo)
+  spaceId     String? // the venue space assigned to this moment (drives the photo, and later the floor plan/layouts)
+  space       VenueSpace?      @relation(fields: [spaceId], references: [id])
   floorPlanId String?
   floorPlan   FloorPlan?       @relation(fields: [floorPlanId], references: [id])
   templateId  String?

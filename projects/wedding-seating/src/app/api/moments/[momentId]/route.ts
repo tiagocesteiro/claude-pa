@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { getMoment, updateMoment, deleteMoment } from "@/lib/db/moments";
 import { listMomentTasks } from "@/lib/db/tasks";
 import { listMomentDecor } from "@/lib/db/momentDecor";
-import { assertMomentAccess } from "@/lib/auth/access";
+import { assertMomentAccess, assertWeddingRole } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 import { recordEvent } from "@/lib/db/audit";
 
@@ -35,14 +35,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ moment
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
   const { momentId } = await params;
+  const moment = await getMoment(momentId);
+  if (!moment) return NextResponse.json({ error: "moment não encontrado" }, { status: 404 });
+  // Venue + couple may edit a moment; the venue owns structure (space), the couple
+  // its content (arrangement/seating).
   try {
-    await assertMomentAccess(actor, momentId, "write");
+    await assertWeddingRole(actor, moment.weddingId, ["venue", "couple", "admin"]);
   } catch (e) {
     return accessErrorResponse(e);
   }
-
-  const moment = await getMoment(momentId);
-  if (!moment) return NextResponse.json({ error: "moment não encontrado" }, { status: 404 });
   const b = await req.json().catch(() => ({}));
 
   const fields: {
@@ -53,6 +54,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ moment
     hasSeating?: boolean;
     startTime?: string | null;
     image?: string | null;
+    spaceId?: string | null;
   } = {};
   if (typeof b?.title === "string" && b.title.trim()) fields.title = b.title.trim();
   if (typeof b?.order === "number") fields.order = b.order;
@@ -62,6 +64,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ moment
   if ("startTime" in b) {
     const s = typeof b.startTime === "string" ? b.startTime.trim() : "";
     fields.startTime = /^\d{1,2}:\d{2}$/.test(s) ? s.padStart(5, "0") : null;
+  }
+
+  // Assign a venue space to the moment (venue-defined). The space must belong to
+  // the wedding's venue; assigning it snapshots the space's photo as the hero.
+  if ("spaceId" in b) {
+    const spaceId: string | null = typeof b.spaceId === "string" && b.spaceId ? b.spaceId : null;
+    if (spaceId) {
+      const wedding = await prisma.wedding.findUnique({ where: { id: moment.weddingId }, select: { venueId: true } });
+      const space = await prisma.venueSpace.findUnique({ where: { id: spaceId }, select: { venueId: true, image: true } });
+      if (!space || space.venueId !== wedding?.venueId) {
+        return NextResponse.json({ error: "espaço não pertence à quinta" }, { status: 400 });
+      }
+      fields.spaceId = spaceId;
+      fields.image = space.image;
+    } else {
+      fields.spaceId = null;
+      fields.image = null;
+    }
   }
 
   // Arrangement (template/floor plan) must belong to the wedding's venue.
@@ -108,12 +128,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ mome
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
   const { momentId } = await params;
+  const before = await getMoment(momentId);
+  if (!before) return NextResponse.json({ ok: true });
+  // Only the venue (owner) may delete a moment — the couple can't.
   try {
-    await assertMomentAccess(actor, momentId, "write");
+    await assertWeddingRole(actor, before.weddingId, ["venue", "admin"]);
   } catch (e) {
     return accessErrorResponse(e);
   }
-  const before = await getMoment(momentId);
   await deleteMoment(momentId);
   if (before) {
     await recordEvent({

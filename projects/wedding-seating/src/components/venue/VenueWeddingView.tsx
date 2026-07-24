@@ -26,6 +26,7 @@ interface Moment {
   startTime: string | null;
   hasSeating: boolean;
   image: string | null;
+  spaceId: string | null;
   finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
   decor: { name: string; category: string | null; quantity: number; image: string | null }[];
   materials: Material[];
@@ -39,6 +40,11 @@ interface View {
   guests: { total: number; confirmed: number; pending: number; declined: number };
   suppliers: { id: string; name: string }[];
   moments: Moment[];
+}
+interface Space {
+  id: string;
+  name: string;
+  image: string | null;
 }
 
 const KIND_LABELS: Record<string, string> = { ceremony: "Cerimónia", cocktail: "Cocktail", dinner: "Jantar", dance: "Dança" };
@@ -64,6 +70,9 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
   const [drafts, setDrafts] = useState<Record<string, { name: string; qty: string; note: string }>>({});
   const [reqRefresh, setReqRefresh] = useState(0);
   const matFileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [newMomentTitle, setNewMomentTitle] = useState("");
+  const [addingMoment, setAddingMoment] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/venue/weddings/${weddingId}`);
@@ -76,9 +85,46 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
     setLoading(false);
   }, [weddingId]);
 
+  const loadSpaces = useCallback(async () => {
+    const res = await fetch(`/api/weddings/${weddingId}/spaces`);
+    if (res.ok) setSpaces(((await res.json()) as { spaces: Space[] }).spaces ?? []);
+  }, [weddingId]);
+
+  async function addMoment() {
+    if (!newMomentTitle.trim()) return;
+    setAddingMoment(true);
+    try {
+      const res = await fetch(`/api/weddings/${weddingId}/moments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newMomentTitle.trim() }),
+      });
+      if (res.ok) {
+        setNewMomentTitle("");
+        await load();
+      }
+    } finally {
+      setAddingMoment(false);
+    }
+  }
+  async function assignSpace(momentId: string, spaceId: string) {
+    const res = await fetch(`/api/moments/${momentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ spaceId: spaceId || null }),
+    });
+    if (res.ok) await load();
+  }
+  async function removeMoment(momentId: string, label: string) {
+    if (!window.confirm(`Remover o momento «${label}»? Perde os layouts, tarefas e decoração dele.`)) return;
+    const res = await fetch(`/api/moments/${momentId}`, { method: "DELETE" });
+    if (res.ok) await load();
+  }
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadSpaces();
+  }, [load, loadSpaces]);
 
   function draftOf(momentId: string) {
     return drafts[momentId] ?? { name: "", qty: "1", note: "" };
@@ -219,7 +265,16 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
       </Card>
 
       {/* Per moment — one tab per moment */}
-      <h2>Momentos</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <h2 style={{ marginBottom: 8 }}>Momentos</h2>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <Input value={newMomentTitle} onChange={(e) => setNewMomentTitle(e.target.value)} placeholder="Novo momento (ex.: Photobooth)" style={{ width: 220 }} onKeyDown={(e) => { if (e.key === "Enter") addMoment(); }} />
+          <Button variant="secondary" size="sm" onClick={addMoment} disabled={addingMoment || !newMomentTitle.trim()}>+ Momento</Button>
+        </div>
+      </div>
+      <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0 }}>
+        A quinta define os momentos e o espaço de cada um. Os noivos só os consultam.
+      </p>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
         {moments.map((m) => {
           const active = (activeMomentId ?? moments[0]?.id) === m.id;
@@ -268,6 +323,20 @@ export default function VenueWeddingView({ weddingId }: { weddingId: string }) {
               ) : (
                 <Badge tone="warning">Sem layout final</Badge>
               )}
+            </div>
+
+            {/* Venue: assign the space (photo) + remove the moment */}
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
+              <label style={{ fontSize: 13, color: "var(--text-muted)" }}>Espaço{" "}
+                <select className="input" value={m.spaceId ?? ""} onChange={(e) => assignSpace(m.id, e.target.value)} style={{ width: 200 }}>
+                  <option value="">— sem espaço —</option>
+                  {spaces.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </label>
+              {spaces.length === 0 && (
+                <span style={{ fontSize: 12, color: "#d97706" }}>Adiciona espaços na página da tua quinta.</span>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => removeMoment(m.id, momentTitle(m))}>Remover momento</Button>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginTop: 12 }}>

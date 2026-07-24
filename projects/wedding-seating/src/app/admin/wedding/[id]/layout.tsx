@@ -36,6 +36,7 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
 
   const [wedding, setWedding] = useState<WeddingRecord | null>(null);
   const [moments, setMoments] = useState<MomentTab[]>([]);
+  const [role, setRole] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   const loadMoments = useCallback(async () => {
@@ -55,6 +56,9 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
     }
     loadWedding();
     loadMoments();
+    fetch("/api/auth/me").then(async (r) => {
+      if (r.ok) setRole(((await r.json()) as { role?: string }).role ?? null);
+    });
   }, [weddingId, loadMoments]);
 
   const detailsHref = `/admin/wedding/${weddingId}/details`;
@@ -107,24 +111,27 @@ export default function WeddingLayout({ children }: { children: React.ReactNode 
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <Tabs tabs={tabs} />
-        <button
-          type="button"
-          onClick={addMoment}
-          disabled={adding}
-          title="Adicionar momento"
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
-            background: "var(--surface)",
-            color: "var(--heading)",
-            padding: "4px 10px",
-            cursor: adding ? "default" : "pointer",
-            fontSize: 13,
-            whiteSpace: "nowrap",
-          }}
-        >
-          + Momento
-        </button>
+        {/* Only the venue/admin define the moments — the couple consumes them. */}
+        {role !== "couple" && (
+          <button
+            type="button"
+            onClick={addMoment}
+            disabled={adding}
+            title="Adicionar momento"
+            style={{
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius)",
+              background: "var(--surface)",
+              color: "var(--heading)",
+              padding: "4px 10px",
+              cursor: adding ? "default" : "pointer",
+              fontSize: 13,
+              whiteSpace: "nowrap",
+            }}
+          >
+            + Momento
+          </button>
+        )}
       </div>
 
       {children}

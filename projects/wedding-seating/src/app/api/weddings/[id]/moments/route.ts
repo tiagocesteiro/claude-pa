@@ -1,31 +1,32 @@
 import { NextResponse } from "next/server";
 import { listMoments, createMoment } from "@/lib/db/moments";
-import { assertWeddingAccess } from "@/lib/auth/access";
+import { assertWeddingRole } from "@/lib/auth/access";
 import { requireActor, accessErrorResponse } from "@/lib/auth/guard";
 import { recordEvent } from "@/lib/db/audit";
 
 export const runtime = "nodejs";
 
-/** List a wedding's moments (tab order). */
+/** List a wedding's moments (tab order). Any participant reads them. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
   const { id } = await params;
   try {
-    await assertWeddingAccess(actor, id, "read");
+    await assertWeddingRole(actor, id, ["venue", "couple", "supplier", "admin"]);
   } catch (e) {
     return accessErrorResponse(e);
   }
   return NextResponse.json({ moments: await listMoments(id) });
 }
 
-/** Create a custom moment (added at the end of the list). */
+/** Create a moment. Only the VENUE (owner) defines the wedding's moments — the
+ * couple can't (they consume the structure the venue sets up). */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const actor = await requireActor();
   if (actor instanceof NextResponse) return actor;
   const { id } = await params;
   try {
-    await assertWeddingAccess(actor, id, "write");
+    await assertWeddingRole(actor, id, ["venue", "admin"]);
   } catch (e) {
     return accessErrorResponse(e);
   }

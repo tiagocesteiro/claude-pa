@@ -14,11 +14,6 @@ interface MomentMeta {
   startTime: string | null;
   image: string | null;
 }
-interface Space {
-  id: string;
-  name: string;
-  image: string | null;
-}
 interface Task {
   id: string;
   text: string;
@@ -68,8 +63,6 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
   const [decor, setDecor] = useState<DecorLine[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [spaces, setSpaces] = useState<Space[]>([]);
-  const [pickingSpace, setPickingSpace] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,10 +105,6 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       if (!cancelled && cRes.ok) {
         setCatalog(((await cRes.json()) as { items: CatalogItem[] }).items ?? []);
       }
-      const spRes = await fetch(`/api/weddings/${weddingId}/spaces`);
-      if (!cancelled && spRes.ok) {
-        setSpaces(((await spRes.json()) as { spaces: Space[] }).spaces ?? []);
-      }
       // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load
       if (!cancelled) setLoading(false);
     })();
@@ -148,17 +137,6 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ startTime: startTime || null }),
-    });
-    await loadMoment();
-  }
-
-  async function setMomentImage(image: string | null) {
-    setMoment((m) => (m ? { ...m, image } : m)); // optimistic
-    setPickingSpace(false);
-    await fetch(`/api/moments/${momentId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image }),
     });
     await loadMoment();
   }
@@ -286,43 +264,13 @@ export default function MomentDetail({ weddingId, momentId }: { weddingId: strin
       </div>
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
-      {/* Hero image of the venue space for this moment */}
-      <div>
-        {moment.image ? (
-          <div style={{ position: "relative", borderRadius: 16, overflow: "hidden" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imageUrlFor(moment.image)} alt={momentTitle(moment)} style={{ width: "100%", maxHeight: 260, objectFit: "cover", display: "block" }} />
-            <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 6 }}>
-              <Button variant="secondary" size="sm" onClick={() => setPickingSpace((v) => !v)}>Trocar espaço</Button>
-              <Button variant="secondary" size="sm" onClick={() => setMomentImage(null)}>Remover</Button>
-            </div>
-          </div>
-        ) : spaces.length > 0 ? (
-          <Button variant="secondary" size="sm" onClick={() => setPickingSpace((v) => !v)}>+ Imagem do espaço</Button>
-        ) : (
-          <p style={{ color: "var(--text-muted)", fontSize: 12, margin: 0 }}>
-            A quinta ainda não adicionou fotos de espaços.
-          </p>
-        )}
-
-        {pickingSpace && spaces.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginTop: 8 }}>
-            {spaces.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setMomentImage(s.image)}
-                title={s.name}
-                style={{ padding: 0, border: moment.image === s.image ? "2px solid var(--accent)" : "1px solid var(--border)", borderRadius: 8, overflow: "hidden", cursor: "pointer", background: "var(--surface)" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrlFor(s.image!)} alt={s.name} style={{ width: "100%", height: 72, objectFit: "cover", display: "block" }} />
-                <span style={{ display: "block", fontSize: 11, padding: "3px 4px", color: "var(--heading)" }}>{s.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Hero image of the venue space for this moment (venue-defined, read-only here) */}
+      {moment.image && (
+        <div style={{ borderRadius: 16, overflow: "hidden" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imageUrlFor(moment.image)} alt={momentTitle(moment)} style={{ width: "100%", maxHeight: 260, objectFit: "cover", display: "block" }} />
+        </div>
+      )}
 
       {/* Layout(s) */}
       <Card>

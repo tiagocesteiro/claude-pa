@@ -434,6 +434,7 @@ export interface VenueWeddingView {
     startTime: string | null;
     hasSeating: boolean;
     image: string | null;
+    spaceId: string | null;
     finalLayout: { name: string; tableCount: number; seatedCount: number } | null;
     decor: { name: string; category: string | null; quantity: number; image: string | null }[];
     materials: { id: string; name: string; quantity: number; note: string | null; image: string | null }[];
@@ -466,6 +467,7 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
           startTime: true,
           hasSeating: true,
           image: true,
+          spaceId: true,
           tasks: { where: { done: false }, select: { text: true, assignee: true, supplierId: true } },
           decor: { select: { name: true, quantity: true, decorItem: { select: { name: true, category: true, image: true } } } },
           materials: { select: { id: true, name: true, quantity: true, note: true, image: true } },
@@ -504,6 +506,7 @@ export async function getVenueWeddingView(weddingId: string): Promise<VenueWeddi
         startTime: m.startTime,
         hasSeating: m.hasSeating,
         image: m.image,
+        spaceId: m.spaceId,
         finalLayout: final
           ? { name: final.name, tableCount: final._count.tables, seatedCount: final._count.seats }
           : null,
