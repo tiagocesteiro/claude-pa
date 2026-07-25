@@ -150,13 +150,19 @@ export default function VenueSpacesManager({ venueId }: { venueId: string }) {
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                     <strong style={{ fontSize: 13 }}>Templates de layout</strong>
-                    <Link href={`/admin/venue/${venueId}/templates?space=${s.id}`} style={{ fontSize: 13 }}>Gerir templates →</Link>
+                    <Link href={`/admin/venue/${venueId}/templates?space=${s.id}`} style={{ fontSize: 13 }}>+ Novo template</Link>
                   </div>
                   {tpls.length === 0 ? (
                     <p style={{ color: "var(--text-muted)", fontSize: 12, margin: "4px 0 0" }}>Sem templates.</p>
                   ) : (
                     <ul style={{ listStyle: "none", padding: 0, margin: "6px 0 0", display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {tpls.map((t) => <li key={t.id}><Badge tone="neutral">{t.name}</Badge></li>)}
+                      {tpls.map((t) => (
+                        <li key={t.id}>
+                          <Link href={`/admin/venue/${venueId}/templates?space=${s.id}`} style={{ fontSize: 13 }}>
+                            <Badge tone="neutral">{t.name}</Badge>
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   )}
                 </div>
