@@ -723,6 +723,11 @@ def process_search(search: dict, state: dict, args, settings: dict) -> list[dict
                 "last_feedback": None,  # when user last approved/rejected
                 "title": listing.get("title", ""),
                 "url": listing["url"],
+                "price_eur": listing.get("price_eur"),
+                "location": listing.get("location"),
+                "typology": listing.get("typology"),
+                "area_m2": listing.get("area_m2"),
+                "image": listing.get("image"),
             }
             tag = "✅" if verdict["verdict"] == "manter" else "🚫"
             date_bits = []
