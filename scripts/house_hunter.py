@@ -174,6 +174,46 @@ def extract_dates(description: str) -> dict:
     return result
 
 
+def is_recent_listing(listing: dict, days: int = 3) -> bool:
+    """Check if a listing was published or updated within the last N days.
+
+    Args:
+        listing: dict with "published_date" and "updated_date" fields (YYYY-MM-DD or None)
+        days: number of days to consider "recent" (default 3)
+
+    Returns:
+        True if listing is recent or has no date info, False otherwise
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff_date = cutoff.date()
+
+    pub_date_str = listing.get("published_date")
+    upd_date_str = listing.get("updated_date")
+
+    # If either date exists and is recent, consider it recent
+    if pub_date_str:
+        try:
+            pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d").date()
+            if pub_date >= cutoff_date:
+                return True
+        except ValueError:
+            pass  # Invalid date format, ignore
+
+    if upd_date_str:
+        try:
+            upd_date = datetime.strptime(upd_date_str, "%Y-%m-%d").date()
+            if upd_date >= cutoff_date:
+                return True
+        except ValueError:
+            pass  # Invalid date format, ignore
+
+    # If no dates or both dates are old, include anyway (benign default)
+    if not pub_date_str and not upd_date_str:
+        return True
+
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
