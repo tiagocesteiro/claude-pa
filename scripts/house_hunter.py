@@ -750,6 +750,8 @@ def main() -> None:
     parser.add_argument("--no-validate", action="store_true", help="Skip the AI validation agent")
     parser.add_argument("--print-urls", action="store_true",
                         help="Print the built search URLs and exit (no scraping)")
+    parser.add_argument("--web", action="store_true",
+                        help="Start web dashboard after scraping (opens browser)")
     args = parser.parse_args()
 
     radar = load_radar()
@@ -769,6 +771,17 @@ def main() -> None:
         return
 
     save_state(state)
+
+    if args.web:
+        from templates import generate_html
+        from server import app, serve_and_open
+
+        html_file = REPO_ROOT / "results.html"
+        generate_html(state, output_path=html_file)
+        print(f"Dashboard saved to {html_file}", file=sys.stderr)
+        print("Starting web server on http://localhost:5000/results", file=sys.stderr)
+        serve_and_open(app)
+        return
 
     if not all_embeds:
         print("No new approved listings this run.", file=sys.stderr)
