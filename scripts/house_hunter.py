@@ -421,7 +421,7 @@ def _firecrawl_scrape(url: str, formats: list, timeout: int = 120,
 
 
 def scrape_listings(url: str) -> list[dict]:
-    """Scrape a search results page → normalized listing dicts (id = listing URL)."""
+    """Scrape a search results page → normalized listing dicts with dates."""
     formats = [{"type": "json", "prompt": LISTINGS_PROMPT, "schema": LISTINGS_SCHEMA}]
     data = _firecrawl_scrape(url, formats)
     extracted = data.get("json") or {}
@@ -435,6 +435,13 @@ def scrape_listings(url: str) -> list[dict]:
         listing_url = (it.get("url") or "").strip()
         if not listing_url:
             continue
+
+        # Extract dates from card text (title + location) — Firecrawl can catch
+        # some dates in card text; refined again against the full description
+        # during validation (see process_search()).
+        combined_text = (it.get("title", "") + " " + it.get("location", "")).lower()
+        dates = extract_dates(combined_text)
+
         out.append({
             "id": listing_url.split("?")[0].rstrip("/"),
             "url": listing_url,
@@ -444,6 +451,8 @@ def scrape_listings(url: str) -> list[dict]:
             "typology": (it.get("typology") or "").strip(),
             "area_m2": it.get("area_m2"),
             "image": (it.get("image") or "").strip() or None,
+            "published_date": dates.get("published_date"),
+            "updated_date": dates.get("updated_date"),
         })
     return out
 
@@ -682,6 +691,11 @@ def process_search(search: dict, state: dict, args, settings: dict) -> list[dict
 
         new = [l for l in listings if l["id"] not in seen]
         print(f"    {len(listings)} listings, {len(new)} new", file=sys.stderr)
+
+        # Filter: keep only recent listings (≤3 days old)
+        new = [l for l in new if is_recent_listing(l, days=3)]
+        print(f"    {len(new)} recent listings", file=sys.stderr)
+
         if len(new) > max_new:
             print(f"    capping to {max_new} (anti-spam)", file=sys.stderr)
             new = new[:max_new]
@@ -691,19 +705,36 @@ def process_search(search: dict, state: dict, args, settings: dict) -> list[dict
             if do_validate and search.get("reject_if"):
                 try:
                     desc = scrape_description(listing["url"])
+                    # Extract more precise dates from full description
+                    dates = extract_dates(desc)
+                    listing["published_date"] = listing.get("published_date") or dates.get("published_date")
+                    listing["updated_date"] = listing.get("updated_date") or dates.get("updated_date")
+
                     verdict = validate_listing(desc, search["reject_if"])
                 except RuntimeError as e:
                     verdict = {"verdict": "manter", "motivo": f"descrição inacessível ({e})"[:120]}
             seen[listing["id"]] = {
                 "verdict": verdict["verdict"],
                 "motivo": verdict.get("motivo", ""),
+                "user_feedback": "pending",  # for feedback loop
+                "published_date": listing.get("published_date"),
+                "updated_date": listing.get("updated_date"),
                 "first_seen": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "last_feedback": None,  # when user last approved/rejected
                 "title": listing.get("title", ""),
                 "url": listing["url"],
             }
             tag = "✅" if verdict["verdict"] == "manter" else "🚫"
-            print(f"    {tag} {listing.get('title','')[:60]} — {verdict.get('motivo','')}",
-                  file=sys.stderr)
+            date_bits = []
+            if listing.get("published_date"):
+                date_bits.append(f"pub:{listing['published_date']}")
+            if listing.get("updated_date"):
+                date_bits.append(f"upd:{listing['updated_date']}")
+            trailer_bits = date_bits + ([verdict["motivo"]] if verdict.get("motivo") else [])
+            line = f"    {tag} {listing.get('title','')[:60]}"
+            if trailer_bits:
+                line += " — " + " ".join(trailer_bits)
+            print(line, file=sys.stderr)
             if verdict["verdict"] == "manter":
                 note = verdict.get("motivo", "") if "inconclusiva" in verdict.get("motivo", "") else ""
                 approved_embeds.append(build_embed(listing, name, note))
