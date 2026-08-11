@@ -275,6 +275,18 @@
     {
       "date": "2026-08-10",
       "name": "Marketplace de Reparação com Comissão por Match"
+    },
+    {
+      "date": "2026-08-11",
+      "name": "Margin Autopilot para POD"
+    },
+    {
+      "date": "2026-08-11",
+      "name": "Tech Pack AI + RFQ Automático"
+    },
+    {
+      "date": "2026-08-11",
+      "name": "Label & Claims Compliance Copilot"
     }
   ]
 }
