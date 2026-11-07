@@ -8,8 +8,8 @@
 #                   "atlas" → critical investment analysis (trades, tickers, hedge-fund lens)
 #                   "scout" → business-opportunity analysis (model, numbers, PT fit, action)
 #   webhook_env — name of the env var / GitHub secret holding the Discord webhook URL.
-#                   "DISCORD_WEBHOOK_URL"         → finance channel (shared with daily briefing)
-#                   "YOUTUBE_DISCORD_WEBHOOK_URL" → business-ideas channel
+#                   "DISCORD_WEBHOOK_URL"         → ATLAS daily briefing channel
+#                   "YOUTUBE_DISCORD_WEBHOOK_URL" → YouTube channel (Andrei videos only)
 #   focus       — what the channel covers
 #   bias_watch  — biases to flag in the analysis
 #
@@ -23,13 +23,8 @@ channels:
   - id: UCGy7SkBjcIAgTiwkXEtPnYg
     name: "Andrei Jikh"
     persona: atlas
-    webhook_env: DISCORD_WEBHOOK_URL
+    webhook_env: YOUTUBE_DISCORD_WEBHOOK_URL
     focus: "Stocks, options, crypto, macro — US retail finance"
     bias_watch: "Promotes own course (Backstage Investing); often bullish risk assets; crypto/SPY/QQQ heavy"
 
-  - id: UChFahjDeMBV67DSXiF5pwBA
-    name: "UpFlip"
-    persona: scout
-    webhook_env: YOUTUBE_DISCORD_WEBHOOK_URL
-    focus: "How to start and grow real businesses — founder interviews, revenue/margin breakdowns, niche business models"
-    bias_watch: "Promotes own courses / UpFlip Academy; survivorship bias (only successful businesses featured); US-centric numbers and regulation"
+# UpFlip (UChFahjDeMBV67DSXiF5pwBA, persona scout) removed — the YouTube channel only carries Andrei.
